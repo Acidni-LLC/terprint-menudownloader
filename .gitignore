@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.venv/
+venv/
+ENV/
+
+# IDEs
+
+.idea/
+*.swp
+*.swo
+*~
+
+# Large data files
+docs/menumover/downloads/**/*.json
+docs/menumover/downloads/downloads/*.json
+docs/menumover/downloads/unified*.json
+docs/menumover/downloads/trulieve*.json
+docs/menumover/downloads/cookies*.json
+docs/menumover/downloads/flowery*.json
+docs/menumover/downloads/muv*.json
+docs/menumover/downloads/sunburn*.json
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db

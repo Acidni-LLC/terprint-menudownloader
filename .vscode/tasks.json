@@ -1,0 +1,30 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "create-function-app",
+			"type": "shell",
+			"command": "echo 'import azure.functions as func' > function_app.py"
+		},
+		{
+			"label": "create-local-settings",
+			"type": "shell",
+			"command": "echo { > local.settings.json"
+		},
+		{
+			"label": "set-env",
+			"type": "shell",
+			"command": "$env:BACKEND_API_KEY = 'test-key'; Write-Host 'Environment variable set'"
+		},
+		{
+			"label": "setup-venv",
+			"type": "shell",
+			"command": "cmd /c \"python -m venv .venv && .venv\\Scripts\\activate && pip install -r requirements.txt\""
+		},
+		{
+			"label": "setup-venv2",
+			"type": "shell",
+			"command": "python -m venv .venv; if ($?) { .venv\\Scripts\\Activate.ps1 }; if ($?) { pip install -r requirements.txt }"
+		}
+	]
+}

@@ -1,0 +1,163 @@
+﻿Column1.id,Column1.code,Column1.storecode,Column1.city
+193,clearwater,clearwater,Clearwater
+194,boynton_beach,boynton_beach,Boynton Beach
+196,bonita_springs,bonita_springs,Bonita Springs
+198,brooksville,brooksville,Brooksville
+199,cape_coral,cape_coral,Cape Coral
+201,dania_beach,dania_beach,Dania Beach
+202,daytona_beach,daytona_beach,Daytona Beach
+203,destin,destin,Destin
+205,englewood,englewood,Englewood
+206,fernandina_beach,fernandina_beach,Fernandina
+207,fort_lauderdale,fort_lauderdale,Ft. Lauderdale
+208,fort_pierce,fort_pierce,Fort Pierce
+209,fort_walton_beach,fort_walton_beach,Mary Esther
+210,gainesville,gainesville,Gainesville
+211,jacksonville,jacksonville,Jacksonville
+212,jacksonville_beach,jacksonville_beach,Jacksonville Beach
+213,key_west,key_west,Key West
+214,lakeland,lakeland,Lakeland
+215,largo,largo,Largo
+217,miami,miami,Miami
+218,miami_gardens,miami_gardens,Miami Gardens
+220,ocala,ocala,Ocala
+221,orange_park,orange_park,Orange Park
+222,orlando,orlando,Orlando
+223,orlando_colonial,orlando_colonial,Orlando
+224,orlando_millenia,orlando_millenia,Orlando
+225,orlando_south,orlando_south,Orlando
+226,palm_coast,palm_coast,Palm Coast
+227,panama_city_beach,panama_city_beach,Panama City Beach
+228,pensacola,pensacola,Pensacola
+229,pensacola_9_mile,pensacola_9_mile,Pensacola
+230,port_charlotte,port_charlotte,Port Charlotte
+231,port_st_lucie,port_st._lucie,Port St. Lucie
+232,sarasota,sarasota,Sarasota
+234,st_petersburg,st_petersburg,St. Petersburg
+235,stuart,stuart,Stuart
+236,tallahassee,tallahassee,Tallahassee
+238,tampa_busch,tampa_busch,Tampa
+239,tarpon_springs,tarpon_springs,Tarpon Springs
+240,titusville,titusville,Titusville
+241,vero_beach,vero_beach,Vero Beach
+243,wesley_chapel,wesley_chapel,Wesley Chapel
+244,west_palm_beach,west_palm_beach,West Palm Beach
+245,st_petersburg_tyrone,st_petersburg_tyrone,St. Petersburg
+246,longwood,longwood,Longwood
+247,tampa_hillsborough,tampa_hillsborough,Tampa
+248,fort_myers,fort_myers,Fort Myers
+249,deerfield_beach,deerfield_beach,Deerfield Beach
+250,merritt_island,merritt_island,Merritt Island
+251,delray_beach,delray_beach,Delray Beach
+252,palm_harbor,palm_harbor,Palm Harbor
+253,bradenton_manatee,west_bradenton,West Bradenton
+254,punta_gorda,punta_gorda,Punta Gorda
+255,brandon,brandon,Brandon
+256,orange_city,orange_city,Orange City
+257,lake_city,lake_city,Lake City
+258,clermont,clermont,Clermont
+260,dadeland,dadeland,Miami
+261,davenport,davenport,Davenport
+262,seffner,seffner,Seffner
+263,gainesvilleuf,gainesville_college_park,Gainesville
+264,summerfield,summerfield,Summerfield
+265,sebastian,sebastian,Sebastian
+266,jacksonville_baymeadows,jacksonville_baymeadows,Jacksonville
+267,tamarac,tamarac,Tamarac
+268,tampa_gandy,tampa_gandy,Tampa
+269,clearwater_gulfbay,clearwater_gulf_to_bay,Clearwater
+270,sebring,sebring,Sebring
+273,dunedin,dunedin,Dunedin
+274,eustis,eustis,Eustis
+275,palm_beach_gardens,palm_beach_gardens,Palm Beach Gardens
+276,osprey,osprey,Osprey
+277,port_richey,port_richey,Port Richey
+278,tampa_citrus_park,tampa_citrus_park,Tampa
+279,tavernier,tavernier,Tavernier
+280,winter_park,winter_park,Winter Park
+282,crystal_river,crystal_river,Crystal River
+283,winter_haven,winter_haven,Winter Haven
+284,leesburg,leesburg,Leesburg
+286,port_orange,port_orange,Port Orange
+287,oviedo,oviedo,Oviedo
+288,kissimmee,kissimmee_west_irlo,Kissimmee
+289,north_port,north_port,North Port
+290,longwood_downtown,longwood_downtown,Longwood
+291,lehigh,lehigh_acres,Lehigh Acres
+292,jacksonville_southside,jacksonville_southside_estates,Jacksonville
+293,gainesville_archer,gainesville_archer,Gainesville
+296,west_palm_okeechobee,west_palm_okeechobee,West Palm Beach
+297,jacksonville_arrowhead,jacksonville_arrowhead,Jacksonville
+298,north_miami_beach,north_miami_beach,North Miami Beach
+299,miami_south_beach,miami_south_beach,Miami Beach
+300,olympia_heights,olympia_heights,Olympia Heights
+301,port_st_lucie_east,port_st._lucie_east,Port St. Lucie
+303,cutler_bay,cutler_bay,Cutler Bay
+304,bartow,bartow,Bartow
+305,inverness,inverness,Inverness
+308,bradenton_bayshore,bradenton_bayshore_gardens,Bradenton
+309,tampa_dale,tampa_dale_mabry,Tampa
+310,okeechobee,okeechobee,Okeechobee
+311,tampa_fairgrounds,tampa_fairgrounds,Tampa
+312,riverview,riverview,Riverview
+313,boca_raton,boca_raton,Boca Raton
+316,fort_myers_summerlin,fort_myers_summerlin,Fort Myers
+317,zephyrhills,zephyrhills,Zephyrhills
+320,new_port_richey_new,new_port_richey_2,New Port Richey
+329,hollywood,hollywood,Hollywood
+369,coral_springs,coral_springs,Coral Springs
+371,apopka,apopka,Apopka
+372,kissimmee_south,kissimmee_south,Kissimmee
+373,auburndale,auburndale,Auburndale
+380,venice,venice,Venice
+398,sanford,sanford,Sanford
+399,palatka,palatka,Palatka
+400,winter_haven_cypress,winter_haven_cypress,Winter Haven
+401,north_fort_myers_bayshore,north_fort_myers_bayshore,North Fort Myers
+402,kissimmee_2647_east_irlo,kissimmee_2647_east_irlo,Kissimmee
+406,hobe_sound,hobe_sound,Hobe Sound
+407,lake_worth,lake_worth,Lake Worth
+409,st_augustine_two,st_augustine_two,St. Augustine
+410,tallahassee_fsu,tallahassee_fsu,Tallahassee
+411,pace,pace,Pace
+414,edgewater_two,edgewater_two,Edgewater
+415,apollo_beach,apollo_beach,Apollo Beach
+416,melbourne_1921,melbourne_1921,Melbourne
+418,marianna,marianna,Marianna
+421,crawfordville,crawfordville,Crawfordville
+422,crestview,crestview,Crestview
+428,palm_bay,palm_bay,Palm Bay
+429,land_o_lakes,land_o_lakes,Land O Lakes
+430,pinellas_park,pinellas_park,Pinellas Park
+431,boynton_beach_two,boynton_beach_two,Boynton Beach
+432,cocoa_beach,cocoa_beach,Cocoa Beach
+433,north_palm_beach,north_palm_beach,North Palm Beach
+434,stuart_kanner,stuart_kanner,Stuart
+435,brooksville_broad,brooksville_broad,Brooksville
+438,dania_beach_federal,dania_beach_federal,Dania Beach
+441,homosassa,homosassa,Homosassa
+444,panama_city,panama_city,Panama City
+445,gulf_breeze,gulf_breeze,Gulf Breeze
+447,ocala_sr_200,ocala_sr_200,Ocala
+448,new_port_richey_sr54,new_port_richey_sr54,New Port Richey
+449,orlando_semoran,orlando_semoran,Orlando
+450,miramar_beach,miramar_beach,Miramar Beach
+451,niceville,niceville,Niceville
+452,cocoa,cocoa,Cocoa
+453,tampa_dale_mabry_north,tampa_dale_mabry_north,Tampa
+454,lake_worth_hypoluxo,lake_worth_hypoluxo,Lake Worth
+455,clearwater_roosevelt,clearwater_roosevelt,Clearwater
+456,hudson,hudson,Hudson
+457,hallandale_beach,hallandale_beach,Hallandale Beach
+458,orlando_west_colonial,orlando_west_colonial,Orlando
+459,lake_placid,lake_placid,Lake Placid
+460,bonita_springs_tamiami,bonita_springs_tamiami,Bonita Springs
+461,st_augustine_a1a,st_augustine_a1a,St Augustine Beach
+462,tampa_kennedy,tampa_kennedy,Tampa
+463,spring_hill,spring_hill,Spring Hill
+464,jacksonville_dunn,jacksonville_dunn,Jacksonville
+467,palm_coast_sr100,palm_coast_sr100,Palm Coast
+469,middleburg,middleburg,Middleburg
+472,miami_beach,miami_beach,Miami
+473,oakland_park,oakland_park,Fort Lauderdale
+474,st_petersburg_central,st_petersburg_central,St Petersburg

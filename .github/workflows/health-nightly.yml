@@ -1,0 +1,46 @@
+name: Nightly Health Check
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # 03:00 UTC daily, after a scheduled run
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Status
+        run: |
+          STATUS=$(curl -s "https://${{ secrets.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net/api/status?code=${{ secrets.AZURE_FUNCTION_KEY }}")
+          echo "$STATUS"
+          echo "$STATUS" | jq -e '.status == "healthy"' || exit 1
+
+      - name: Check Batch Health
+        run: |
+          CODE=${{ secrets.AZURE_FUNCTION_KEY }}
+          HEALTH=$(curl -s -o /tmp/health.json -w "%{http_code}" "https://${{ secrets.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net/api/health/batches?code=$CODE")
+          echo "HTTP: $HEALTH"
+          cat /tmp/health.json
+          if [ "$HEALTH" = "503" ]; then exit 1; fi
+          jq -e 'has("alert") and (.alert == false)' /tmp/health.json || exit 1
+
+      - name: Notify on Failure
+        if: failure()
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          WORKFLOW: ${{ github.workflow }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$WEBHOOK_URL" ]; then echo "No WEBHOOK_URL provided; skipping notification."; exit 0; fi
+          payload=$(cat <<'EOF'
+{
+  "text": "Nightly health check FAILED for terprint-menu-downloader",
+  "attachments": [
+    {
+      "text": "Workflow: ${WORKFLOW}\nRun: ${RUN_URL}"
+    }
+  ]
+}
+EOF
+)
+          curl -X POST -H "Content-Type: application/json" -d "$payload" "$WEBHOOK_URL"
