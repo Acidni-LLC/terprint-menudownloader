@@ -8,6 +8,7 @@ When used standalone (python menu_downloader.py), it uses sys.path manipulation 
 import os
 import sys
 import json
+import csv
 import time
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -386,54 +387,29 @@ class DispensaryOrchestrator:
             # Trulieve Downloader  
             logger.info("Initializing Trulieve downloader...")
             
-            # Load Trulieve config from menu_config.json (try sibling repo first, then docs/ fallback)
+            # Load Trulieve stores from local menus/storeid_location_list.csv (172 stores)
+            # and category IDs from menus/menu_config.json
             trulieve_store_ids = None
-            trulieve_category_ids = None
-            try:
-                config_path = os.path.join(terprint_python_dir, "menus", "menu_config.json")
-                menus_dir = os.path.join(terprint_python_dir, "menus")
-
-                # Prefer sibling repo config, but fall back to docs/menu_config.json when available
-                if not os.path.exists(config_path):
-                    docs_config_path = os.path.join(docs_dir, 'menu_config.json')
-                    if os.path.exists(docs_config_path):
-                        config_path = docs_config_path
-                        menus_dir = os.path.join(docs_dir)
-
-                if os.path.exists(config_path):
-                    with open(config_path, 'r', encoding='utf-8') as f:
-                        config = json.load(f)
-
-                    trulieve_settings = config.get('trulieve_settings', {})
-                    stores_json_file = trulieve_settings.get('stores_json')
-                    trulieve_category_ids = trulieve_settings.get('category_ids', [])
-
-                    # Build full path to CSV file (try menus_dir first, then docs_dir)
-                    if stores_json_file:
-                        json_full_path = os.path.join(menus_dir, stores_json_file)
-                        # try in docs directory as a fallback if not found in menus_dir
-                        if not os.path.exists(json_full_path):
-                            alt = os.path.join(docs_dir, os.path.basename(stores_json_file))
-                            if os.path.exists(alt):
-                                json_full_path = alt
-
-                        if os.path.exists(json_full_path):
-                            # Load JSON file
-                            with open(json_full_path, 'r', encoding='utf-8') as jsonfile:
-                                stores_data = json.load(jsonfile)
-                                # Extract 'code' field from each store object
-                                trulieve_store_ids = [store['code'] for store in stores_data if 'code' in store]
-
-                            logger.info(f"Trulieve: Loaded {len(trulieve_store_ids)} store IDs from JSON: {json_full_path}")
-                            logger.info(f"Trulieve: Using {len(trulieve_category_ids)} category IDs from config")
-                        else:
-                            logger.warning(f"Trulieve: JSON file not found at {json_full_path}")
-                    else:
-                        logger.warning("Trulieve: No stores_json configured")
-                else:
-                    logger.warning("Trulieve: menu_config.json not found in sibling repo or docs/")
-            except Exception as e:
-                logger.error(f"Trulieve: Error loading config: {e}")
+            trulieve_category_ids = ["MjA4", "MjM3", "MjA5", "Ng=="]  # Flower, Pre-Rolls, Vaporizers, Edibles
+            
+            # Path to the menus folder (sibling to orchestrator.py)
+            menus_dir = os.path.join(os.path.dirname(__file__), "menus")
+            csv_path = os.path.join(menus_dir, "storeid_location_list.csv")
+            
+            logger.info(f"Trulieve: Loading stores from {csv_path}")
+            
+            if os.path.exists(csv_path):
+                try:
+                    with open(csv_path, 'r', encoding='utf-8-sig') as csvfile:  # utf-8-sig handles BOM
+                        reader = csv.DictReader(csvfile)
+                        trulieve_store_ids = [row.get('location', '').strip() for row in reader if row.get('location', '').strip()]
+                    logger.info(f"Trulieve: Loaded {len(trulieve_store_ids)} store IDs from {csv_path}")
+                    logger.info(f"Trulieve: Using {len(trulieve_category_ids)} category IDs")
+                except Exception as e:
+                    logger.error(f"Trulieve: Error reading CSV: {e}")
+            else:
+                logger.error(f"Trulieve: Store file not found at {csv_path}")
+                logger.error(f"Trulieve: Contents of {os.path.dirname(__file__)}: {os.listdir(os.path.dirname(__file__))}")
             
             downloaders['trulieve'] = {
                 'name': 'Trulieve',
@@ -493,7 +469,6 @@ class DispensaryOrchestrator:
             flowery_csv_path = os.path.join(os.path.dirname(__file__), "flowery_stores.csv")
             if os.path.exists(flowery_csv_path):
                 try:
-                    import csv
                     with open(flowery_csv_path, 'r', encoding='utf-8') as f:
                         reader = csv.DictReader(f)
                         for row in reader:
