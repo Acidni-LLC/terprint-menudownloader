@@ -122,11 +122,18 @@ jobs:
           
           echo "🚀 Deploying $IMAGE_NAME to ${{ env.CONTAINER_APP_NAME }}"
           
-          # Update container app with new image
+          # Update container app with new image and environment variables
           az containerapp update \
             --name ${{ env.CONTAINER_APP_NAME }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \
-            --image $IMAGE_NAME
+            --image $IMAGE_NAME \
+            --set-env-vars \
+              "PORT=8000" \
+              "AZURE_STORAGE_ACCOUNT_NAME=stterprintsharedgen2" \
+              "AZURE_CONTAINER_NAME=jsonfiles" \
+              "BATCH_PROCESSOR_KEY=secretref:batch-processor-key" \
+              "BATCH_PROCESSOR_URL=https://ca-terprint-batchprocessor.kindmoss-c6723cbe.eastus2.azurecontainerapps.io/api/run-batch-processor" \
+              "TRULIEVE_DEV_MODE=false"
           
           echo "✅ Deployment completed successfully"
 
