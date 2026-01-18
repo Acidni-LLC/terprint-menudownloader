@@ -2,7 +2,7 @@ name: 🚀 Deploy Menu Downloader Container App
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, main ]
     paths:
       - 'container_app/**'
       - 'src/**'
