@@ -18,7 +18,7 @@ def load_config(config_path: str = None) -> Dict:
         config_path = os.path.join(os.path.dirname(__file__), "menu_config.json")
     
     try:
-        with open(config_path, 'r', encoding='utf-8') as f:
+        with open(config_path, 'r', encoding='utf-8-sig') as f:
             return json.load(f)
     except FileNotFoundError:
         print(f"Config file not found at {config_path}, using defaults")
@@ -59,7 +59,7 @@ def load_trulieve_store_ids(csv_path: str = None) -> List[str]:
     stores = []
     try:
         import csv
-        with open(csv_path, 'r', encoding='utf-8') as f:
+        with open(csv_path, 'r', encoding='utf-8-sig') as f:
             # Try DictReader first to use header names when available
             reader = csv.DictReader(f)
             if reader.fieldnames:

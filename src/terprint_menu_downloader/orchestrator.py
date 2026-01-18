@@ -1919,7 +1919,7 @@ def main():
     parser.add_argument('--no-parallel', action='store_true', help='(Deprecated) Dispensaries are always processed sequentially')
     parser.add_argument('--no-azure', action='store_true', help='Skip Azure upload')
     parser.add_argument('--upload-only', action='store_true', help='Upload existing files only, skip downloading')
-    parser.add_argument('--dispensary', '-d', choices=['muv', 'trulieve', 'sunburn', 'cookies', 'flowery'], 
+    parser.add_argument('--dispensary', '-d', choices=['muv', 'trulieve', 'sunburn', 'cookies', 'flowery', 'curaleaf'], 
                        help='Run only specific dispensary')
     parser.add_argument('--list-dispensaries', action='store_true', help='List available dispensaries')
     parser.add_argument('--show-config', action='store_true', help='Display current configuration settings and exit')
