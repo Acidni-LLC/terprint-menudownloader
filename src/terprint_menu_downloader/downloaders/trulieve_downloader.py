@@ -329,9 +329,9 @@ class TrulieveDownloader:
             out_of_stock_stores = []
             product_name = None
             
-            # Collect data - use dev_mode for faster response
+            # Collect data - use instance dev_mode setting
             all_data = collect_all_trulieve_data_browser_format(
-                dev_mode=True,  # Quick check mode
+                dev_mode=self.dev_mode,  # Use instance setting, not hardcoded True
                 store_ids=stores_to_check
             )
             

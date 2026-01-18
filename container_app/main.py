@@ -19,6 +19,14 @@ import requests
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
+# Import stock routes
+try:
+    from stock_routes import router as stock_router
+    STOCK_ROUTES_AVAILABLE = True
+except ImportError:
+    STOCK_ROUTES_AVAILABLE = False
+    stock_router = None
+
 # Ensure writable directories for logs in container environment
 # Set log directory before any package imports that might try to create logs
 os.environ.setdefault('LOG_DIR', '/tmp/logs')
@@ -76,12 +84,12 @@ else:
 if TERPRINT_CONFIG_AVAILABLE and batch_processor_config:
     _bp_endpoint = batch_processor_config.get('endpoint', {})
     BATCH_PROCESSOR_URL = _bp_endpoint.get('url', 
-        "https://func-terprint-batchprocessor.azurewebsites.net/api/run-batch-processor")
+        "https://ca-terprint-batchprocessor.kindmoss-c6723cbe.eastus2.azurecontainerapps.io/api/run-batch-processor")
     BATCH_PROCESSOR_KEY = _bp_endpoint.get('code', '') or os.environ.get("BATCH_PROCESSOR_KEY", "")
 else:
     BATCH_PROCESSOR_URL = os.environ.get(
         "BATCH_PROCESSOR_URL",
-        "https://func-terprint-batchprocessor.azurewebsites.net/api/run-batch-processor"
+        "https://ca-terprint-batchprocessor.kindmoss-c6723cbe.eastus2.azurecontainerapps.io/api/run-batch-processor"
     )
     BATCH_PROCESSOR_KEY = os.environ.get("BATCH_PROCESSOR_KEY", "")
 
@@ -195,11 +203,26 @@ def run_download() -> dict:
     from terprint_menu_downloader import DispensaryOrchestrator
     
     logger.info("Creating DispensaryOrchestrator...")
+    logger.info("IMPORTANT: dev_mode=False - Using ALL PRODUCTION STORES")
     orchestrator = DispensaryOrchestrator(
         output_dir='/tmp/downloads',  # Use temp directory
         dev_mode=False,
         in_memory=True
     )
+    
+    # Log Trulieve configuration after orchestrator creation
+    try:
+        trulieve_config = orchestrator.downloaders.get('trulieve', {})
+        if trulieve_config:
+            downloader = trulieve_config.get('downloader')
+            if downloader:
+                store_count = len(getattr(downloader, 'store_ids', [])) if hasattr(downloader, 'store_ids') and downloader.store_ids else 0
+                category_count = len(getattr(downloader, 'category_ids', [])) if hasattr(downloader, 'category_ids') and downloader.category_ids else 0
+                logger.info(f"TRULIEVE CONFIG: {store_count} stores, {category_count} categories, total combinations: {store_count * category_count}")
+                if store_count < 100:
+                    logger.warning(f"WARNING: Only {store_count} Trulieve stores loaded - expected 162!")
+    except Exception as e:
+        logger.error(f"Error checking Trulieve config: {e}")
     
     logger.info("Running full pipeline...")
     results = orchestrator.run_full_pipeline(
@@ -267,10 +290,11 @@ async def lifespan(app: FastAPI):
     app_state["startup_time"] = datetime.utcnow()
     logger.info("Starting Terprint Menu Downloader Container App...")
     
-    # Schedule downloads at 9am, 3pm, 9pm EST (14:00, 20:00, 02:00 UTC)
+    # Schedule downloads every 2 hours from 8am-10pm EST (13:00-03:00 UTC)
+    # Runs at: 8am, 10am, 12pm, 2pm, 4pm, 6pm, 8pm, 10pm EST
     scheduler.add_job(
         scheduled_download_job,
-        CronTrigger(hour='2,14,20', minute=0, timezone='UTC'),
+        CronTrigger(hour='1,3,13,15,17,19,21,23', minute=0, timezone='UTC'),
         id='scheduled_download',
         name='Menu Download Job',
         replace_existing=True
@@ -291,6 +315,14 @@ app = FastAPI(
     version="2.0.0",
     lifespan=lifespan
 )
+
+# Include stock routes if available
+if STOCK_ROUTES_AVAILABLE and stock_router:
+    app.include_router(stock_router)
+    logger.info('Stock routes enabled')
+else:
+    logger.warning('Stock routes not available - terprint-core package may be missing')
+
 
 
 # ============================================================================
@@ -407,3 +439,4 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+

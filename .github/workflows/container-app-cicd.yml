@@ -1,0 +1,180 @@
+name: Container App CI/CD
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'container_app/**'
+      - 'src/**'
+      - '.github/workflows/container-app-cicd.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'container_app/**'
+      - 'src/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod
+
+env:
+  REGISTRY_LOGIN_SERVER: crterprint.azurecr.io
+  CONTAINER_APP_NAME: ca-terprint-menudownloader
+  RESOURCE_GROUP: rg-dev-terprint-ca
+  IMAGE_NAME: terprint-menudownloader
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+      
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Log in to Azure Container Registry
+        run: |
+          az acr login --name crterprint
+
+      - name: Extract metadata
+        id: meta
+        run: |
+          # Create tag based on branch and commit
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            TAG="latest"
+          else
+            TAG="pr-${{ github.event.number }}"
+          fi
+          
+          # Add commit SHA for uniqueness
+          TAG="${TAG}-${{ github.sha:0:8 }}"
+          
+          echo "tags=${{ env.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${TAG}" >> $GITHUB_OUTPUT
+          echo "Tag: ${TAG}"
+
+      - name: Build and push container image
+        id: build
+        run: |
+          cd container_app
+          
+          # Build with build context as parent directory to access src/
+          az acr build \
+            --registry crterprint \
+            --image ${{ env.IMAGE_NAME }}:${{ github.sha:0:8 }} \
+            --image ${{ env.IMAGE_NAME }}:latest \
+            --file Dockerfile \
+            ..
+          
+          # Get the digest
+          DIGEST=$(az acr repository show-manifests --name crterprint --repository ${{ env.IMAGE_NAME }} --query "[0].digest" -o tsv)
+          echo "digest=${DIGEST}" >> $GITHUB_OUTPUT
+
+  deploy-dev:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    environment: 
+      name: dev
+      url: https://${{ env.CONTAINER_APP_NAME }}.kindmoss-c6723cbe.eastus2.azurecontainerapps.io
+      
+    steps:
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Container App
+        run: |
+          az containerapp update \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image ${{ env.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha:0:8 }}
+
+      - name: Health Check
+        run: |
+          # Wait for deployment to complete
+          sleep 30
+          
+          # Check health endpoint
+          RESPONSE=$(curl -s -o /tmp/health.json -w "%{http_code}" "https://${{ env.CONTAINER_APP_NAME }}.kindmoss-c6723cbe.eastus2.azurecontainerapps.io/health")
+          
+          echo "HTTP Status: $RESPONSE"
+          if [ -f /tmp/health.json ]; then
+            echo "Response:"
+            cat /tmp/health.json
+          fi
+          
+          # Expect 200 OK
+          if [ "$RESPONSE" != "200" ]; then
+            echo "Health check failed with status $RESPONSE"
+            exit 1
+          fi
+
+      - name: Trigger Integration Tests
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.GH_PAT_TERPRINT_TESTS }}
+          repository: Acidni-LLC/terprint-tests
+          event-type: post-deploy-tests
+          client-payload: |
+            {
+              "service": "menu-downloader",
+              "environment": "dev",
+              "image_tag": "${{ github.sha:0:8 }}",
+              "deployment_url": "https://${{ env.CONTAINER_APP_NAME }}.kindmoss-c6723cbe.eastus2.azurecontainerapps.io"
+            }
+
+  deploy-prod:
+    needs: [build, deploy-dev]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    environment: 
+      name: production
+      url: https://ca-terprint-menudownloader-prod.kindmoss-c6723cbe.eastus2.azurecontainerapps.io
+      
+    steps:
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Production Container App
+        run: |
+          # Note: Update resource group and app name for production
+          az containerapp update \
+            --name ca-terprint-menudownloader-prod \
+            --resource-group rg-prod-terprint-ca \
+            --image ${{ env.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha:0:8 }}
+
+      - name: Production Health Check
+        run: |
+          # Wait for deployment to complete
+          sleep 60
+          
+          # Check health endpoint
+          RESPONSE=$(curl -s -o /tmp/health.json -w "%{http_code}" "https://ca-terprint-menudownloader-prod.kindmoss-c6723cbe.eastus2.azurecontainerapps.io/health")
+          
+          echo "HTTP Status: $RESPONSE"
+          if [ -f /tmp/health.json ]; then
+            echo "Response:"
+            cat /tmp/health.json
+          fi
+          
+          # Expect 200 OK
+          if [ "$RESPONSE" != "200" ]; then
+            echo "Production health check failed with status $RESPONSE"
+            exit 1
+          fi

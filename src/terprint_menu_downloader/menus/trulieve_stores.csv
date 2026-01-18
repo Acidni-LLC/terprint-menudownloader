@@ -1,4 +1,4 @@
-﻿Column1.id,Column1.code,Column1.storecode,Column1.city
+id,code,storecode,city
 193,clearwater,clearwater,Clearwater
 194,boynton_beach,boynton_beach,Boynton Beach
 196,bonita_springs,bonita_springs,Bonita Springs
@@ -161,3 +161,4 @@
 472,miami_beach,miami_beach,Miami
 473,oakland_park,oakland_park,Fort Lauderdale
 474,st_petersburg_central,st_petersburg_central,St Petersburg
+

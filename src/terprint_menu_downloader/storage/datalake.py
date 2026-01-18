@@ -2,7 +2,14 @@ import json
 import os
 from datetime import datetime
 from azure.storage.filedatalake import DataLakeServiceClient, ContentSettings
-from azure.identity import DefaultAzureCredential, ClientSecretCredential, AzureCliCredential
+from azure.identity import (
+    DefaultAzureCredential, 
+    ClientSecretCredential, 
+    AzureCliCredential,
+    ManagedIdentityCredential,
+    EnvironmentCredential,
+    ChainedTokenCredential
+)
 import logging
 
 class AzureDataLakeManager:
@@ -22,7 +29,7 @@ class AzureDataLakeManager:
         # Batch extraction callback
         self.batch_callback = None
         
-        # Set up credential - use DefaultAzureCredential for Azure environments, AzureCliCredential for local dev
+        # Set up credential - Container Apps compatible (no AzureCliCredential in chain)
         if credential is None:
             # Detect Azure environment (Functions, Container Apps, App Service)
             is_azure_environment = (
@@ -32,9 +39,14 @@ class AzureDataLakeManager:
                 os.environ.get('IDENTITY_ENDPOINT') is not None            # Managed Identity available
             )
             if is_azure_environment:
-                self.credential = DefaultAzureCredential()
+                # Use ChainedTokenCredential without AzureCliCredential for Container Apps
+                # This prevents "Azure CLI not found on path" errors
+                self.credential = ChainedTokenCredential(
+                    ManagedIdentityCredential(),  # Works in Container Apps, Functions, App Service
+                    EnvironmentCredential()       # Fallback for service principal auth
+                )
             else:
-                # Use AzureCliCredential for local development (more reliable with RBAC)
+                # Local development - use Azure CLI credentials
                 self.credential = AzureCliCredential()
         else:
             self.credential = credential

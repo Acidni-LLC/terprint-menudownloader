@@ -405,42 +405,31 @@ class DispensaryOrchestrator:
                         config = json.load(f)
 
                     trulieve_settings = config.get('trulieve_settings', {})
-                    trulieve_store_ids_csv = trulieve_settings.get('store_ids_csv')
+                    stores_json_file = trulieve_settings.get('stores_json')
                     trulieve_category_ids = trulieve_settings.get('category_ids', [])
 
                     # Build full path to CSV file (try menus_dir first, then docs_dir)
-                    if trulieve_store_ids_csv:
-                        csv_full_path = os.path.join(menus_dir, trulieve_store_ids_csv)
-                        if not os.path.exists(csv_full_path):
-                            # try in docs directory as a fallback
-                            alt = os.path.join(docs_dir, os.path.basename(trulieve_store_ids_csv))
+                    if stores_json_file:
+                        json_full_path = os.path.join(menus_dir, stores_json_file)
+                        # try in docs directory as a fallback if not found in menus_dir
+                        if not os.path.exists(json_full_path):
+                            alt = os.path.join(docs_dir, os.path.basename(stores_json_file))
                             if os.path.exists(alt):
-                                csv_full_path = alt
+                                json_full_path = alt
 
-                        if os.path.exists(csv_full_path):
-                            import csv as _csv
-                            with open(csv_full_path, 'r', encoding='utf-8') as csvfile:
-                                reader = _csv.reader(csvfile)
-                                # If header looks non-numeric, assume first row is header
-                                first_row = next(reader, None)
-                                if first_row and any([c.isalpha() for c in ''.join(first_row)]):
-                                    # we consumed header; continue reading rows
-                                    pass
-                                else:
-                                    # first_row was actual data, include it
-                                    if first_row:
-                                        # rewind list: treat first_row as data
-                                        rows = [first_row] + list(reader)
-                                        reader = iter(rows)
+                        if os.path.exists(json_full_path):
+                            # Load JSON file
+                            with open(json_full_path, 'r', encoding='utf-8') as jsonfile:
+                                stores_data = json.load(jsonfile)
+                                # Extract 'code' field from each store object
+                                trulieve_store_ids = [store['code'] for store in stores_data if 'code' in store]
 
-                                trulieve_store_ids = [row[1] for row in reader if row and len(row) >= 2]
-
-                            logger.info(f"Trulieve: Loaded {len(trulieve_store_ids)} store IDs from CSV: {csv_full_path}")
+                            logger.info(f"Trulieve: Loaded {len(trulieve_store_ids)} store IDs from JSON: {json_full_path}")
                             logger.info(f"Trulieve: Using {len(trulieve_category_ids)} category IDs from config")
                         else:
-                            logger.warning(f"Trulieve: CSV file not found at {csv_full_path}")
+                            logger.warning(f"Trulieve: JSON file not found at {json_full_path}")
                     else:
-                        logger.warning("Trulieve: No store_ids_csv configured")
+                        logger.warning("Trulieve: No stores_json configured")
                 else:
                     logger.warning("Trulieve: menu_config.json not found in sibling repo or docs/")
             except Exception as e:

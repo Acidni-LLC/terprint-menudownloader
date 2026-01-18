@@ -1,0 +1,974 @@
+[
+    {
+        "storecode":  "clearwater",
+        "code":  "clearwater",
+        "id":  "193",
+        "city":  "Clearwater"
+    },
+    {
+        "storecode":  "boynton_beach",
+        "code":  "boynton_beach",
+        "id":  "194",
+        "city":  "Boynton Beach"
+    },
+    {
+        "storecode":  "bonita_springs",
+        "code":  "bonita_springs",
+        "id":  "196",
+        "city":  "Bonita Springs"
+    },
+    {
+        "storecode":  "brooksville",
+        "code":  "brooksville",
+        "id":  "198",
+        "city":  "Brooksville"
+    },
+    {
+        "storecode":  "cape_coral",
+        "code":  "cape_coral",
+        "id":  "199",
+        "city":  "Cape Coral"
+    },
+    {
+        "storecode":  "dania_beach",
+        "code":  "dania_beach",
+        "id":  "201",
+        "city":  "Dania Beach"
+    },
+    {
+        "storecode":  "daytona_beach",
+        "code":  "daytona_beach",
+        "id":  "202",
+        "city":  "Daytona Beach"
+    },
+    {
+        "storecode":  "destin",
+        "code":  "destin",
+        "id":  "203",
+        "city":  "Destin"
+    },
+    {
+        "storecode":  "englewood",
+        "code":  "englewood",
+        "id":  "205",
+        "city":  "Englewood"
+    },
+    {
+        "storecode":  "fernandina_beach",
+        "code":  "fernandina_beach",
+        "id":  "206",
+        "city":  "Fernandina"
+    },
+    {
+        "storecode":  "fort_lauderdale",
+        "code":  "fort_lauderdale",
+        "id":  "207",
+        "city":  "Ft. Lauderdale"
+    },
+    {
+        "storecode":  "fort_pierce",
+        "code":  "fort_pierce",
+        "id":  "208",
+        "city":  "Fort Pierce"
+    },
+    {
+        "storecode":  "fort_walton_beach",
+        "code":  "fort_walton_beach",
+        "id":  "209",
+        "city":  "Mary Esther"
+    },
+    {
+        "storecode":  "gainesville",
+        "code":  "gainesville",
+        "id":  "210",
+        "city":  "Gainesville"
+    },
+    {
+        "storecode":  "jacksonville",
+        "code":  "jacksonville",
+        "id":  "211",
+        "city":  "Jacksonville"
+    },
+    {
+        "storecode":  "jacksonville_beach",
+        "code":  "jacksonville_beach",
+        "id":  "212",
+        "city":  "Jacksonville Beach"
+    },
+    {
+        "storecode":  "key_west",
+        "code":  "key_west",
+        "id":  "213",
+        "city":  "Key West"
+    },
+    {
+        "storecode":  "lakeland",
+        "code":  "lakeland",
+        "id":  "214",
+        "city":  "Lakeland"
+    },
+    {
+        "storecode":  "largo",
+        "code":  "largo",
+        "id":  "215",
+        "city":  "Largo"
+    },
+    {
+        "storecode":  "miami",
+        "code":  "miami",
+        "id":  "217",
+        "city":  "Miami"
+    },
+    {
+        "storecode":  "miami_gardens",
+        "code":  "miami_gardens",
+        "id":  "218",
+        "city":  "Miami Gardens"
+    },
+    {
+        "storecode":  "ocala",
+        "code":  "ocala",
+        "id":  "220",
+        "city":  "Ocala"
+    },
+    {
+        "storecode":  "orange_park",
+        "code":  "orange_park",
+        "id":  "221",
+        "city":  "Orange Park"
+    },
+    {
+        "storecode":  "orlando",
+        "code":  "orlando",
+        "id":  "222",
+        "city":  "Orlando"
+    },
+    {
+        "storecode":  "orlando_colonial",
+        "code":  "orlando_colonial",
+        "id":  "223",
+        "city":  "Orlando"
+    },
+    {
+        "storecode":  "orlando_millenia",
+        "code":  "orlando_millenia",
+        "id":  "224",
+        "city":  "Orlando"
+    },
+    {
+        "storecode":  "orlando_south",
+        "code":  "orlando_south",
+        "id":  "225",
+        "city":  "Orlando"
+    },
+    {
+        "storecode":  "palm_coast",
+        "code":  "palm_coast",
+        "id":  "226",
+        "city":  "Palm Coast"
+    },
+    {
+        "storecode":  "panama_city_beach",
+        "code":  "panama_city_beach",
+        "id":  "227",
+        "city":  "Panama City Beach"
+    },
+    {
+        "storecode":  "pensacola",
+        "code":  "pensacola",
+        "id":  "228",
+        "city":  "Pensacola"
+    },
+    {
+        "storecode":  "pensacola_9_mile",
+        "code":  "pensacola_9_mile",
+        "id":  "229",
+        "city":  "Pensacola"
+    },
+    {
+        "storecode":  "port_charlotte",
+        "code":  "port_charlotte",
+        "id":  "230",
+        "city":  "Port Charlotte"
+    },
+    {
+        "storecode":  "port_st._lucie",
+        "code":  "port_st_lucie",
+        "id":  "231",
+        "city":  "Port St. Lucie"
+    },
+    {
+        "storecode":  "sarasota",
+        "code":  "sarasota",
+        "id":  "232",
+        "city":  "Sarasota"
+    },
+    {
+        "storecode":  "st_petersburg",
+        "code":  "st_petersburg",
+        "id":  "234",
+        "city":  "St. Petersburg"
+    },
+    {
+        "storecode":  "stuart",
+        "code":  "stuart",
+        "id":  "235",
+        "city":  "Stuart"
+    },
+    {
+        "storecode":  "tallahassee",
+        "code":  "tallahassee",
+        "id":  "236",
+        "city":  "Tallahassee"
+    },
+    {
+        "storecode":  "tampa_busch",
+        "code":  "tampa_busch",
+        "id":  "238",
+        "city":  "Tampa"
+    },
+    {
+        "storecode":  "tarpon_springs",
+        "code":  "tarpon_springs",
+        "id":  "239",
+        "city":  "Tarpon Springs"
+    },
+    {
+        "storecode":  "titusville",
+        "code":  "titusville",
+        "id":  "240",
+        "city":  "Titusville"
+    },
+    {
+        "storecode":  "vero_beach",
+        "code":  "vero_beach",
+        "id":  "241",
+        "city":  "Vero Beach"
+    },
+    {
+        "storecode":  "wesley_chapel",
+        "code":  "wesley_chapel",
+        "id":  "243",
+        "city":  "Wesley Chapel"
+    },
+    {
+        "storecode":  "west_palm_beach",
+        "code":  "west_palm_beach",
+        "id":  "244",
+        "city":  "West Palm Beach"
+    },
+    {
+        "storecode":  "st_petersburg_tyrone",
+        "code":  "st_petersburg_tyrone",
+        "id":  "245",
+        "city":  "St. Petersburg"
+    },
+    {
+        "storecode":  "longwood",
+        "code":  "longwood",
+        "id":  "246",
+        "city":  "Longwood"
+    },
+    {
+        "storecode":  "tampa_hillsborough",
+        "code":  "tampa_hillsborough",
+        "id":  "247",
+        "city":  "Tampa"
+    },
+    {
+        "storecode":  "fort_myers",
+        "code":  "fort_myers",
+        "id":  "248",
+        "city":  "Fort Myers"
+    },
+    {
+        "storecode":  "deerfield_beach",
+        "code":  "deerfield_beach",
+        "id":  "249",
+        "city":  "Deerfield Beach"
+    },
+    {
+        "storecode":  "merritt_island",
+        "code":  "merritt_island",
+        "id":  "250",
+        "city":  "Merritt Island"
+    },
+    {
+        "storecode":  "delray_beach",
+        "code":  "delray_beach",
+        "id":  "251",
+        "city":  "Delray Beach"
+    },
+    {
+        "storecode":  "palm_harbor",
+        "code":  "palm_harbor",
+        "id":  "252",
+        "city":  "Palm Harbor"
+    },
+    {
+        "storecode":  "west_bradenton",
+        "code":  "bradenton_manatee",
+        "id":  "253",
+        "city":  "West Bradenton"
+    },
+    {
+        "storecode":  "punta_gorda",
+        "code":  "punta_gorda",
+        "id":  "254",
+        "city":  "Punta Gorda"
+    },
+    {
+        "storecode":  "brandon",
+        "code":  "brandon",
+        "id":  "255",
+        "city":  "Brandon"
+    },
+    {
+        "storecode":  "orange_city",
+        "code":  "orange_city",
+        "id":  "256",
+        "city":  "Orange City"
+    },
+    {
+        "storecode":  "lake_city",
+        "code":  "lake_city",
+        "id":  "257",
+        "city":  "Lake City"
+    },
+    {
+        "storecode":  "clermont",
+        "code":  "clermont",
+        "id":  "258",
+        "city":  "Clermont"
+    },
+    {
+        "storecode":  "dadeland",
+        "code":  "dadeland",
+        "id":  "260",
+        "city":  "Miami"
+    },
+    {
+        "storecode":  "davenport",
+        "code":  "davenport",
+        "id":  "261",
+        "city":  "Davenport"
+    },
+    {
+        "storecode":  "seffner",
+        "code":  "seffner",
+        "id":  "262",
+        "city":  "Seffner"
+    },
+    {
+        "storecode":  "gainesville_college_park",
+        "code":  "gainesvilleuf",
+        "id":  "263",
+        "city":  "Gainesville"
+    },
+    {
+        "storecode":  "summerfield",
+        "code":  "summerfield",
+        "id":  "264",
+        "city":  "Summerfield"
+    },
+    {
+        "storecode":  "sebastian",
+        "code":  "sebastian",
+        "id":  "265",
+        "city":  "Sebastian"
+    },
+    {
+        "storecode":  "jacksonville_baymeadows",
+        "code":  "jacksonville_baymeadows",
+        "id":  "266",
+        "city":  "Jacksonville"
+    },
+    {
+        "storecode":  "tamarac",
+        "code":  "tamarac",
+        "id":  "267",
+        "city":  "Tamarac"
+    },
+    {
+        "storecode":  "tampa_gandy",
+        "code":  "tampa_gandy",
+        "id":  "268",
+        "city":  "Tampa"
+    },
+    {
+        "storecode":  "clearwater_gulf_to_bay",
+        "code":  "clearwater_gulfbay",
+        "id":  "269",
+        "city":  "Clearwater"
+    },
+    {
+        "storecode":  "sebring",
+        "code":  "sebring",
+        "id":  "270",
+        "city":  "Sebring"
+    },
+    {
+        "storecode":  "dunedin",
+        "code":  "dunedin",
+        "id":  "273",
+        "city":  "Dunedin"
+    },
+    {
+        "storecode":  "eustis",
+        "code":  "eustis",
+        "id":  "274",
+        "city":  "Eustis"
+    },
+    {
+        "storecode":  "palm_beach_gardens",
+        "code":  "palm_beach_gardens",
+        "id":  "275",
+        "city":  "Palm Beach Gardens"
+    },
+    {
+        "storecode":  "osprey",
+        "code":  "osprey",
+        "id":  "276",
+        "city":  "Osprey"
+    },
+    {
+        "storecode":  "port_richey",
+        "code":  "port_richey",
+        "id":  "277",
+        "city":  "Port Richey"
+    },
+    {
+        "storecode":  "tampa_citrus_park",
+        "code":  "tampa_citrus_park",
+        "id":  "278",
+        "city":  "Tampa"
+    },
+    {
+        "storecode":  "tavernier",
+        "code":  "tavernier",
+        "id":  "279",
+        "city":  "Tavernier"
+    },
+    {
+        "storecode":  "winter_park",
+        "code":  "winter_park",
+        "id":  "280",
+        "city":  "Winter Park"
+    },
+    {
+        "storecode":  "crystal_river",
+        "code":  "crystal_river",
+        "id":  "282",
+        "city":  "Crystal River"
+    },
+    {
+        "storecode":  "winter_haven",
+        "code":  "winter_haven",
+        "id":  "283",
+        "city":  "Winter Haven"
+    },
+    {
+        "storecode":  "leesburg",
+        "code":  "leesburg",
+        "id":  "284",
+        "city":  "Leesburg"
+    },
+    {
+        "storecode":  "port_orange",
+        "code":  "port_orange",
+        "id":  "286",
+        "city":  "Port Orange"
+    },
+    {
+        "storecode":  "oviedo",
+        "code":  "oviedo",
+        "id":  "287",
+        "city":  "Oviedo"
+    },
+    {
+        "storecode":  "kissimmee_west_irlo",
+        "code":  "kissimmee",
+        "id":  "288",
+        "city":  "Kissimmee"
+    },
+    {
+        "storecode":  "north_port",
+        "code":  "north_port",
+        "id":  "289",
+        "city":  "North Port"
+    },
+    {
+        "storecode":  "longwood_downtown",
+        "code":  "longwood_downtown",
+        "id":  "290",
+        "city":  "Longwood"
+    },
+    {
+        "storecode":  "lehigh_acres",
+        "code":  "lehigh",
+        "id":  "291",
+        "city":  "Lehigh Acres"
+    },
+    {
+        "storecode":  "jacksonville_southside_estates",
+        "code":  "jacksonville_southside",
+        "id":  "292",
+        "city":  "Jacksonville"
+    },
+    {
+        "storecode":  "gainesville_archer",
+        "code":  "gainesville_archer",
+        "id":  "293",
+        "city":  "Gainesville"
+    },
+    {
+        "storecode":  "west_palm_okeechobee",
+        "code":  "west_palm_okeechobee",
+        "id":  "296",
+        "city":  "West Palm Beach"
+    },
+    {
+        "storecode":  "jacksonville_arrowhead",
+        "code":  "jacksonville_arrowhead",
+        "id":  "297",
+        "city":  "Jacksonville"
+    },
+    {
+        "storecode":  "north_miami_beach",
+        "code":  "north_miami_beach",
+        "id":  "298",
+        "city":  "North Miami Beach"
+    },
+    {
+        "storecode":  "miami_south_beach",
+        "code":  "miami_south_beach",
+        "id":  "299",
+        "city":  "Miami Beach"
+    },
+    {
+        "storecode":  "olympia_heights",
+        "code":  "olympia_heights",
+        "id":  "300",
+        "city":  "Olympia Heights"
+    },
+    {
+        "storecode":  "port_st._lucie_east",
+        "code":  "port_st_lucie_east",
+        "id":  "301",
+        "city":  "Port St. Lucie"
+    },
+    {
+        "storecode":  "cutler_bay",
+        "code":  "cutler_bay",
+        "id":  "303",
+        "city":  "Cutler Bay"
+    },
+    {
+        "storecode":  "bartow",
+        "code":  "bartow",
+        "id":  "304",
+        "city":  "Bartow"
+    },
+    {
+        "storecode":  "inverness",
+        "code":  "inverness",
+        "id":  "305",
+        "city":  "Inverness"
+    },
+    {
+        "storecode":  "bradenton_bayshore_gardens",
+        "code":  "bradenton_bayshore",
+        "id":  "308",
+        "city":  "Bradenton"
+    },
+    {
+        "storecode":  "tampa_dale_mabry",
+        "code":  "tampa_dale",
+        "id":  "309",
+        "city":  "Tampa"
+    },
+    {
+        "storecode":  "okeechobee",
+        "code":  "okeechobee",
+        "id":  "310",
+        "city":  "Okeechobee"
+    },
+    {
+        "storecode":  "tampa_fairgrounds",
+        "code":  "tampa_fairgrounds",
+        "id":  "311",
+        "city":  "Tampa"
+    },
+    {
+        "storecode":  "riverview",
+        "code":  "riverview",
+        "id":  "312",
+        "city":  "Riverview"
+    },
+    {
+        "storecode":  "boca_raton",
+        "code":  "boca_raton",
+        "id":  "313",
+        "city":  "Boca Raton"
+    },
+    {
+        "storecode":  "fort_myers_summerlin",
+        "code":  "fort_myers_summerlin",
+        "id":  "316",
+        "city":  "Fort Myers"
+    },
+    {
+        "storecode":  "zephyrhills",
+        "code":  "zephyrhills",
+        "id":  "317",
+        "city":  "Zephyrhills"
+    },
+    {
+        "storecode":  "new_port_richey_2",
+        "code":  "new_port_richey_new",
+        "id":  "320",
+        "city":  "New Port Richey"
+    },
+    {
+        "storecode":  "hollywood",
+        "code":  "hollywood",
+        "id":  "329",
+        "city":  "Hollywood"
+    },
+    {
+        "storecode":  "coral_springs",
+        "code":  "coral_springs",
+        "id":  "369",
+        "city":  "Coral Springs"
+    },
+    {
+        "storecode":  "apopka",
+        "code":  "apopka",
+        "id":  "371",
+        "city":  "Apopka"
+    },
+    {
+        "storecode":  "kissimmee_south",
+        "code":  "kissimmee_south",
+        "id":  "372",
+        "city":  "Kissimmee"
+    },
+    {
+        "storecode":  "auburndale",
+        "code":  "auburndale",
+        "id":  "373",
+        "city":  "Auburndale"
+    },
+    {
+        "storecode":  "venice",
+        "code":  "venice",
+        "id":  "380",
+        "city":  "Venice"
+    },
+    {
+        "storecode":  "sanford",
+        "code":  "sanford",
+        "id":  "398",
+        "city":  "Sanford"
+    },
+    {
+        "storecode":  "palatka",
+        "code":  "palatka",
+        "id":  "399",
+        "city":  "Palatka"
+    },
+    {
+        "storecode":  "winter_haven_cypress",
+        "code":  "winter_haven_cypress",
+        "id":  "400",
+        "city":  "Winter Haven"
+    },
+    {
+        "storecode":  "north_fort_myers_bayshore",
+        "code":  "north_fort_myers_bayshore",
+        "id":  "401",
+        "city":  "North Fort Myers"
+    },
+    {
+        "storecode":  "kissimmee_2647_east_irlo",
+        "code":  "kissimmee_2647_east_irlo",
+        "id":  "402",
+        "city":  "Kissimmee"
+    },
+    {
+        "storecode":  "hobe_sound",
+        "code":  "hobe_sound",
+        "id":  "406",
+        "city":  "Hobe Sound"
+    },
+    {
+        "storecode":  "lake_worth",
+        "code":  "lake_worth",
+        "id":  "407",
+        "city":  "Lake Worth"
+    },
+    {
+        "storecode":  "st_augustine_two",
+        "code":  "st_augustine_two",
+        "id":  "409",
+        "city":  "St. Augustine"
+    },
+    {
+        "storecode":  "tallahassee_fsu",
+        "code":  "tallahassee_fsu",
+        "id":  "410",
+        "city":  "Tallahassee"
+    },
+    {
+        "storecode":  "pace",
+        "code":  "pace",
+        "id":  "411",
+        "city":  "Pace"
+    },
+    {
+        "storecode":  "edgewater_two",
+        "code":  "edgewater_two",
+        "id":  "414",
+        "city":  "Edgewater"
+    },
+    {
+        "storecode":  "apollo_beach",
+        "code":  "apollo_beach",
+        "id":  "415",
+        "city":  "Apollo Beach"
+    },
+    {
+        "storecode":  "melbourne_1921",
+        "code":  "melbourne_1921",
+        "id":  "416",
+        "city":  "Melbourne"
+    },
+    {
+        "storecode":  "marianna",
+        "code":  "marianna",
+        "id":  "418",
+        "city":  "Marianna"
+    },
+    {
+        "storecode":  "crawfordville",
+        "code":  "crawfordville",
+        "id":  "421",
+        "city":  "Crawfordville"
+    },
+    {
+        "storecode":  "crestview",
+        "code":  "crestview",
+        "id":  "422",
+        "city":  "Crestview"
+    },
+    {
+        "storecode":  "palm_bay",
+        "code":  "palm_bay",
+        "id":  "428",
+        "city":  "Palm Bay"
+    },
+    {
+        "storecode":  "land_o_lakes",
+        "code":  "land_o_lakes",
+        "id":  "429",
+        "city":  "Land O Lakes"
+    },
+    {
+        "storecode":  "pinellas_park",
+        "code":  "pinellas_park",
+        "id":  "430",
+        "city":  "Pinellas Park"
+    },
+    {
+        "storecode":  "boynton_beach_two",
+        "code":  "boynton_beach_two",
+        "id":  "431",
+        "city":  "Boynton Beach"
+    },
+    {
+        "storecode":  "cocoa_beach",
+        "code":  "cocoa_beach",
+        "id":  "432",
+        "city":  "Cocoa Beach"
+    },
+    {
+        "storecode":  "north_palm_beach",
+        "code":  "north_palm_beach",
+        "id":  "433",
+        "city":  "North Palm Beach"
+    },
+    {
+        "storecode":  "stuart_kanner",
+        "code":  "stuart_kanner",
+        "id":  "434",
+        "city":  "Stuart"
+    },
+    {
+        "storecode":  "brooksville_broad",
+        "code":  "brooksville_broad",
+        "id":  "435",
+        "city":  "Brooksville"
+    },
+    {
+        "storecode":  "dania_beach_federal",
+        "code":  "dania_beach_federal",
+        "id":  "438",
+        "city":  "Dania Beach"
+    },
+    {
+        "storecode":  "homosassa",
+        "code":  "homosassa",
+        "id":  "441",
+        "city":  "Homosassa"
+    },
+    {
+        "storecode":  "panama_city",
+        "code":  "panama_city",
+        "id":  "444",
+        "city":  "Panama City"
+    },
+    {
+        "storecode":  "gulf_breeze",
+        "code":  "gulf_breeze",
+        "id":  "445",
+        "city":  "Gulf Breeze"
+    },
+    {
+        "storecode":  "ocala_sr_200",
+        "code":  "ocala_sr_200",
+        "id":  "447",
+        "city":  "Ocala"
+    },
+    {
+        "storecode":  "new_port_richey_sr54",
+        "code":  "new_port_richey_sr54",
+        "id":  "448",
+        "city":  "New Port Richey"
+    },
+    {
+        "storecode":  "orlando_semoran",
+        "code":  "orlando_semoran",
+        "id":  "449",
+        "city":  "Orlando"
+    },
+    {
+        "storecode":  "miramar_beach",
+        "code":  "miramar_beach",
+        "id":  "450",
+        "city":  "Miramar Beach"
+    },
+    {
+        "storecode":  "niceville",
+        "code":  "niceville",
+        "id":  "451",
+        "city":  "Niceville"
+    },
+    {
+        "storecode":  "cocoa",
+        "code":  "cocoa",
+        "id":  "452",
+        "city":  "Cocoa"
+    },
+    {
+        "storecode":  "tampa_dale_mabry_north",
+        "code":  "tampa_dale_mabry_north",
+        "id":  "453",
+        "city":  "Tampa"
+    },
+    {
+        "storecode":  "lake_worth_hypoluxo",
+        "code":  "lake_worth_hypoluxo",
+        "id":  "454",
+        "city":  "Lake Worth"
+    },
+    {
+        "storecode":  "clearwater_roosevelt",
+        "code":  "clearwater_roosevelt",
+        "id":  "455",
+        "city":  "Clearwater"
+    },
+    {
+        "storecode":  "hudson",
+        "code":  "hudson",
+        "id":  "456",
+        "city":  "Hudson"
+    },
+    {
+        "storecode":  "hallandale_beach",
+        "code":  "hallandale_beach",
+        "id":  "457",
+        "city":  "Hallandale Beach"
+    },
+    {
+        "storecode":  "orlando_west_colonial",
+        "code":  "orlando_west_colonial",
+        "id":  "458",
+        "city":  "Orlando"
+    },
+    {
+        "storecode":  "lake_placid",
+        "code":  "lake_placid",
+        "id":  "459",
+        "city":  "Lake Placid"
+    },
+    {
+        "storecode":  "bonita_springs_tamiami",
+        "code":  "bonita_springs_tamiami",
+        "id":  "460",
+        "city":  "Bonita Springs"
+    },
+    {
+        "storecode":  "st_augustine_a1a",
+        "code":  "st_augustine_a1a",
+        "id":  "461",
+        "city":  "St Augustine Beach"
+    },
+    {
+        "storecode":  "tampa_kennedy",
+        "code":  "tampa_kennedy",
+        "id":  "462",
+        "city":  "Tampa"
+    },
+    {
+        "storecode":  "spring_hill",
+        "code":  "spring_hill",
+        "id":  "463",
+        "city":  "Spring Hill"
+    },
+    {
+        "storecode":  "jacksonville_dunn",
+        "code":  "jacksonville_dunn",
+        "id":  "464",
+        "city":  "Jacksonville"
+    },
+    {
+        "storecode":  "palm_coast_sr100",
+        "code":  "palm_coast_sr100",
+        "id":  "467",
+        "city":  "Palm Coast"
+    },
+    {
+        "storecode":  "middleburg",
+        "code":  "middleburg",
+        "id":  "469",
+        "city":  "Middleburg"
+    },
+    {
+        "storecode":  "miami_beach",
+        "code":  "miami_beach",
+        "id":  "472",
+        "city":  "Miami"
+    },
+    {
+        "storecode":  "oakland_park",
+        "code":  "oakland_park",
+        "id":  "473",
+        "city":  "Fort Lauderdale"
+    },
+    {
+        "storecode":  "st_petersburg_central",
+        "code":  "st_petersburg_central",
+        "id":  "474",
+        "city":  "St Petersburg"
+    }
+]

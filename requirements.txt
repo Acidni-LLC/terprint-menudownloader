@@ -1,0 +1,22 @@
+﻿# Azure dependencies
+azure-storage-blob>=12.19.0
+azure-identity>=1.15.0
+azure-core>=1.29.0
+
+# Web framework
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.5.0
+
+# HTTP clients
+httpx>=0.26.0
+aiohttp>=3.9.0
+
+# Scheduling
+apscheduler>=3.10.0
+
+# Utilities
+python-dateutil>=2.8.0
+
+# Terprint packages from Azure Artifacts
+terprint-config>=2.0.0

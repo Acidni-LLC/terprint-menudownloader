@@ -1,9 +1,16 @@
-name: Azure Function CI/CD
+name: Azure Function CI/CD (LEGACY)
+
+# DEPRECATED: This workflow is for the old Azure Functions architecture
+# New deployments should use container-app-cicd.yml
 
 on:
-  push:
-    branches: [ main ]
+  # Disabled - keeping for reference only
   workflow_dispatch:
+    inputs:
+      legacy_deploy:
+        description: 'Deploy legacy Azure Function (deprecated)'
+        required: true
+        type: boolean
 
 jobs:
   build-and-deploy:
