@@ -2,14 +2,19 @@ name: 🚀 Deploy Menu Downloader Container App
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
     paths:
       - 'container_app/**'
       - 'src/**'
       - 'pyproject.toml'
       - '.github/workflows/container-app-deploy.yml'
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
+    paths:
+      - 'container_app/**'
+      - 'src/**'
+      - 'pyproject.toml'
+  workflow_dispatch:
     paths:
       - 'container_app/**'
       - 'src/**'

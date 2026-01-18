@@ -2,13 +2,13 @@ name: Container App CI/CD
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
     paths:
       - 'container_app/**'
       - 'src/**'
       - '.github/workflows/container-app-cicd.yml'
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
     paths:
       - 'container_app/**'
       - 'src/**'
