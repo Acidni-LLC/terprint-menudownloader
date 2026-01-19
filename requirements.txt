@@ -1,4 +1,5 @@
 ﻿# Azure dependencies
+azure-functions>=1.18.0
 azure-storage-blob>=12.19.0
 azure-identity>=1.15.0
 azure-core>=1.29.0
@@ -19,4 +20,4 @@ apscheduler>=3.10.0
 python-dateutil>=2.8.0
 
 # Terprint packages from Azure Artifacts
-terprint-config>=2.0.0
+terprint-config>=3.4.0
