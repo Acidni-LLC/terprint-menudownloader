@@ -80,9 +80,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 🔐 Login to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+        run: |
+          az login --service-principal \
+            --username "${{ secrets.ORG_AZURE_CLIENT_ID }}" \
+            --password "${{ secrets.ORG_AZURE_CLIENT_SECRET }}" \
+            --tenant "${{ secrets.ORG_AZURE_TENANT_ID }}"
+          
+          az account set --subscription "${{ secrets.ORG_AZURE_SUBSCRIPTION_ID }}"
 
       - name: 🐳 Build and push container
         id: build
@@ -112,9 +116,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 🔐 Login to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+        run: |
+          az login --service-principal \
+            --username "${{ secrets.ORG_AZURE_CLIENT_ID }}" \
+            --password "${{ secrets.ORG_AZURE_CLIENT_SECRET }}" \
+            --tenant "${{ secrets.ORG_AZURE_TENANT_ID }}"
+          
+          az account set --subscription "${{ secrets.ORG_AZURE_SUBSCRIPTION_ID }}"
 
       - name: 🚀 Deploy to Container Apps
         run: |
@@ -174,7 +182,7 @@ jobs:
       - name: 🧪 Trigger Terprint Integration Tests
         uses: peter-evans/repository-dispatch@v3
         with:
-          token: ${{ secrets.GH_PAT_TERPRINT_TESTS }}
+          token: ${{ secrets.ORG_GH_PAT_TERPRINT_TESTS }}
           repository: Acidni-LLC/terprint-tests
           event-type: post-deploy-tests
           client-payload: |
