@@ -92,7 +92,7 @@ jobs:
   deploy-dev:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    if: github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
     environment: 
       name: dev
       url: https://${{ env.CONTAINER_APP_NAME }}.kindmoss-c6723cbe.eastus2.azurecontainerapps.io
@@ -151,7 +151,7 @@ jobs:
   deploy-prod:
     needs: [build, deploy-dev]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
     environment: 
       name: production
       url: https://ca-terprint-menudownloader-prod.kindmoss-c6723cbe.eastus2.azurecontainerapps.io
