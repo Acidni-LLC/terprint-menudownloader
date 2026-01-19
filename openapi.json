@@ -1,0 +1,660 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Terprint Menu Downloader & Stock API",
+    "description": "Container App for downloading dispensary menus and providing real-time stock search across Florida dispensaries",
+    "version": "2.0.0",
+    "contact": {
+      "name": "Acidni LLC",
+      "url": "https://acidni.net",
+      "email": "dev@acidni.net"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://ca-terprint-menudownloader.kindmoss-c6723cbe.eastus2.azurecontainerapps.io",
+      "description": "Container App (Development)"
+    },
+    {
+      "url": "https://apim-terprint-dev.azure-api.net/menus",
+      "description": "APIM Gateway"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "description": "Health check endpoint for Container Apps probes",
+        "operationId": "health_check",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {"type": "string", "example": "healthy"},
+                    "timestamp": {"type": "string", "format": "date-time"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/status": {
+      "get": {
+        "summary": "Get Service Status",
+        "description": "Get detailed status of the menu downloader including uptime and last run information",
+        "operationId": "get_status",
+        "responses": {
+          "200": {
+            "description": "Status information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/run": {
+      "post": {
+        "summary": "Trigger Manual Menu Download",
+        "description": "Manually trigger menu download, batch creation, and stock index build",
+        "operationId": "manual_run",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Download completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {"type": "string"},
+                    "download_result": {"type": "object"},
+                    "batch_creator_result": {"type": "object"},
+                    "stock_index_result": {"type": "object"}
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Download already in progress"
+          },
+          "500": {
+            "description": "Download failed"
+          }
+        }
+      }
+    },
+    "/api/stock/status": {
+      "get": {
+        "summary": "Stock Index Status",
+        "description": "Get stock index metadata including total items, unique strains, and dispensaries",
+        "operationId": "stock_status",
+        "tags": ["Stock API"],
+        "responses": {
+          "200": {
+            "description": "Stock index status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {"type": "string", "example": "healthy"},
+                    "service": {"type": "string", "example": "stock-api"},
+                    "index_available": {"type": "boolean"},
+                    "index_metadata": {
+                      "type": "object",
+                      "properties": {
+                        "build_date": {"type": "string", "format": "date-time"},
+                        "total_items": {"type": "integer"},
+                        "unique_strains": {"type": "integer"},
+                        "dispensaries": {"type": "array", "items": {"type": "string"}},
+                        "batch_files_processed": {"type": "integer"}
+                      }
+                    },
+                    "timestamp": {"type": "string", "format": "date-time"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stock/search": {
+      "get": {
+        "summary": "Search Stock by Strain",
+        "description": "Search for products by strain name across all dispensaries",
+        "operationId": "search_stock",
+        "tags": ["Stock API"],
+        "parameters": [
+          {
+            "name": "strain",
+            "in": "query",
+            "required": true,
+            "description": "Strain name to search for",
+            "schema": {"type": "string"},
+            "example": "Gelato"
+          },
+          {
+            "name": "dispensary",
+            "in": "query",
+            "required": false,
+            "description": "Filter by specific dispensary",
+            "schema": {"type": "string"},
+            "example": "trulieve"
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "description": "Filter by product category",
+            "schema": {"type": "string"},
+            "example": "flower"
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "required": false,
+            "description": "User latitude for distance-based sorting",
+            "schema": {"type": "number", "format": "float"},
+            "example": 28.5383
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "required": false,
+            "description": "User longitude for distance-based sorting",
+            "schema": {"type": "number", "format": "float"},
+            "example": -81.3792
+          },
+          {
+            "name": "max_distance",
+            "in": "query",
+            "required": false,
+            "description": "Maximum distance in miles (requires lat/lng)",
+            "schema": {"type": "number", "format": "float", "maximum": 100},
+            "example": 25
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Maximum results to return",
+            "schema": {"type": "integer", "default": 50, "maximum": 200}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "strain": {"type": "string"},
+                    "strain_normalized": {"type": "string"},
+                    "matches": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/StockItem"}
+                    },
+                    "total": {"type": "integer"},
+                    "total_all_dispensaries": {"type": "integer"},
+                    "user_location": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "lat": {"type": "number"},
+                        "lng": {"type": "number"}
+                      }
+                    },
+                    "sorted_by_distance": {"type": "boolean"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stock/{dispensary}": {
+      "get": {
+        "summary": "Get Dispensary Inventory",
+        "description": "Get all stock for a specific dispensary",
+        "operationId": "get_dispensary_stock",
+        "tags": ["Stock API"],
+        "parameters": [
+          {
+            "name": "dispensary",
+            "in": "path",
+            "required": true,
+            "description": "Dispensary name",
+            "schema": {"type": "string"},
+            "example": "trulieve"
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "description": "Filter by product category",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Maximum results to return",
+            "schema": {"type": "integer", "default": 100, "maximum": 500}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dispensary inventory",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "dispensary": {"type": "string"},
+                    "found": {"type": "boolean"},
+                    "total": {"type": "integer"},
+                    "total_unfiltered": {"type": "integer"},
+                    "items": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/StockItem"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Bulk Stock Check",
+        "description": "Check stock for multiple batches at once",
+        "operationId": "bulk_stock_check",
+        "tags": ["Stock API"],
+        "parameters": [
+          {
+            "name": "dispensary",
+            "in": "path",
+            "required": true,
+            "description": "Dispensary name",
+            "schema": {"type": "string"}
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkStockRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bulk stock check results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "dispensary": {"type": "string"},
+                    "requested": {"type": "integer"},
+                    "found": {"type": "integer"},
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "batch_id": {"type": "string"},
+                          "found": {"type": "boolean"},
+                          "item": {"$ref": "#/components/schemas/StockItem"}
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stock/{dispensary}/{batch_id}": {
+      "get": {
+        "summary": "Get Specific Batch Stock",
+        "description": "Get stock information for a specific batch at a dispensary",
+        "operationId": "get_batch_stock",
+        "tags": ["Stock API"],
+        "parameters": [
+          {
+            "name": "dispensary",
+            "in": "path",
+            "required": true,
+            "description": "Dispensary name",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "batch_id",
+            "in": "path",
+            "required": true,
+            "description": "Batch/lot code",
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Batch found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "found": {"type": "boolean"},
+                    "batch": {"$ref": "#/components/schemas/StockItem"},
+                    "dispensary": {"type": "string"},
+                    "batch_id": {"type": "string"}
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Batch not found"
+          }
+        }
+      }
+    },
+    "/api/stock/build-index": {
+      "post": {
+        "summary": "Rebuild Stock Index",
+        "description": "Manually rebuild the stock index from latest batch files",
+        "operationId": "build_stock_index",
+        "tags": ["Stock API"],
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "description": "Date to build from (YYYYMMDD)",
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Index built successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean"},
+                    "index_path": {"type": "string"},
+                    "metadata": {"type": "object"}
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Index build failed"
+          }
+        }
+      }
+    },
+    "/api/stock/nearest": {
+      "get": {
+        "summary": "Find Nearest Locations",
+        "description": "Find nearest dispensaries carrying a specific strain within a radius",
+        "operationId": "get_nearest_stock",
+        "tags": ["Stock API"],
+        "parameters": [
+          {
+            "name": "strain",
+            "in": "query",
+            "required": true,
+            "description": "Strain name to search for",
+            "schema": {"type": "string"},
+            "example": "Gelato"
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "description": "User latitude",
+            "schema": {"type": "number", "format": "float"},
+            "example": 28.5383
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "required": true,
+            "description": "User longitude",
+            "schema": {"type": "number", "format": "float"},
+            "example": -81.3792
+          },
+          {
+            "name": "max_distance",
+            "in": "query",
+            "required": false,
+            "description": "Maximum distance in miles",
+            "schema": {"type": "number", "format": "float", "default": 50, "maximum": 100}
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Maximum results to return",
+            "schema": {"type": "integer", "default": 10, "maximum": 50}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Nearest locations found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "strain": {"type": "string"},
+                    "strain_normalized": {"type": "string"},
+                    "user_location": {
+                      "type": "object",
+                      "properties": {
+                        "lat": {"type": "number"},
+                        "lng": {"type": "number"}
+                      }
+                    },
+                    "max_distance_miles": {"type": "number"},
+                    "nearest_locations": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/StockItem"}
+                    },
+                    "total_found": {"type": "integer"},
+                    "total_within_radius": {"type": "integer"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stock/locations/{dispensary}": {
+      "get": {
+        "summary": "Get Dispensary Locations",
+        "description": "Get all store locations for a dispensary with optional distance sorting",
+        "operationId": "get_dispensary_locations",
+        "tags": ["Stock API"],
+        "parameters": [
+          {
+            "name": "dispensary",
+            "in": "path",
+            "required": true,
+            "description": "Dispensary name",
+            "schema": {"type": "string"},
+            "example": "cookies"
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "required": false,
+            "description": "User latitude for distance sorting",
+            "schema": {"type": "number", "format": "float"}
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "required": false,
+            "description": "User longitude for distance sorting",
+            "schema": {"type": "number", "format": "float"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dispensary locations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "dispensary": {"type": "string"},
+                    "locations": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "location_id": {"type": "string"},
+                          "dispensary": {"type": "string"},
+                          "latitude": {"type": "number"},
+                          "longitude": {"type": "number"},
+                          "address": {"type": "string"},
+                          "distance_miles": {"type": "number", "nullable": true}
+                        }
+                      }
+                    },
+                    "total": {"type": "integer"},
+                    "user_location": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "lat": {"type": "number"},
+                        "lng": {"type": "number"}
+                      }
+                    },
+                    "sorted_by_distance": {"type": "boolean"}
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Dispensary not found"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "StatusResponse": {
+        "type": "object",
+        "properties": {
+          "status": {"type": "string"},
+          "version": {"type": "string"},
+          "timestamp": {"type": "string", "format": "date-time"},
+          "uptime_seconds": {"type": "number"},
+          "last_run": {"type": "string", "format": "date-time", "nullable": true},
+          "last_run_status": {"type": "string", "nullable": true},
+          "is_running": {"type": "boolean"},
+          "scheduled_runs": {"type": "integer"},
+          "manual_runs": {"type": "integer"},
+          "next_scheduled_run": {"type": "string", "format": "date-time", "nullable": true},
+          "terprint_config_available": {"type": "boolean"}
+        }
+      },
+      "RunRequest": {
+        "type": "object",
+        "properties": {
+          "skip_batch_processor": {"type": "boolean", "default": false},
+          "dry_run_batch": {"type": "boolean", "default": false},
+          "dispensary": {"type": "string", "nullable": true}
+        }
+      },
+      "StockItem": {
+        "type": "object",
+        "properties": {
+          "batch_id": {"type": "string"},
+          "strain": {"type": "string"},
+          "strain_normalized": {"type": "string"},
+          "dispensary": {"type": "string"},
+          "category": {"type": "string"},
+          "product_name": {"type": "string"},
+          "thc_percent": {"type": "number", "nullable": true},
+          "cbd_percent": {"type": "number", "nullable": true},
+          "terpenes": {"type": "object", "nullable": true},
+          "price": {"type": "number", "nullable": true},
+          "weight_grams": {"type": "number", "nullable": true},
+          "in_stock": {"type": "boolean"},
+          "store_location": {"type": "string", "nullable": true},
+          "store_name": {"type": "string", "nullable": true},
+          "latitude": {"type": "number", "nullable": true},
+          "longitude": {"type": "number", "nullable": true},
+          "address": {"type": "string", "nullable": true},
+          "distance_miles": {"type": "number", "nullable": true},
+          "last_seen": {"type": "string", "format": "date-time"},
+          "source_file": {"type": "string"}
+        }
+      },
+      "BulkStockRequest": {
+        "type": "object",
+        "required": ["batch_ids"],
+        "properties": {
+          "batch_ids": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "List of batch IDs to check"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Ocp-Apim-Subscription-Key",
+        "description": "APIM subscription key for authentication"
+      }
+    }
+  },
+  "security": [
+    {"ApiKeyAuth": []}
+  ],
+  "tags": [
+    {
+      "name": "Stock API",
+      "description": "Real-time stock search and inventory management"
+    }
+  ]
+}

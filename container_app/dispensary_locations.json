@@ -1,0 +1,70 @@
+{
+  "cookies": {
+    "bradenton": {"lat": 27.4989, "lng": -82.5748, "address": "Bradenton, FL"},
+    "brooksville": {"lat": 28.5553, "lng": -82.3873, "address": "Brooksville, FL"},
+    "deland-woodland": {"lat": 29.0283, "lng": -81.3031, "address": "DeLand, FL"},
+    "fort-myers": {"lat": 26.6406, "lng": -81.8723, "address": "Fort Myers, FL"},
+    "gainesville": {"lat": 29.6516, "lng": -82.3248, "address": "Gainesville, FL"},
+    "jacksonville": {"lat": 30.3322, "lng": -81.6557, "address": "Jacksonville, FL"},
+    "miami": {"lat": 25.7617, "lng": -80.1918, "address": "Miami, FL"},
+    "n-miami-beach": {"lat": 25.9323, "lng": -80.1265, "address": "North Miami Beach, FL"},
+    "orange-blossom": {"lat": 28.5383, "lng": -81.3792, "address": "Orlando, FL"},
+    "orange-park": {"lat": 30.1661, "lng": -81.7067, "address": "Orange Park, FL"},
+    "orlando": {"lat": 28.5383, "lng": -81.3792, "address": "Orlando, FL"},
+    "palm-bay": {"lat": 28.0345, "lng": -80.5887, "address": "Palm Bay, FL"},
+    "pensacola": {"lat": 30.4213, "lng": -87.2169, "address": "Pensacola, FL"},
+    "port-charlotte": {"lat": 26.9762, "lng": -82.0906, "address": "Port Charlotte, FL"},
+    "port-st-lucie": {"lat": 27.2937, "lng": -80.3503, "address": "Port St. Lucie, FL"},
+    "sanford": {"lat": 28.8028, "lng": -81.2731, "address": "Sanford, FL"},
+    "tampa": {"lat": 27.9506, "lng": -82.4572, "address": "Tampa, FL"},
+    "tampa-fletcher": {"lat": 28.0742, "lng": -82.4376, "address": "Tampa (Fletcher), FL"}
+  },
+  "muv": {
+    "tallahassee": {"lat": 30.4383, "lng": -84.2807, "address": "Tallahassee, FL"},
+    "tampa": {"lat": 27.9506, "lng": -82.4572, "address": "Tampa, FL"},
+    "orlando": {"lat": 28.5383, "lng": -81.3792, "address": "Orlando, FL"},
+    "miami": {"lat": 25.7617, "lng": -80.1918, "address": "Miami, FL"},
+    "jacksonville": {"lat": 30.3322, "lng": -81.6557, "address": "Jacksonville, FL"},
+    "st-petersburg": {"lat": 27.7676, "lng": -82.6403, "address": "St. Petersburg, FL"},
+    "fort-myers": {"lat": 26.6406, "lng": -81.8723, "address": "Fort Myers, FL"},
+    "naples": {"lat": 26.1420, "lng": -81.7948, "address": "Naples, FL"},
+    "sarasota": {"lat": 27.3364, "lng": -82.5307, "address": "Sarasota, FL"},
+    "clearwater": {"lat": 27.9659, "lng": -82.8001, "address": "Clearwater, FL"}
+  },
+  "trulieve": {
+    "aventura": {"lat": 25.9564, "lng": -80.1392, "address": "Aventura, FL"},
+    "boca_raton": {"lat": 26.3683, "lng": -80.1289, "address": "Boca Raton, FL"},
+    "tampa": {"lat": 27.9506, "lng": -82.4572, "address": "Tampa, FL"},
+    "orlando": {"lat": 28.5383, "lng": -81.3792, "address": "Orlando, FL"},
+    "miami": {"lat": 25.7617, "lng": -80.1918, "address": "Miami, FL"},
+    "jacksonville": {"lat": 30.3322, "lng": -81.6557, "address": "Jacksonville, FL"},
+    "tallahassee": {"lat": 30.4383, "lng": -84.2807, "address": "Tallahassee, FL"},
+    "pensacola": {"lat": 30.4213, "lng": -87.2169, "address": "Pensacola, FL"},
+    "gainesville": {"lat": 29.6516, "lng": -82.3248, "address": "Gainesville, FL"},
+    "fort_myers": {"lat": 26.6406, "lng": -81.8723, "address": "Fort Myers, FL"}
+  },
+  "curaleaf": {
+    "tampa": {"lat": 27.9506, "lng": -82.4572, "address": "Tampa, FL"},
+    "jacksonville": {"lat": 30.3322, "lng": -81.6557, "address": "Jacksonville, FL"},
+    "miami": {"lat": 25.7617, "lng": -80.1918, "address": "Miami, FL"},
+    "orlando": {"lat": 28.5383, "lng": -81.3792, "address": "Orlando, FL"},
+    "fort-lauderdale": {"lat": 26.1224, "lng": -80.1373, "address": "Fort Lauderdale, FL"},
+    "west-palm-beach": {"lat": 26.7153, "lng": -80.0534, "address": "West Palm Beach, FL"},
+    "st-petersburg": {"lat": 27.7676, "lng": -82.6403, "address": "St. Petersburg, FL"},
+    "tallahassee": {"lat": 30.4383, "lng": -84.2807, "address": "Tallahassee, FL"},
+    "pensacola": {"lat": 30.4213, "lng": -87.2169, "address": "Pensacola, FL"},
+    "cape-canaveral": {"lat": 28.3922, "lng": -80.6077, "address": "Cape Canaveral, FL"}
+  },
+  "flowery": {
+    "orlando": {"lat": 28.5383, "lng": -81.3792, "address": "Orlando, FL"},
+    "miami": {"lat": 25.7617, "lng": -80.1918, "address": "Miami, FL"},
+    "tampa": {"lat": 27.9506, "lng": -82.4572, "address": "Tampa, FL"},
+    "fort-lauderdale": {"lat": 26.1224, "lng": -80.1373, "address": "Fort Lauderdale, FL"},
+    "jacksonville": {"lat": 30.3322, "lng": -81.6557, "address": "Jacksonville, FL"},
+    "tallahassee": {"lat": 30.4383, "lng": -84.2807, "address": "Tallahassee, FL"},
+    "pensacola": {"lat": 30.4213, "lng": -87.2169, "address": "Pensacola, FL"},
+    "gainesville": {"lat": 29.6516, "lng": -82.3248, "address": "Gainesville, FL"},
+    "sarasota": {"lat": 27.3364, "lng": -82.5307, "address": "Sarasota, FL"},
+    "naples": {"lat": 26.1420, "lng": -81.7948, "address": "Naples, FL"}
+  }
+}

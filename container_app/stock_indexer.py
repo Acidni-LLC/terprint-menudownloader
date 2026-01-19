@@ -46,6 +46,13 @@ class StockItem:
     weight_grams: Optional[float] = None
     in_stock: bool = True
     
+    # Location data (for proximity search)
+    store_location: Optional[str] = None  # e.g., "miami", "tampa"
+    store_name: Optional[str] = None      # e.g., "Cookies Miami"
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    address: Optional[str] = None
+    
     # Metadata
     last_seen: str = None
     source_file: str = None
@@ -89,6 +96,63 @@ class StockIndexer:
             credential=credential
         )
         self.container = self.blob_service.get_container_client(self.CONTAINER_NAME)
+        
+        # Load location reference data
+        self.locations = self._load_locations()
+    
+    def _load_locations(self) -> Dict:
+        """Load dispensary location coordinates from JSON."""
+        import os
+        locations_path = os.path.join(os.path.dirname(__file__), 'dispensary_locations.json')
+        try:
+            with open(locations_path, 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            logger.warning(f"Could not load location data: {e}")
+            return {}
+    
+    def _get_location_for_item(self, dispensary: str, store_location: str) -> Dict:
+        """Get lat/lng/address for a store location."""
+        if not store_location:
+            return {'lat': None, 'lng': None, 'address': None}
+        
+        dispensary_locations = self.locations.get(dispensary.lower(), {})
+        # Normalize store_location (remove special characters, lowercase)
+        normalized_location = store_location.lower().replace(' ', '-').replace('_', '-')
+        
+        # Try exact match first
+        location_data = dispensary_locations.get(normalized_location)
+        if location_data:
+            return location_data
+        
+        # Try without normalization
+        location_data = dispensary_locations.get(store_location)
+        if location_data:
+            return location_data
+        
+        return {'lat': None, 'lng': None, 'address': None}
+    
+    @staticmethod
+    def calculate_distance(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+        """
+        Calculate distance in miles using Haversine formula.
+        
+        Args:
+            lat1, lng1: First coordinate pair
+            lat2, lng2: Second coordinate pair
+        
+        Returns:
+            Distance in miles
+        """
+        import math
+        R = 3959  # Earth's radius in miles
+        lat1_rad = math.radians(lat1)
+        lat2_rad = math.radians(lat2)
+        dlat = math.radians(lat2 - lat1)
+        dlng = math.radians(lng2 - lng1)
+        a = math.sin(dlat/2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlng/2)**2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+        return R * c
     
     def normalize_strain_name(self, strain: str) -> str:
         """
@@ -142,15 +206,18 @@ class StockIndexer:
         return self._build_index_from_items(all_items, [blob.name for blob in batch_blobs])
     
     def build_index_from_latest(self) -> Dict:
-        """Build stock index from the most recent consolidated batch file."""
+        """Build stock index from the most recent consolidated batch file, plus menu files for missing dispensaries."""
         logger.info("Finding latest batch file...")
+        
+        # Known dispensaries we expect to have data for
+        expected_dispensaries = {"trulieve", "muv", "flowery", "curaleaf", "cookies", "sunnyside", "sunburn"}
         
         # List all consolidated batch files
         batch_blobs = list(self.container.list_blobs(name_starts_with="batches/consolidated_"))
         
         if not batch_blobs:
-            logger.warning("No batch files found")
-            return self._empty_index()
+            logger.warning("No batch files found, trying to build from menu files...")
+            return self.build_index_from_menus()
         
         # Sort by name (which includes date) and get latest
         batch_blobs.sort(key=lambda b: b.name, reverse=True)
@@ -158,11 +225,189 @@ class StockIndexer:
         
         logger.info(f"Processing latest batch file: {latest_blob.name}")
         
-        # Process the file
+        # Process the batch file
         items = self._process_batch_file(latest_blob.name)
+        source_files = [latest_blob.name]
+        
+        # Check which dispensaries are in the batch data
+        dispensaries_in_batch = {item.dispensary.lower() for item in items}
+        missing_dispensaries = expected_dispensaries - dispensaries_in_batch
+        
+        if missing_dispensaries:
+            logger.info(f"Dispensaries missing from batch: {missing_dispensaries}. Checking menu files...")
+            
+            # Try to fill in missing dispensaries from menu files
+            for dispensary in missing_dispensaries:
+                menu_items = self._get_latest_menu_items(dispensary)
+                if menu_items:
+                    items.extend(menu_items)
+                    logger.info(f"Added {len(menu_items)} items from {dispensary} menu files")
         
         # Build index
-        return self._build_index_from_items(items, [latest_blob.name])
+        return self._build_index_from_items(items, source_files)
+    
+    def _get_latest_menu_items(self, dispensary: str, max_days_back: int = 30) -> List[StockItem]:
+        """Get items from the most recent menu file for a dispensary, looking back up to max_days_back days."""
+        from datetime import timedelta
+        
+        for days_back in range(max_days_back):
+            check_date = datetime.now(timezone.utc) - timedelta(days=days_back)
+            date_str = check_date.strftime("%Y/%m/%d")
+            prefix = f"dispensaries/{dispensary}/{date_str}/"
+            
+            menu_blobs = list(self.container.list_blobs(name_starts_with=prefix))
+            
+            if menu_blobs:
+                # Get the latest file
+                menu_blobs.sort(key=lambda b: b.name, reverse=True)
+                latest_menu = menu_blobs[0]
+                
+                logger.info(f"Found menu file for {dispensary}: {latest_menu.name} ({days_back} days old)")
+                return self._process_menu_file(latest_menu.name, dispensary)
+        
+        logger.warning(f"No menu files found for {dispensary} in last {max_days_back} days")
+        return []
+    
+    def build_index_from_menus(self) -> Dict:
+        """Build stock index directly from raw menu files (fallback if no batch files)."""
+        logger.info("Building stock index from menu files...")
+        
+        # Get today's date
+        today = datetime.now(timezone.utc).strftime("%Y/%m/%d")
+        
+        # Known dispensary folders
+        dispensaries = ["trulieve", "muv", "flowery", "curaleaf", "cookies", "sunnyside", "sunburn"]
+        
+        all_items: List[StockItem] = []
+        source_files: List[str] = []
+        
+        for dispensary in dispensaries:
+            # Look for today's menu files
+            prefix = f"dispensaries/{dispensary}/{today}/"
+            menu_blobs = list(self.container.list_blobs(name_starts_with=prefix))
+            
+            if not menu_blobs:
+                # Try yesterday
+                from datetime import timedelta
+                yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y/%m/%d")
+                prefix = f"dispensaries/{dispensary}/{yesterday}/"
+                menu_blobs = list(self.container.list_blobs(name_starts_with=prefix))
+            
+            if menu_blobs:
+                # Get the latest file for this dispensary
+                menu_blobs.sort(key=lambda b: b.name, reverse=True)
+                latest_menu = menu_blobs[0]
+                
+                logger.info(f"Processing menu for {dispensary}: {latest_menu.name}")
+                items = self._process_menu_file(latest_menu.name, dispensary)
+                all_items.extend(items)
+                source_files.append(latest_menu.name)
+        
+        if not all_items:
+            logger.warning("No menu files found")
+            return self._empty_index()
+        
+        return self._build_index_from_items(all_items, source_files)
+    
+    def _process_menu_file(self, blob_name: str, dispensary: str) -> List[StockItem]:
+        """Process a raw menu file and extract stock items."""
+        try:
+            blob_client = self.container.get_blob_client(blob_name)
+            content = blob_client.download_blob().readall()
+            data = json.loads(content)
+            
+            items = []
+            
+            # Handle different menu formats
+            products = []
+            
+            # Common product array locations
+            if isinstance(data, list):
+                products = data
+            elif 'products' in data:
+                products = data['products']
+            elif 'data' in data:
+                if isinstance(data['data'], list):
+                    products = data['data']
+                elif 'products' in data['data']:
+                    products = data['data']['products']
+            elif 'items' in data:
+                products = data['items']
+            elif 'menu' in data:
+                products = data['menu']
+            
+            for product in products:
+                if not isinstance(product, dict):
+                    continue
+                
+                # Extract strain name (various field names)
+                strain = (
+                    product.get('strain') or 
+                    product.get('strainName') or 
+                    product.get('strain_name') or
+                    product.get('name') or 
+                    product.get('productName') or
+                    product.get('title') or
+                    'Unknown'
+                )
+                
+                # Extract batch number
+                batch_id = (
+                    product.get('batch_number') or
+                    product.get('batchNumber') or
+                    product.get('batchId') or
+                    product.get('batch_id') or
+                    product.get('sku') or
+                    product.get('id') or
+                    'unknown'
+                )
+                
+                # Extract category
+                category = (
+                    product.get('category') or
+                    product.get('productCategory') or
+                    product.get('product_category') or
+                    product.get('type') or
+                    'unknown'
+                )
+                
+                # Extract THC/CBD
+                thc = product.get('thc') or product.get('thcPercent') or product.get('thc_percent')
+                cbd = product.get('cbd') or product.get('cbdPercent') or product.get('cbd_percent')
+                
+                # Try to convert to float
+                try:
+                    thc = float(thc) if thc else None
+                except (ValueError, TypeError):
+                    thc = None
+                try:
+                    cbd = float(cbd) if cbd else None
+                except (ValueError, TypeError):
+                    cbd = None
+                
+                item = StockItem(
+                    batch_id=str(batch_id),
+                    strain=strain,
+                    strain_normalized=self.normalize_strain_name(strain),
+                    dispensary=dispensary,
+                    category=str(category) if category else 'unknown',
+                    product_name=product.get('name') or strain,
+                    thc_percent=thc,
+                    cbd_percent=cbd,
+                    terpenes=product.get('terpenes'),
+                    price=product.get('price'),
+                    last_seen=datetime.now(timezone.utc).isoformat(),
+                    source_file=blob_name
+                )
+                
+                items.append(item)
+            
+            logger.info(f"Extracted {len(items)} items from {blob_name}")
+            return items
+            
+        except Exception as e:
+            logger.error(f"Error processing menu file {blob_name}: {e}")
+            return []
     
     def _process_batch_file(self, blob_name: str) -> List[StockItem]:
         """Process a single batch file and extract stock items."""
@@ -176,16 +421,33 @@ class StockIndexer:
         for batch in data.get('batches', []):
             dispensary = batch.get('dispensary', 'unknown')
             
-            # Extract stock item
-            strain = batch.get('strain_name') or batch.get('name', 'Unknown')
+            # Extract strain name - batch files use 'strain' field
+            # Also check 'strain_name' for compatibility
+            strain = (
+                batch.get('strain') or 
+                batch.get('strain_name') or 
+                batch.get('product_name') or 
+                batch.get('name', 'Unknown')
+            )
+            
+            # Extract batch ID - can be batch_code, batch_number, or batch_name
+            batch_id = (
+                batch.get('batch_code') or
+                batch.get('batch_number') or
+                batch.get('batch_name') or
+                'unknown'
+            )
+            
+            # Get category from product_type or category field
+            category = batch.get('category') or batch.get('product_type') or 'unknown'
             
             item = StockItem(
-                batch_id=batch.get('batch_number', 'unknown'),
+                batch_id=batch_id,
                 strain=strain,
                 strain_normalized=self.normalize_strain_name(strain),
                 dispensary=dispensary,
-                category=batch.get('category', 'unknown'),
-                product_name=batch.get('name', strain),
+                category=category,
+                product_name=batch.get('product_name') or batch.get('name') or strain,
                 thc_percent=batch.get('thc_percent'),
                 cbd_percent=batch.get('cbd_percent'),
                 terpenes=batch.get('terpenes'),

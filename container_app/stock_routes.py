@@ -95,9 +95,12 @@ async def search_stock(
     strain: str = Query(..., description="Strain name to search for"),
     dispensary: Optional[str] = Query(None, description="Filter by dispensary"),
     category: Optional[str] = Query(None, description="Filter by category"),
+    lat: Optional[float] = Query(None, description="User latitude for distance sorting"),
+    lng: Optional[float] = Query(None, description="User longitude for distance sorting"),
+    max_distance: Optional[float] = Query(None, description="Max distance in miles", le=100),
     limit: int = Query(50, description="Max results to return", le=200)
 ):
-    """Search for products by strain name across all dispensaries."""
+    """Search for products by strain name, optionally filtered by location."""
     index = get_stock_index()
     indexer = get_indexer()
     
@@ -125,6 +128,25 @@ async def search_stock(
     if category:
         filtered = [item for item in filtered if item["category"].lower() == category.lower()]
     
+    # Calculate distances if user location provided
+    if lat and lng:
+        indexer = get_indexer()
+        for item in filtered:
+            if item.get('latitude') and item.get('longitude'):
+                item['distance_miles'] = round(indexer.calculate_distance(
+                    lat, lng, item['latitude'], item['longitude']
+                ), 2)
+        
+        # Filter by max distance
+        if max_distance:
+            filtered = [
+                item for item in filtered 
+                if item.get('distance_miles') is not None and item['distance_miles'] <= max_distance
+            ]
+        
+        # Sort by distance (nearest first)
+        filtered.sort(key=lambda x: x.get('distance_miles') if x.get('distance_miles') is not None else float('inf'))
+    
     # Limit results
     filtered = filtered[:limit]
     
@@ -133,7 +155,98 @@ async def search_stock(
         "strain_normalized": strain_normalized,
         "matches": filtered,
         "total": len(filtered),
-        "total_all_dispensaries": len(items)
+        "total_all_dispensaries": len(items),
+        "user_location": {"lat": lat, "lng": lng} if lat and lng else None,
+        "sorted_by_distance": bool(lat and lng)
+    }
+
+
+@router.get("/locations/{dispensary}")
+async def get_dispensary_locations(
+    dispensary: str,
+    lat: Optional[float] = Query(None, description="User latitude for distance sorting"),
+    lng: Optional[float] = Query(None, description="User longitude for distance sorting")
+):
+    """Get all store locations for a dispensary."""
+    indexer = get_indexer()
+    dispensary_lower = dispensary.lower()
+    
+    locations = indexer.locations.get(dispensary_lower, {})
+    
+    if not locations:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No location data found for dispensary '{dispensary}'"
+        )
+    
+    result = []
+    for location_id, location_data in locations.items():
+        location_info = {
+            "location_id": location_id,
+            "dispensary": dispensary,
+            "latitude": location_data['lat'],
+            "longitude": location_data['lng'],
+            "address": location_data['address'],
+            "distance_miles": None
+        }
+        
+        # Calculate distance if user location provided
+        if lat is not None and lng is not None and location_data.get('lat'):
+            location_info['distance_miles'] = round(indexer.calculate_distance(
+                lat, lng, location_data['lat'], location_data['lng']
+            ), 2)
+        
+        result.append(location_info)
+    
+    # Sort by distance if available
+    if lat is not None and lng is not None:
+        result.sort(key=lambda x: x['distance_miles'] if x['distance_miles'] is not None else float('inf'))
+    
+    return {
+        "dispensary": dispensary,
+        "locations": result,
+        "total": len(result),
+        "user_location": {"lat": lat, "lng": lng} if lat is not None and lng is not None else None,
+        "sorted_by_distance": bool(lat is not None and lng is not None)
+    }
+
+
+@router.get("/{dispensary}")
+async def get_dispensary_stock(
+    dispensary: str,
+    category: Optional[str] = Query(None, description="Filter by category"),
+    limit: int = Query(100, description="Max results to return", le=500)
+):
+    """Get all stock for a specific dispensary."""
+    index = get_stock_index()
+    
+    # Get dispensary items (case insensitive)
+    dispensary_lower = dispensary.lower()
+    dispensary_items = index["by_dispensary"].get(dispensary_lower, [])
+    
+    if not dispensary_items:
+        return {
+            "dispensary": dispensary,
+            "found": False,
+            "total": 0,
+            "items": [],
+            "message": f"No inventory found for dispensary '{dispensary}'"
+        }
+    
+    # Apply category filter
+    filtered = dispensary_items
+    if category:
+        filtered = [item for item in filtered if item.get("category", "").lower() == category.lower()]
+    
+    # Apply limit
+    filtered = filtered[:limit]
+    
+    return {
+        "dispensary": dispensary,
+        "found": True,
+        "total": len(filtered),
+        "total_unfiltered": len(dispensary_items),
+        "items": filtered
     }
 
 
@@ -228,6 +341,62 @@ async def build_stock_index(
             status_code=500,
             detail=f"Failed to build stock index: {str(e)}"
         )
+
+@router.get("/nearest")
+async def get_nearest_stock(
+    strain: str = Query(..., description="Strain name to search for"),
+    lat: float = Query(..., description="User latitude"),
+    lng: float = Query(..., description="User longitude"),
+    max_distance: float = Query(50, description="Max distance in miles", le=100),
+    limit: int = Query(10, description="Max results to return", le=50)
+):
+    """Find nearest dispensaries carrying a specific strain."""
+    index = get_stock_index()
+    indexer = get_indexer()
+    
+    strain_normalized = indexer.normalize_strain_name(strain)
+    items = index["by_strain"].get(strain_normalized, [])
+    
+    if not items:
+        return {
+            "strain": strain,
+            "user_location": {"lat": lat, "lng": lng},
+            "max_distance_miles": max_distance,
+            "nearest_locations": [],
+            "total_found": 0,
+            "message": f"No products found for strain '{strain}'"
+        }
+    
+    # Filter to items with location data
+    items_with_location = [
+        item for item in items 
+        if item.get('latitude') is not None and item.get('longitude') is not None
+    ]
+    
+    # Calculate distances
+    for item in items_with_location:
+        item['distance_miles'] = round(indexer.calculate_distance(
+            lat, lng, item['latitude'], item['longitude']
+        ), 2)
+    
+    # Filter by max distance
+    nearby_items = [
+        item for item in items_with_location 
+        if item['distance_miles'] <= max_distance
+    ]
+    
+    # Sort by distance
+    nearby_items.sort(key=lambda x: x['distance_miles'])
+    
+    return {
+        "strain": strain,
+        "strain_normalized": strain_normalized,
+        "user_location": {"lat": lat, "lng": lng},
+        "max_distance_miles": max_distance,
+        "nearest_locations": nearby_items[:limit],
+        "total_found": len(nearby_items),
+        "total_within_radius": len(nearby_items)
+    }
 
 
 @router.post("/run")
