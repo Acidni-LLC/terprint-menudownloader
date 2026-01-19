@@ -27,6 +27,14 @@ except ImportError:
     STOCK_ROUTES_AVAILABLE = False
     stock_router = None
 
+# Import stock indexer for building index after downloads
+try:
+    from stock_indexer import StockIndexer
+    STOCK_INDEXER_AVAILABLE = True
+except ImportError:
+    STOCK_INDEXER_AVAILABLE = False
+    StockIndexer = None
+
 # Ensure writable directories for logs in container environment
 # Set log directory before any package imports that might try to create logs
 os.environ.setdefault('LOG_DIR', '/tmp/logs')
@@ -80,7 +88,13 @@ if TERPRINT_CONFIG_AVAILABLE and storage_config:
 else:
     STRAIN_INDEX_CONTAINER = os.environ.get("AZURE_STORAGE_CONTAINER", "jsonfiles")
 
-# Batch processor configuration
+# Batch Creator configuration (Stage 2.5 - creates consolidated batch files)
+BATCH_CREATOR_URL = os.environ.get(
+    "BATCH_CREATOR_URL",
+    "https://ca-terprint-batches.kindmoss-c6723cbe.eastus2.azurecontainerapps.io/api/create-batches"
+)
+
+# Batch processor configuration (Stage 3 - processes COAs from batch files)
 if TERPRINT_CONFIG_AVAILABLE and batch_processor_config:
     _bp_endpoint = batch_processor_config.get('endpoint', {})
     BATCH_PROCESSOR_URL = _bp_endpoint.get('url', 
@@ -164,8 +178,47 @@ def get_blob_service_client():
         raise ValueError("No valid Azure Storage credentials found")
 
 
-def trigger_batch_processor(dry_run: bool = False, dispensary: str = None) -> dict:
-    """Trigger the batch processor to process uploaded menu data."""
+def trigger_batch_creator(trigger_coa: bool = True) -> dict:
+    """Trigger the Batch Creator to consolidate menu files into batch files.
+    
+    Args:
+        trigger_coa: If True, Batch Creator will automatically trigger COA Processor after batch creation
+    
+    Returns:
+        dict with status and response from Batch Creator
+    """
+    logger.info(f"Triggering Batch Creator at {BATCH_CREATOR_URL} (trigger_coa={trigger_coa})")
+    
+    try:
+        # Call Batch Creator - it will process today's menus by default
+        response = requests.post(
+            BATCH_CREATOR_URL,
+            params={"trigger_coa": trigger_coa},
+            headers={"Content-Type": "application/json"},
+            timeout=600  # Batch creation can take a while
+        )
+        response.raise_for_status()
+        result = response.json()
+        
+        logger.info(f"Batch Creator completed: {result.get('status', 'unknown')}")
+        return {"status": "success", "response": result}
+        
+    except requests.exceptions.Timeout:
+        logger.error("Batch Creator request timed out")
+        return {"status": "timeout", "error": "Request timed out after 600 seconds"}
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to trigger Batch Creator: {str(e)}")
+        return {"status": "error", "error": str(e)}
+
+
+def trigger_batch_processor(dry_run: bool = False, dispensary: str = None, date: str = None) -> dict:
+    """Trigger the batch processor to process uploaded menu data.
+    
+    Args:
+        dry_run: If True, run in dry-run mode without writing to database
+        dispensary: Specific dispensary to process (optional)
+        date: Date to process in YYYY-MM-DD format (defaults to today)
+    """
     if not BATCH_PROCESSOR_KEY:
         logger.warning("BATCH_PROCESSOR_KEY not configured, skipping batch processor trigger")
         return {"status": "skipped", "reason": "BATCH_PROCESSOR_KEY not configured"}
@@ -174,8 +227,10 @@ def trigger_batch_processor(dry_run: bool = False, dispensary: str = None) -> di
     payload = {"dry_run": dry_run}
     if dispensary:
         payload["dispensary"] = dispensary
+    if date:
+        payload["date"] = date
     
-    logger.info(f"Triggering batch processor at {BATCH_PROCESSOR_URL} (dry_run={dry_run}, dispensary={dispensary})")
+    logger.info(f"Triggering batch processor at {BATCH_PROCESSOR_URL} (dry_run={dry_run}, dispensary={dispensary}, date={date})")
     
     try:
         response = requests.post(
@@ -196,6 +251,43 @@ def trigger_batch_processor(dry_run: bool = False, dispensary: str = None) -> di
     except requests.exceptions.RequestException as e:
         logger.error(f"Failed to trigger batch processor: {str(e)}")
         return {"status": "error", "error": str(e)}
+
+
+def build_stock_index_from_menus() -> dict:
+    """
+    Build stock index from the latest menu downloads.
+    Called automatically after each menu download run.
+    """
+    if not STOCK_INDEXER_AVAILABLE:
+        logger.warning("Stock indexer not available - skipping index build")
+        return {"success": False, "error": "Stock indexer not available"}
+    
+    try:
+        logger.info("Building stock index from latest menu data...")
+        indexer = StockIndexer()
+        
+        # Try to build from latest batch file first
+        # If no batch files exist, this will return an empty index
+        index = indexer.build_index_from_latest()
+        
+        if index and index.get('metadata', {}).get('total_items', 0) > 0:
+            path = indexer.save_index(index)
+            metadata = index['metadata']
+            logger.info(f"Stock index built: {metadata['total_items']} items, {metadata['unique_strains']} strains")
+            return {
+                "success": True,
+                "total_items": metadata['total_items'],
+                "unique_strains": metadata['unique_strains'],
+                "dispensaries": metadata['dispensaries'],
+                "index_path": path
+            }
+        else:
+            logger.warning("No items found for stock index - batch files may not exist yet")
+            return {"success": False, "error": "No batch data available yet"}
+            
+    except Exception as e:
+        logger.error(f"Failed to build stock index: {e}", exc_info=True)
+        return {"success": False, "error": str(e)}
 
 
 def run_download() -> dict:
@@ -257,26 +349,44 @@ async def scheduled_download_job():
         
         logger.info(f"Scheduled download completed. Success: {success}")
         
-        # Trigger batch processor
-        logger.info("Triggering batch processor after download...")
+        # Pipeline: Stage 2 (Download + Batch Consolidation) → Stage 3 (COA Processor) → Stock Index
+        # Note: Batch consolidation happens automatically in DispensaryOrchestrator.run_full_pipeline()
+        #       via _extract_and_consolidate_batches() - creates consolidated_batches_YYYYMMDD.json
+        
+        # Trigger Batch Processor (Stage 3) - extracts COA data and writes to SQL
+        logger.info("Triggering Batch Processor for COA extraction (Stage 3)...")
         try:
-            batch_result = trigger_batch_processor(dry_run=False)
-            logger.info(f"Batch processor result: {batch_result.get('status', 'unknown')}")
+            today = datetime.now().strftime('%Y-%m-%d')
+            batch_processor_result = trigger_batch_processor(date=today)
+            logger.info(f"Batch Processor result: {batch_processor_result.get('status', 'unknown')}")
         except Exception as batch_err:
-            logger.error(f"Batch processor trigger failed: {str(batch_err)}")
+            logger.error(f"Batch Processor trigger failed: {str(batch_err)}")
+        
+        # Build stock index after batch processing
+        logger.info("Building stock index from consolidated batches...")
+        try:
+            index_result = build_stock_index_from_menus()
+            if index_result.get('success'):
+                logger.info(f"Stock index built: {index_result.get('total_items', 0)} items")
+            else:
+                logger.warning(f"Stock index build issue: {index_result.get('error')}")
+        except Exception as index_err:
+            logger.error(f"Stock index build failed: {str(index_err)}")
             
     except Exception as e:
         logger.error(f"Scheduled download failed: {str(e)}", exc_info=True)
         app_state["last_run_status"] = "error"
         app_state["last_run_result"] = {"error": str(e)}
         
-        # Still try batch processor
-        try:
-            trigger_batch_processor(dry_run=False)
-        except Exception:
-            pass
     finally:
         app_state["is_running"] = False
+        # Always try to create batches even if download failed (may have partial data)
+        if app_state["last_run_status"] == "error":
+            try:
+                logger.info("Download failed but attempting batch creation anyway...")
+                trigger_batch_creator(trigger_coa=True)
+            except Exception:
+                pass
 
 
 # ============================================================================
@@ -381,18 +491,20 @@ async def manual_run(request: RunRequest, background_tasks: BackgroundTasks):
         app_state["last_run_status"] = "success" if success else "partial"
         app_state["last_run_result"] = result.get('summary', {})
         
-        # Trigger batch processor unless skipped
-        batch_result = None
+        # Pipeline: Download → Batch Creator → Stock Index
+        batch_creator_result = None
         if not request.skip_batch_processor:
-            batch_result = trigger_batch_processor(
-                dry_run=request.dry_run_batch,
-                dispensary=request.dispensary
-            )
+            # Trigger Batch Creator (which will trigger Batch Processor if trigger_coa=True)
+            batch_creator_result = trigger_batch_creator(trigger_coa=True)
+        
+        # Build stock index from the consolidated batches
+        index_result = build_stock_index_from_menus()
         
         return {
             "status": "completed",
             "download_result": result.get('summary', {}),
-            "batch_processor_result": batch_result
+            "batch_creator_result": batch_creator_result,
+            "stock_index_result": index_result
         }
         
     except Exception as e:
@@ -412,6 +524,17 @@ async def trigger_batch(request: BatchTriggerRequest):
         dispensary=request.dispensary
     )
     return result
+
+
+@app.post("/build-stock-index")
+async def build_stock_index():
+    """Manually trigger stock index rebuild from latest menu data."""
+    logger.info("Manual stock index build requested")
+    result = build_stock_index_from_menus()
+    if result.get('success'):
+        return result
+    else:
+        raise HTTPException(status_code=500, detail=result.get('error', 'Failed to build stock index'))
 
 
 @app.get("/config")
