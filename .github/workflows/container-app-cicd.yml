@@ -44,20 +44,24 @@ jobs:
         env:
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
         run: |
-          # Parse the JSON credentials
-          CLIENT_ID=$(echo $AZURE_CREDENTIALS | jq -r .clientId)
-          CLIENT_SECRET=$(echo $AZURE_CREDENTIALS | jq -r .clientSecret)
-          TENANT_ID=$(echo $AZURE_CREDENTIALS | jq -r .tenantId)
-          SUBSCRIPTION_ID=$(echo $AZURE_CREDENTIALS | jq -r .subscriptionId)
+          # Parse the JSON credentials with proper quoting
+          CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
+          CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
+          TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
+          SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
+          
+          # Debugging - check if variables are set (masked by GitHub)
+          echo "CLIENT_ID length: ${#CLIENT_ID}"
+          echo "TENANT_ID length: ${#TENANT_ID}"
           
           # Login using service principal
           az login --service-principal \
-            --username $CLIENT_ID \
-            --password $CLIENT_SECRET \
-            --tenant $TENANT_ID
+            --username "$CLIENT_ID" \
+            --password "$CLIENT_SECRET" \
+            --tenant "$TENANT_ID"
           
           # Set subscription
-          az account set --subscription $SUBSCRIPTION_ID
+          az account set --subscription "$SUBSCRIPTION_ID"
 
       - name: Log in to Azure Container Registry
         run: |
@@ -112,17 +116,17 @@ jobs:
         env:
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
         run: |
-          CLIENT_ID=$(echo $AZURE_CREDENTIALS | jq -r .clientId)
-          CLIENT_SECRET=$(echo $AZURE_CREDENTIALS | jq -r .clientSecret)
-          TENANT_ID=$(echo $AZURE_CREDENTIALS | jq -r .tenantId)
-          SUBSCRIPTION_ID=$(echo $AZURE_CREDENTIALS | jq -r .subscriptionId)
+          CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
+          CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
+          TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
+          SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
           
           az login --service-principal \
-            --username $CLIENT_ID \
-            --password $CLIENT_SECRET \
-            --tenant $TENANT_ID
+            --username "$CLIENT_ID" \
+            --password "$CLIENT_SECRET" \
+            --tenant "$TENANT_ID"
           
-          az account set --subscription $SUBSCRIPTION_ID
+          az account set --subscription "$SUBSCRIPTION_ID"
 
       - name: Deploy to Container App
         run: |
@@ -178,17 +182,17 @@ jobs:
         env:
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
         run: |
-          CLIENT_ID=$(echo $AZURE_CREDENTIALS | jq -r .clientId)
-          CLIENT_SECRET=$(echo $AZURE_CREDENTIALS | jq -r .clientSecret)
-          TENANT_ID=$(echo $AZURE_CREDENTIALS | jq -r .tenantId)
-          SUBSCRIPTION_ID=$(echo $AZURE_CREDENTIALS | jq -r .subscriptionId)
+          CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
+          CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
+          TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
+          SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
           
           az login --service-principal \
-            --username $CLIENT_ID \
-            --password $CLIENT_SECRET \
-            --tenant $TENANT_ID
+            --username "$CLIENT_ID" \
+            --password "$CLIENT_SECRET" \
+            --tenant "$TENANT_ID"
           
-          az account set --subscription $SUBSCRIPTION_ID
+          az account set --subscription "$SUBSCRIPTION_ID"
 
       - name: Deploy to Production Container App
         run: |
