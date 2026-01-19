@@ -33,7 +33,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     outputs:
-      image-tag: ${{ steps.meta.outputs.tags }}
+      image-tag: ${{ steps.build.outputs.image-tag }}
       image-digest: ${{ steps.build.outputs.digest }}
       
     steps:
@@ -53,16 +53,16 @@ jobs:
         id: meta
         run: |
           # Create tag based on branch and commit
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            TAG="latest"
+          SHORT_SHA="${GITHUB_SHA:0:8}"
+          
+          if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
+            TAG="latest-${SHORT_SHA}"
           else
-            TAG="pr-${{ github.event.number }}"
+            TAG="pr-${{ github.event.number }}-${SHORT_SHA}"
           fi
           
-          # Add commit SHA for uniqueness
-          TAG="${TAG}-${{ github.sha:0:8 }}"
-          
           echo "tags=${{ env.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${TAG}" >> $GITHUB_OUTPUT
+          echo "short-sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
           echo "Tag: ${TAG}"
 
       - name: Build and push container image
@@ -70,10 +70,12 @@ jobs:
         run: |
           cd container_app
           
+          SHORT_SHA="${{ steps.meta.outputs.short-sha }}"
+          
           # Build with build context as parent directory to access src/
           az acr build \
             --registry crterprint \
-            --image ${{ env.IMAGE_NAME }}:${{ github.sha:0:8 }} \
+            --image ${{ env.IMAGE_NAME }}:${SHORT_SHA} \
             --image ${{ env.IMAGE_NAME }}:latest \
             --file Dockerfile \
             ..
@@ -81,6 +83,7 @@ jobs:
           # Get the digest
           DIGEST=$(az acr repository show-manifests --name crterprint --repository ${{ env.IMAGE_NAME }} --query "[0].digest" -o tsv)
           echo "digest=${DIGEST}" >> $GITHUB_OUTPUT
+          echo "image-tag=${SHORT_SHA}" >> $GITHUB_OUTPUT
 
   deploy-dev:
     needs: build
@@ -101,7 +104,7 @@ jobs:
           az containerapp update \
             --name ${{ env.CONTAINER_APP_NAME }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \
-            --image ${{ env.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha:0:8 }}
+            --image ${{ env.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ needs.build.outputs.image-tag }}
 
       - name: Health Check
         run: |
@@ -133,7 +136,7 @@ jobs:
             {
               "service": "menu-downloader",
               "environment": "dev",
-              "image_tag": "${{ github.sha:0:8 }}",
+              "image_tag": "${{ needs.build.outputs.image-tag }}",
               "deployment_url": "https://${{ env.CONTAINER_APP_NAME }}.kindmoss-c6723cbe.eastus2.azurecontainerapps.io"
             }
 
@@ -157,7 +160,7 @@ jobs:
           az containerapp update \
             --name ca-terprint-menudownloader-prod \
             --resource-group rg-prod-terprint-ca \
-            --image ${{ env.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha:0:8 }}
+            --image ${{ env.REGISTRY_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ needs.build.outputs.image-tag }}
 
       - name: Production Health Check
         run: |
