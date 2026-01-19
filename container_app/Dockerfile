@@ -43,6 +43,7 @@ COPY container_app/*.py ./
 # Copy configuration files
 COPY container_app/menu_config.json ./menu_config.json
 COPY container_app/storeid_location_list.csv ./storeid_location_list.csv
+COPY container_app/dispensary_locations.json ./dispensary_locations.json
 
 # Create writable directories for logs and downloads
 RUN mkdir -p /tmp/logs /tmp/downloads \
