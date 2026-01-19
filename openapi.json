@@ -545,12 +545,12 @@
                       "items": {
                         "type": "object",
                         "properties": {
-                          "location_id": {"type": "string"},
-                          "dispensary": {"type": "string"},
-                          "latitude": {"type": "number"},
-                          "longitude": {"type": "number"},
-                          "address": {"type": "string"},
-                          "distance_miles": {"type": "number", "nullable": true}
+                          "location_id": {"type": "string", "example": "orlando"},
+                          "dispensary": {"type": "string", "example": "cookies"},
+                          "latitude": {"type": "number", "example": 28.5383},
+                          "longitude": {"type": "number", "example": -81.3792},
+                          "address": {"type": "string", "description": "Full street address", "example": "3742 E Colonial Dr, Orlando, FL 32803"},
+                          "distance_miles": {"type": "number", "nullable": true, "example": 5.2}
                         }
                       }
                     },
@@ -617,12 +617,12 @@
           "price": {"type": "number", "nullable": true},
           "weight_grams": {"type": "number", "nullable": true},
           "in_stock": {"type": "boolean"},
-          "store_location": {"type": "string", "nullable": true},
-          "store_name": {"type": "string", "nullable": true},
-          "latitude": {"type": "number", "nullable": true},
-          "longitude": {"type": "number", "nullable": true},
-          "address": {"type": "string", "nullable": true},
-          "distance_miles": {"type": "number", "nullable": true},
+          "store_location": {"type": "string", "nullable": true, "example": "orlando"},
+          "store_name": {"type": "string", "nullable": true, "example": "Cookies Orlando"},
+          "latitude": {"type": "number", "nullable": true, "example": 28.5383},
+          "longitude": {"type": "number", "nullable": true, "example": -81.3792},
+          "address": {"type": "string", "nullable": true, "description": "Full street address", "example": "3742 E Colonial Dr, Orlando, FL 32803"},
+          "distance_miles": {"type": "number", "nullable": true, "example": 5.2},
           "last_seen": {"type": "string", "format": "date-time"},
           "source_file": {"type": "string"}
         }
