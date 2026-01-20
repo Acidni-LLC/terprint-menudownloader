@@ -327,6 +327,25 @@ class DispensaryOrchestrator:
             log_exception(logger, e, context="Downloader initialization")
             self.downloaders = {}
 
+        # Genetics extraction configuration (package mode only)
+        self._genetics_scraper = None
+        self._genetics_storage = None
+        self.enable_genetics = os.environ.get("ENABLE_GENETICS", "1") != "0"
+        self.save_genetics = os.environ.get("SAVE_GENETICS", "1") != "0"
+        if _RUNNING_AS_PACKAGE and self.enable_genetics:
+            try:
+                from .genetics.scraper import GeneticsScraper
+                from .genetics.storage import GeneticsStorage
+                self._genetics_scraper = GeneticsScraper()
+                self._genetics_storage = GeneticsStorage()
+                logger.info(f"[GENETICS] Enabled: {self.enable_genetics}, Save: {self.save_genetics}")
+            except Exception as e:
+                logger.warning(f"[GENETICS] Genetics modules not available: {e}")
+                self._genetics_scraper = None
+                self._genetics_storage = None
+                self.enable_genetics = False
+                self.save_genetics = False
+
     def find_all_muv_json_files(self):
         """List all muv*.json files from Azure Data Lake"""
         if not self.azure_manager:
@@ -829,9 +848,37 @@ class DispensaryOrchestrator:
                     
                     # Extract batches from downloaded data
                     logger.info(f"[BATCH] Extracting batches from {len(results)} files for {dispensary_id}")
+                    genetics_count = 0
                     for filepath, data in results:
                         self._extract_batches_from_data(dispensary_id, filepath, data)
+                        # Genetics extraction per file
+                        if self.enable_genetics and self._genetics_scraper and isinstance(data, (dict, list)):
+                            try:
+                                source_file = os.path.basename(filepath)
+                                extraction = self._genetics_scraper.extract_from_menu(data, dispensary=dispensary_id, source_file=source_file)
+                                genetics_count += extraction.unique_strains
+                                # Save immediately if configured
+                                if self.save_genetics and self._genetics_storage and extraction.genetics_found:
+                                    import asyncio
+                                    async def _save():
+                                        try:
+                                            await self._genetics_storage.connect()
+                                            await self._genetics_storage.save_genetics(extraction.genetics_found)
+                                        except Exception as _e:
+                                            logger.warning(f"[GENETICS] Save failed: {_e}")
+                                    try:
+                                        asyncio.run(_save())
+                                    except RuntimeError:
+                                        # If an event loop exists, fallback to creating one
+                                        loop = asyncio.new_event_loop()
+                                        asyncio.set_event_loop(loop)
+                                        loop.run_until_complete(_save())
+                                        loop.close()
+                            except Exception as ge:
+                                logger.debug(f"[GENETICS] Extraction error for {dispensary_id}/{source_file}: {ge}")
                     logger.info(f"[BATCH] Total batches collected so far: {len(self.batch_tracker)}")
+                    if self.enable_genetics:
+                        logger.info(f"[GENETICS] {dispensary_id}: extracted genetics for ~{genetics_count} strains")
                     
                     # Print completion to console
                     sys.stdout.write(f"[OK] {config['name']} completed: {len(results)} files\n")
@@ -1439,6 +1486,24 @@ class DispensaryOrchestrator:
         
         # Save results to Azure Data Lake
         self._save_results()
+        
+        # Optionally refresh genetics index after pipeline
+        try:
+            if getattr(self, 'enable_genetics', False) and self._genetics_storage:
+                import asyncio
+                async def _refresh():
+                    await self._genetics_storage.connect()
+                    await self._genetics_storage.refresh_index()
+                try:
+                    asyncio.run(_refresh())
+                except RuntimeError:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    loop.run_until_complete(_refresh())
+                    loop.close()
+                logger.info("[GENETICS] Index refreshed for recommender usage")
+        except Exception as e:
+            logger.warning(f"[GENETICS] Index refresh failed: {e}")
         
         # Print final summary
         self._print_summary()

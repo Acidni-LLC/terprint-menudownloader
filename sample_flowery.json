@@ -1,0 +1,156 @@
+{
+  "sample": {
+    "id": 7486,
+    "woocommerce_id": "2606601",
+    "supplier": {
+      "id": 2,
+      "company_id": 2,
+      "name": "Packwoods",
+      "slug": "packwoods",
+      "description": null,
+      "created_at": "2022-04-25T19:56:22.000000Z",
+      "updated_at": "2024-06-12T19:40:09.000000Z"
+    },
+    "brand": {
+      "id": 7,
+      "name": "PACKS",
+      "slug": "packs",
+      "description": null,
+      "created_at": "2022-07-19T00:16:04.000000Z",
+      "updated_at": "2024-06-12T19:19:51.000000Z"
+    },
+    "media": [
+      {
+        "id": 84133,
+        "collection_name": "media",
+        "url": "https://salve-platform-production-pub-1.s3.amazonaws.com/84133/zourz-thumb.png",
+        "featured": 1,
+        "sizes": {
+          "thumb": "https://salve-platform-production-pub-1.s3.amazonaws.com/84133/conversions/zourz-thumb-thumb.jpg"
+        },
+        "name": "zourz-thumb.png",
+        "mime": "image/png",
+        "order_column": 0,
+        "size": "00000000000000792278",
+        "type": "image",
+        "created_at": "2025-08-14T22:13:56.000000Z",
+        "updated_at": "2025-08-14T22:13:56.000000Z"
+      },
+      {
+        "id": 37611,
+        "collection_name": "media",
+        "url": "https://salve-platform-production-pub-1.s3.amazonaws.com/37611/Zourz-Main.jpg",
+        "featured": 0,
+        "sizes": {
+          "thumb": "https://salve-platform-production-pub-1.s3.amazonaws.com/37611/conversions/Zourz-Main-thumb.jpg"
+        },
+        "name": "Zourz-Main.jpg",
+        "mime": "image/jpeg",
+        "order_column": 1,
+        "size": "00000000000000428714",
+        "type": "image",
+        "created_at": "2024-11-27T17:00:23.000000Z",
+        "updated_at": "2025-08-14T22:13:56.000000Z"
+      },
+      {
+        "id": 37612,
+        "collection_name": "media",
+        "url": "https://salve-platform-production-pub-1.s3.amazonaws.com/37612/Zourz-Macro.jpg",
+        "featured": 0,
+        "sizes": {
+          "thumb": "https://salve-platform-production-pub-1.s3.amazonaws.com/37612/conversions/Zourz-Macro-thumb.jpg"
+        },
+        "name": "Zourz-Macro.jpg",
+        "mime": "image/jpeg",
+        "order_column": 2,
+        "size": "00000000000000894365",
+        "type": "image",
+        "created_at": "2024-11-27T17:00:24.000000Z",
+        "updated_at": "2025-08-14T22:13:56.000000Z"
+      },
+      {
+        "id": 37613,
+        "collection_name": "media",
+        "url": "https://salve-platform-production-pub-1.s3.amazonaws.com/37613/Zourz-Brand.jpg",
+        "featured": 0,
+        "sizes": {
+          "thumb": "https://salve-platform-production-pub-1.s3.amazonaws.com/37613/conversions/Zourz-Brand-thumb.jpg"
+        },
+        "name": "Zourz-Brand.jpg",
+        "mime": "image/jpeg",
+        "order_column": 3,
+        "size": "00000000000001244462",
+        "type": "image",
+        "created_at": "2024-11-27T17:00:24.000000Z",
+        "updated_at": "2025-08-14T22:13:56.000000Z"
+      }
+    ],
+    "strain": {
+      "id": 3258,
+      "name": "Zourz",
+      "slug": "zourz",
+      "lineage": "hybrid/indica"
+    },
+    "categories": [
+      "Flower",
+      "Whole Flower"
+    ],
+    "tags": [
+      "Flower 3.5g",
+      "Mylar Bag",
+      "New Arrival",
+      "Mix & Match"
+    ],
+    "name": "Zourz Eighth",
+    "slug": "zourz-eighth",
+    "unit_weight": "3.5g",
+    "sku": "449864",
+    "total_thc": 20.1,
+    "total_cbd": 0.0298,
+    "total_terpenes": 2.37,
+    "terpenes": {
+      "alpha_bisabolol": null,
+      "alpha_humulene": null,
+      "alpha_myrcene": null,
+      "alpha_pinene": null,
+      "beta_caryophyllene": null,
+      "beta_myrcene": null,
+      "beta_pinene": null,
+      "borneol": null,
+      "camphene": null,
+      "caryophyllene": 0.732,
+      "delta_3_carene": null,
+      "eucalyptol": null,
+      "farnesene": null,
+      "geraniol": null,
+      "geranyl_acetate": null,
+      "guaiol": null,
+      "hexahydrothymol": null,
+      "humulene": null,
+      "limonene": 0.35,
+      "linalool": null,
+      "myrcene": null,
+      "ocimene": 0.355,
+      "pinene": null,
+      "sabinene": null,
+      "terpineol": null,
+      "terpinolene": null,
+      "total": 2.37,
+      "trans_caryophyllene": null,
+      "trans_nerolidol": null,
+      "valencene": null
+    },
+    "unit_price": 45,
+    "sale_price": 25,
+    "pricing_unit": "g",
+    "batch_num": "0368307444966428",
+    "is_published": true,
+    "is_recreational": false,
+    "created_at": "2024-11-22T17:52:57.000000Z",
+    "updated_at": "2025-12-01T12:21:52.000000Z",
+    "next_coa_at": "2025-11-26",
+    "nrid": 217457,
+    "tqty": 122
+  },
+  "count": 166
+}

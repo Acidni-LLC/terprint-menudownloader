@@ -1,0 +1,1627 @@
+{
+  "dispensary": "curaleaf",
+  "store_slug": "curaleaf-tampa-dale-mabry-midtown",
+  "store_name": "Tampa Dale Mabry Midtown",
+  "store_id": "LMR137",
+  "state": "FL",
+  "timestamp": "2026-01-20T01:10:53.158598+00:00",
+  "download_time": "2026-01-20T01:10:53.158608+00:00",
+  "product_count": 92,
+  "products": [
+    {
+      "name": "Stone Orchard Whole Flower",
+      "category": "Flower",
+      "weight": "3.5g",
+      "price": 20.0,
+      "product_id": "12083",
+      "product_slug": "whole-flower-indica-stone-orchard-whole-flower-3.5g-41300?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/whole-flower-indica-stone-orchard-whole-flower-3.5g-41300?stockType=Default",
+      "thc_percent": 28.2,
+      "cbd_percent": 0.06,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 1.74,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "Singapore Sling Whole Flower",
+      "category": "Flower",
+      "weight": "3.5g",
+      "price": 17.5,
+      "product_id": "8552",
+      "product_slug": "whole-flower-sativa-singapore-sling-whole-flower-3.5g-19300?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/whole-flower-sativa-singapore-sling-whole-flower-3.5g-19300?stockType=Default",
+      "thc_percent": 26.2,
+      "cbd_percent": 0.05,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": 1.4,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Pomme Jelly Whole Flower",
+      "category": "Flower",
+      "weight": "3.5g",
+      "price": 17.5,
+      "product_id": "8419",
+      "product_slug": "whole-flower-sativa-pomme-jelly-whole-flower-3.5g-19166?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/whole-flower-sativa-pomme-jelly-whole-flower-3.5g-19166?stockType=Default",
+      "thc_percent": 27.7,
+      "cbd_percent": 0.06,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": 2.63,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Essentials Lychee Dream Cartridge",
+      "category": "Vape",
+      "weight": "1g",
+      "price": 25.0,
+      "product_id": "7955",
+      "product_slug": "cartridge-sativa-essentials-lychee-dream-cartridge-1g-18538?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/cartridge-sativa-essentials-lychee-dream-cartridge-1g-18538?stockType=Default",
+      "thc_percent": 87.24,
+      "cbd_percent": 0.17,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": 2.5666,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Daybreak Delight Whole Flower",
+      "category": "Flower",
+      "weight": "3.5g",
+      "price": 20.0,
+      "product_id": "7769",
+      "product_slug": "whole-flower-sativa-daybreak-delight-whole-flower-3.5g-18287?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/whole-flower-sativa-daybreak-delight-whole-flower-3.5g-18287?stockType=Default",
+      "thc_percent": 30.1,
+      "cbd_percent": 0.04,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": 2.69,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Triple Stack Whole Flower",
+      "category": "Flower",
+      "weight": "3.5g",
+      "price": 25.0,
+      "product_id": "7557",
+      "product_slug": "whole-flower-indica-triple-stack-whole-flower-3.5g-17975?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/whole-flower-indica-triple-stack-whole-flower-3.5g-17975?stockType=Default",
+      "thc_percent": 32.5,
+      "cbd_percent": 0.06,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 2.28,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Moonbeam Gelato Whole Flower",
+      "category": "Flower",
+      "weight": "3.5g",
+      "price": 25.0,
+      "product_id": "7537",
+      "product_slug": "whole-flower-hybrid-moonbeam-gelato-whole-flower-3.5g-17925?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/whole-flower-hybrid-moonbeam-gelato-whole-flower-3.5g-17925?stockType=Default",
+      "thc_percent": 26.4,
+      "cbd_percent": 0.04,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 1.576,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Baya Dulce Whole Flower",
+      "category": "Flower",
+      "weight": "3.5g",
+      "price": 25.0,
+      "product_id": "7400",
+      "product_slug": "whole-flower-sativa-baya-dulce-whole-flower-3.5g-17730?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/whole-flower-sativa-baya-dulce-whole-flower-3.5g-17730?stockType=Default",
+      "thc_percent": 28.17,
+      "cbd_percent": 0.07,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": 1.77,
+      "top_terpenes": "Limonene, Caryophyllene, Myrcene",
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Modified Gas Live Resin Cartridge",
+      "category": "Vape",
+      "weight": "0.5g",
+      "price": 25.0,
+      "product_id": "7089",
+      "product_slug": "cartridge-indica-modified-gas-live-resin-cartridge-0.5g-17295?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/cartridge-indica-modified-gas-live-resin-cartridge-0.5g-17295?stockType=Default",
+      "thc_percent": 83.53,
+      "cbd_percent": 0.15,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 5.828,
+      "top_terpenes": "Limonene",
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Go Go Guava Fruit STIQ",
+      "category": "Vape",
+      "weight": "1g",
+      "price": 25.0,
+      "product_id": "2202",
+      "product_slug": "fruit-stiq-sativa-go-go-guava-fruit-stiq-1g-2365?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/fruit-stiq-sativa-go-go-guava-fruit-stiq-1g-2365?stockType=Default",
+      "thc_percent": null,
+      "cbd_percent": null,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": null,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "ACE Super Boof Cartridge",
+      "category": "Vape",
+      "weight": "1g",
+      "price": 55.0,
+      "product_id": "12239",
+      "product_slug": "cartridge-hybrid-ace-super-boof-cartridge-1g-41509?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/cartridge-hybrid-ace-super-boof-cartridge-1g-41509?stockType=Default",
+      "thc_percent": 92.8,
+      "cbd_percent": 0.23,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 4.5,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "ACE Tigers Blood Cartridge",
+      "category": "Vape",
+      "weight": "1g",
+      "price": 55.0,
+      "product_id": "12240",
+      "product_slug": "cartridge-hybrid-ace-tigers-blood-cartridge-1g-41510?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/cartridge-hybrid-ace-tigers-blood-cartridge-1g-41510?stockType=Default",
+      "thc_percent": 92.6,
+      "cbd_percent": 0.18,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 2.26,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "ACE Dabbalicious Cartridge",
+      "category": "Vape",
+      "weight": "1g",
+      "price": 55.0,
+      "product_id": "12241",
+      "product_slug": "cartridge-indica-ace-dabbalicious-cartridge-1g-41511?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/cartridge-indica-ace-dabbalicious-cartridge-1g-41511?stockType=Default",
+      "thc_percent": 92.5,
+      "cbd_percent": 0.22,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 4.73,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "AC/DC 1:1 Ratioed Cartridge",
+      "category": "Vape",
+      "weight": "1g",
+      "price": 32.5,
+      "product_id": "8567",
+      "product_slug": "cartridge-hybrid-ac-dc-1-1-ratioed-cartridge-1g-19319?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/cartridge-hybrid-ac-dc-1-1-ratioed-cartridge-1g-19319?stockType=Default",
+      "thc_percent": 48.7,
+      "cbd_percent": 42.6,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 5.35,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "Sour Tsunami 1:1 Ratioed Cartridge",
+      "category": "Vape",
+      "weight": "1g",
+      "price": 32.5,
+      "product_id": "8568",
+      "product_slug": "cartridge-sativa-sour-tsunami-1-1-ratioed-cartridge-1g-19320?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/cartridge-sativa-sour-tsunami-1-1-ratioed-cartridge-1g-19320?stockType=Default",
+      "thc_percent": 47.1,
+      "cbd_percent": 0.25,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": 4.88,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "Collie Man Kush Whole Flower",
+      "category": "Flower",
+      "weight": "3.5g",
+      "price": 33.0,
+      "product_id": "8152",
+      "product_slug": "whole-flower-indica-collie-man-kush-whole-flower-3.5g-18784?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/whole-flower-indica-collie-man-kush-whole-flower-3.5g-18784?stockType=Default",
+      "thc_percent": 29.4,
+      "cbd_percent": 0.06,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 3.4972,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "East Coast Sour Diesel Whole Flower",
+      "category": "Flower",
+      "weight": "3.5g",
+      "price": 33.0,
+      "product_id": "8881",
+      "product_slug": "whole-flower-sativa-east-coast-sour-diesel-whole-flower-3.5g-19727?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/whole-flower-sativa-east-coast-sour-diesel-whole-flower-3.5g-19727?stockType=Default",
+      "thc_percent": 30.0,
+      "cbd_percent": 0.06,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": 1.73,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "Collie Man Kush Smalls",
+      "category": "Flower",
+      "weight": "3.5g",
+      "price": 30.0,
+      "product_id": "7915",
+      "product_slug": "smalls-indica-collie-man-kush-smalls-3.5g-18491?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/smalls-indica-collie-man-kush-smalls-3.5g-18491?stockType=Default",
+      "thc_percent": 28.5,
+      "cbd_percent": 0.07,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 3.18,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "The OG Smalls",
+      "category": "Flower",
+      "weight": "3.5g",
+      "price": 30.0,
+      "product_id": "8102",
+      "product_slug": "smalls-indica-the-og-smalls-3.5g-18731?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/smalls-indica-the-og-smalls-3.5g-18731?stockType=Default",
+      "thc_percent": 29.2,
+      "cbd_percent": 0.08,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 1.26,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Jayna's Sunshine Smalls",
+      "category": "Flower",
+      "weight": "3.5g",
+      "price": 30.0,
+      "product_id": "12233",
+      "product_slug": "smalls-hybrid-jayna's-sunshine-smalls-3.5g-41501?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/smalls-hybrid-jayna's-sunshine-smalls-3.5g-41501?stockType=Default",
+      "thc_percent": 31.3,
+      "cbd_percent": 0.09,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 1.96,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "Paw Paw Smalls",
+      "category": "Flower",
+      "weight": "3.5g",
+      "price": 30.0,
+      "product_id": "12299",
+      "product_slug": "smalls-hybrid-paw-paw-smalls-3.5g-41573?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/smalls-hybrid-paw-paw-smalls-3.5g-41573?stockType=Default",
+      "thc_percent": 31.0,
+      "cbd_percent": 0.07,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 2.34,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "Blue Lobster Whole Flower",
+      "category": "Flower",
+      "weight": "3.5g",
+      "price": 27.0,
+      "product_id": "8801",
+      "product_slug": "whole-flower-hybrid-blue-lobster-whole-flower-3.5g-19630?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/whole-flower-hybrid-blue-lobster-whole-flower-3.5g-19630?stockType=Default",
+      "thc_percent": 28.2,
+      "cbd_percent": 0.05,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 2.05,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "Papaya Drip #7 Smalls",
+      "category": "Flower",
+      "weight": "3.5g",
+      "price": 24.0,
+      "product_id": "19565",
+      "product_slug": "smalls-hybrid-papaya-drip-7-smalls-3.5g-51192?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/smalls-hybrid-papaya-drip-7-smalls-3.5g-51192?stockType=Default",
+      "thc_percent": 31.5,
+      "cbd_percent": 0.07,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 2.45,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "Papaya Drip #7 Whole Flower",
+      "category": "Flower",
+      "weight": "3.5g",
+      "price": 22.8,
+      "product_id": "19447",
+      "product_slug": "whole-flower-hybrid-papaya-drip-7-whole-flower-3.5g-46877?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/whole-flower-hybrid-papaya-drip-7-whole-flower-3.5g-46877?stockType=Default",
+      "thc_percent": 31.1,
+      "cbd_percent": 0.07,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 2.64,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "Raspberry Parfait Whole Flower",
+      "category": "Flower",
+      "weight": "3.5g",
+      "price": 22.5,
+      "product_id": "11675",
+      "product_slug": "whole-flower-sativa-raspberry-parfait-whole-flower-3.5g-40769?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/whole-flower-sativa-raspberry-parfait-whole-flower-3.5g-40769?stockType=Default",
+      "thc_percent": 26.9,
+      "cbd_percent": 0.07,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": 1.66,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "Foreign Kush Mints Whole Flower",
+      "category": "Flower",
+      "weight": "3.5g",
+      "price": 33.0,
+      "product_id": "7770",
+      "product_slug": "whole-flower-indica-foreign-kush-mints-whole-flower-3.5g-18289?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/whole-flower-indica-foreign-kush-mints-whole-flower-3.5g-18289?stockType=Default",
+      "thc_percent": 33.6,
+      "cbd_percent": 0.15,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 3.48,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Cap Junky Whole Flower",
+      "category": "Flower",
+      "weight": "3.5g",
+      "price": 33.0,
+      "product_id": "830",
+      "product_slug": "whole-flower-hybrid-cap-junky-whole-flower-3.5g-560?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/whole-flower-hybrid-cap-junky-whole-flower-3.5g-560?stockType=Default",
+      "thc_percent": 32.8,
+      "cbd_percent": 0.05,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 2.99,
+      "top_terpenes": "Caryophyllene, Limonene, Linalool",
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Foreign Kush Mints Whole Flower",
+      "category": "Flower",
+      "weight": "1g",
+      "price": 10.0,
+      "product_id": "7750",
+      "product_slug": "whole-flower-indica-foreign-kush-mints-whole-flower-1g-19161?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/whole-flower-indica-foreign-kush-mints-whole-flower-1g-19161?stockType=Default",
+      "thc_percent": 32.3,
+      "cbd_percent": 0.03,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 2.19,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "PawPaw Whole Flower",
+      "category": "Flower",
+      "weight": "1g",
+      "price": 10.0,
+      "product_id": "12219",
+      "product_slug": "whole-flower-hybrid-pawpaw-whole-flower-1g-41484?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/whole-flower-hybrid-pawpaw-whole-flower-1g-41484?stockType=Default",
+      "thc_percent": 31.3,
+      "cbd_percent": 0.08,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 2.4,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "Zesty Garlic Cookies Whole Flower",
+      "category": "Flower",
+      "weight": "3.5g",
+      "price": 33.0,
+      "product_id": "7512",
+      "product_slug": "whole-flower-indica-zesty-garlic-cookies-whole-flower-3.5g-17885?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/whole-flower-indica-zesty-garlic-cookies-whole-flower-3.5g-17885?stockType=Default",
+      "thc_percent": null,
+      "cbd_percent": null,
+      "strain_type": "Indica",
+      "total_terpenes_percent": null,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Atomic Breath Whole Flower",
+      "category": "Flower",
+      "weight": "3.5g",
+      "price": 33.0,
+      "product_id": "8403",
+      "product_slug": "whole-flower-hybrid-atomic-breath-whole-flower-3.5g-19145?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/whole-flower-hybrid-atomic-breath-whole-flower-3.5g-19145?stockType=Default",
+      "thc_percent": 30.5,
+      "cbd_percent": 0.05,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 3.38,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Titan Express Whole Flower",
+      "category": "Flower",
+      "weight": "3.5g",
+      "price": 33.0,
+      "product_id": "8155",
+      "product_slug": "whole-flower-sativa-titan-express-whole-flower-3.5g-18787?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/whole-flower-sativa-titan-express-whole-flower-3.5g-18787?stockType=Default",
+      "thc_percent": 30.2,
+      "cbd_percent": 0.06,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": 2.6091,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Zesty Garlic Cookies Whole Flower",
+      "category": "Flower",
+      "weight": "1g",
+      "price": 10.0,
+      "product_id": "8422",
+      "product_slug": "whole-flower-indica-zesty-garlic-cookies-whole-flower-1g-19170?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/whole-flower-indica-zesty-garlic-cookies-whole-flower-1g-19170?stockType=Default",
+      "thc_percent": 30.1,
+      "cbd_percent": 0.17,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 1.876,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Papaya Drip #3 Pre-Roll",
+      "category": "Pre-Rolls",
+      "weight": "1g",
+      "price": 8.0,
+      "product_id": "19564",
+      "product_slug": "pre-roll-hybrid-papaya-drip-3-pre-roll-1g-51191?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/pre-rolls-69/pre-roll-hybrid-papaya-drip-3-pre-roll-1g-51191?stockType=Default",
+      "thc_percent": 29.0,
+      "cbd_percent": 0.08,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 1.2,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "Collie Man Kush Pre-Roll Pack",
+      "category": "Pre-Rolls",
+      "weight": null,
+      "price": null,
+      "product_id": "19449",
+      "product_slug": "pre-roll-pack-indica-collie-man-kush-pre-roll-pack-0.4g-ea-2-pack-47022?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/pre-rolls-69/pre-roll-pack-indica-collie-man-kush-pre-roll-pack-0.4g-ea-2-pack-47022?stockType=Default",
+      "thc_percent": 29.9,
+      "cbd_percent": 0.09,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 2.43,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "True OG Pre-Roll",
+      "category": "Pre-Rolls",
+      "weight": "1g",
+      "price": 6.0,
+      "product_id": "12304",
+      "product_slug": "pre-roll-indica-true-og-pre-roll-1g-41578?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/pre-rolls-69/pre-roll-indica-true-og-pre-roll-1g-41578?stockType=Default",
+      "thc_percent": 28.0,
+      "cbd_percent": 0.1,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 1.59,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "Jayna's Sunshine Pre-Roll",
+      "category": "Pre-Rolls",
+      "weight": "1g",
+      "price": 9.0,
+      "product_id": "12230",
+      "product_slug": "pre-roll-hybrid-jayna's-sunshine-pre-roll-1g-41497?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/pre-rolls-69/pre-roll-hybrid-jayna's-sunshine-pre-roll-1g-41497?stockType=Default",
+      "thc_percent": 31.3,
+      "cbd_percent": 0.09,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 1.88,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "Isla Bloom Pre-Roll Pack",
+      "category": "Pre-Rolls",
+      "weight": null,
+      "price": null,
+      "product_id": "12225",
+      "product_slug": "pre-roll-pack-indica-isla-bloom-pre-roll-pack-0.4g-ea-2-pack-41492?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/pre-rolls-69/pre-roll-pack-indica-isla-bloom-pre-roll-pack-0.4g-ea-2-pack-41492?stockType=Default",
+      "thc_percent": 28.6,
+      "cbd_percent": 0.12,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 1.23,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "PawPaw Pre-Roll",
+      "category": "Pre-Rolls",
+      "weight": "1g",
+      "price": 9.0,
+      "product_id": "12222",
+      "product_slug": "pre-roll-hybrid-pawpaw-pre-roll-1g-41488?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/pre-rolls-69/pre-roll-hybrid-pawpaw-pre-roll-1g-41488?stockType=Default",
+      "thc_percent": 31.2,
+      "cbd_percent": 0.07,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 1.72,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "Dulce Fresa Pre-Roll",
+      "category": "Pre-Rolls",
+      "weight": "1g",
+      "price": 6.0,
+      "product_id": "12132",
+      "product_slug": "pre-roll-sativa-dulce-fresa-pre-roll-1g-41351?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/pre-rolls-69/pre-roll-sativa-dulce-fresa-pre-roll-1g-41351?stockType=Default",
+      "thc_percent": 28.6,
+      "cbd_percent": 0.05,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": 1.8,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "Isla Bloom Pre-Roll",
+      "category": "Pre-Rolls",
+      "weight": "1g",
+      "price": 6.0,
+      "product_id": "12071",
+      "product_slug": "pre-roll-indica-isla-bloom-pre-roll-1g-41277?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/pre-rolls-69/pre-roll-indica-isla-bloom-pre-roll-1g-41277?stockType=Default",
+      "thc_percent": 28.0,
+      "cbd_percent": 0.11,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 1.31,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "Citrine Valley Pre-Roll",
+      "category": "Pre-Rolls",
+      "weight": "1g",
+      "price": 6.0,
+      "product_id": "12055",
+      "product_slug": "pre-roll-indica-citrine-valley-pre-roll-1g-41261?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/pre-rolls-69/pre-roll-indica-citrine-valley-pre-roll-1g-41261?stockType=Default",
+      "thc_percent": 30.2,
+      "cbd_percent": 0.18,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 1.15,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "Silver Mirage Pre-Roll Pack",
+      "category": "Pre-Rolls",
+      "weight": null,
+      "price": null,
+      "product_id": "12027",
+      "product_slug": "pre-roll-pack-hybrid-silver-mirage-pre-roll-pack-0.4g-ea-2-pack-41230?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/pre-rolls-69/pre-roll-pack-hybrid-silver-mirage-pre-roll-pack-0.4g-ea-2-pack-41230?stockType=Default",
+      "thc_percent": 26.7,
+      "cbd_percent": 0.06,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 1.79,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "Orange Dark Fast-Acting Chocolate",
+      "category": "Edibles",
+      "weight": null,
+      "price": null,
+      "product_id": "747",
+      "product_slug": "chocolate-hybrid-orange-dark-fast-acting-chocolate-5mg-ea-20-pack-474?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/edibles-65/chocolate-hybrid-orange-dark-fast-acting-chocolate-5mg-ea-20-pack-474?stockType=Default",
+      "thc_percent": null,
+      "cbd_percent": null,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": null,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Hazelnut Milk Fast-Acting Chocolate",
+      "category": "Edibles",
+      "weight": null,
+      "price": null,
+      "product_id": "748",
+      "product_slug": "chocolate-hybrid-hazelnut-milk-fast-acting-chocolate-5mg-ea-20-pack-475?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/edibles-65/chocolate-hybrid-hazelnut-milk-fast-acting-chocolate-5mg-ea-20-pack-475?stockType=Default",
+      "thc_percent": null,
+      "cbd_percent": null,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": null,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Watermelon Lime Fast-Acting Fruit Chew",
+      "category": "Edibles",
+      "weight": null,
+      "price": null,
+      "product_id": "5214",
+      "product_slug": "fruit-chew-indica-watermelon-lime-fast-acting-fruit-chew-10mg-ea-10-pack-17768?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/edibles-65/fruit-chew-indica-watermelon-lime-fast-acting-fruit-chew-10mg-ea-10-pack-17768?stockType=Default",
+      "thc_percent": null,
+      "cbd_percent": null,
+      "strain_type": "Indica",
+      "total_terpenes_percent": null,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Strawberry Lemonade Fast-Acting Fruit Chew",
+      "category": "Edibles",
+      "weight": null,
+      "price": null,
+      "product_id": "5215",
+      "product_slug": "fruit-chew-sativa-strawberry-lemonade-fast-acting-fruit-chew-10mg-ea-10-pack-17779?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/edibles-65/fruit-chew-sativa-strawberry-lemonade-fast-acting-fruit-chew-10mg-ea-10-pack-17779?stockType=Default",
+      "thc_percent": null,
+      "cbd_percent": null,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": null,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Green Apple Fast-Acting Fruit Chew",
+      "category": "Edibles",
+      "weight": null,
+      "price": null,
+      "product_id": "5216",
+      "product_slug": "fruit-chew-hybrid-green-apple-fast-acting-fruit-chew-10mg-ea-10-pack-17769?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/edibles-65/fruit-chew-hybrid-green-apple-fast-acting-fruit-chew-10mg-ea-10-pack-17769?stockType=Default",
+      "thc_percent": null,
+      "cbd_percent": null,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": null,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Mango (THC:CBD) Ratioed Fruit Chew",
+      "category": "Edibles",
+      "weight": "10mg",
+      "price": 12.0,
+      "product_id": "6931",
+      "product_slug": "fruit-chew-hybrid-mango-(thc-cbd)-ratioed-fruit-chew-10mg-17034?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/edibles-65/fruit-chew-hybrid-mango-(thc-cbd)-ratioed-fruit-chew-10mg-17034?stockType=Default",
+      "thc_percent": null,
+      "cbd_percent": null,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": null,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Pomegranate Fast-Acting Fruit Chew",
+      "category": "Edibles",
+      "weight": null,
+      "price": null,
+      "product_id": "7476",
+      "product_slug": "fruit-chew-indica-pomegranate-fast-acting-fruit-chew-10mg-ea-10-pack-17822?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/edibles-65/fruit-chew-indica-pomegranate-fast-acting-fruit-chew-10mg-ea-10-pack-17822?stockType=Default",
+      "thc_percent": null,
+      "cbd_percent": null,
+      "strain_type": "Indica",
+      "total_terpenes_percent": null,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Pineapple Sugar Free Fruit Chews",
+      "category": "Edibles",
+      "weight": null,
+      "price": null,
+      "product_id": "11876",
+      "product_slug": "fruit-chew-sativa-pineapple-sugar-free-fruit-chews-10mg-ea-10-pack-41751?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/edibles-65/fruit-chew-sativa-pineapple-sugar-free-fruit-chews-10mg-ea-10-pack-41751?stockType=Default",
+      "thc_percent": null,
+      "cbd_percent": null,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": null,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "Mixed Berry Classic Fruit Chew",
+      "category": "Edibles",
+      "weight": null,
+      "price": null,
+      "product_id": "734",
+      "product_slug": "fruit-chew-indica-mixed-berry-classic-fruit-chew-10mg-10-pack-461?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/edibles-65/fruit-chew-indica-mixed-berry-classic-fruit-chew-10mg-10-pack-461?stockType=Default",
+      "thc_percent": null,
+      "cbd_percent": null,
+      "strain_type": "Indica",
+      "total_terpenes_percent": null,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Peach Fruit Chew",
+      "category": "Edibles",
+      "weight": null,
+      "price": null,
+      "product_id": "735",
+      "product_slug": "fruit-chew-hybrid-peach-fruit-chew-10mg-10-pack-462?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/edibles-65/fruit-chew-hybrid-peach-fruit-chew-10mg-10-pack-462?stockType=Default",
+      "thc_percent": null,
+      "cbd_percent": null,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": null,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Essentials Strawberry Cough Cartridge",
+      "category": "Vape",
+      "weight": "1g",
+      "price": 25.0,
+      "product_id": "1685",
+      "product_slug": "cartridge-sativa-essentials-strawberry-cough-cartridge-1g-2000?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/cartridge-sativa-essentials-strawberry-cough-cartridge-1g-2000?stockType=Default",
+      "thc_percent": 92.2,
+      "cbd_percent": 0.21,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": 5.16,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Essentials FPOG Cartridge",
+      "category": "Vape",
+      "weight": "1g",
+      "price": 32.5,
+      "product_id": "1667",
+      "product_slug": "cartridge-hybrid-essentials-fpog-cartridge-1g-1983?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/cartridge-hybrid-essentials-fpog-cartridge-1g-1983?stockType=Default",
+      "thc_percent": 91.4,
+      "cbd_percent": 0.21,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 6.01,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Linalool"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Blueberry Muffin Cartridge",
+      "category": "Vape",
+      "weight": "1g",
+      "price": 32.5,
+      "product_id": "12466",
+      "product_slug": "cartridge-indica-blueberry-muffin-cartridge-1g-41766?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/cartridge-indica-blueberry-muffin-cartridge-1g-41766?stockType=Default",
+      "thc_percent": 92.6,
+      "cbd_percent": 0.2,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 1.84,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Essentials Tropic Thunder All-In-One",
+      "category": "Vape",
+      "weight": "0.3g",
+      "price": 16.25,
+      "product_id": "1904",
+      "product_slug": "all-in-one-hybrid-essentials-tropic-thunder-all-in-one-0.3g-1539?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/all-in-one-hybrid-essentials-tropic-thunder-all-in-one-0.3g-1539?stockType=Default",
+      "thc_percent": 91.3,
+      "cbd_percent": 0.16,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 3.52,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Essentials Blackberry Kush Cartridge",
+      "category": "Vape",
+      "weight": "1g",
+      "price": 25.0,
+      "product_id": "1663",
+      "product_slug": "cartridge-indica-essentials-blackberry-kush-cartridge-1g-1979?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/cartridge-indica-essentials-blackberry-kush-cartridge-1g-1979?stockType=Default",
+      "thc_percent": 85.5,
+      "cbd_percent": 0.18,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 4.59,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Essentials Orange Pop Cartridge",
+      "category": "Vape",
+      "weight": "1g",
+      "price": 32.5,
+      "product_id": "1678",
+      "product_slug": "cartridge-sativa-essentials-orange-pop-cartridge-1g-1994?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/cartridge-sativa-essentials-orange-pop-cartridge-1g-1994?stockType=Default",
+      "thc_percent": 90.3,
+      "cbd_percent": 0.19,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": 5.1358,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Dynasty OG C02 Cartridge",
+      "category": "Vape",
+      "weight": "1g",
+      "price": 35.75,
+      "product_id": "1621",
+      "product_slug": "cartridge-hybrid-dynasty-og-c02-cartridge-1g-1970?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/cartridge-hybrid-dynasty-og-c02-cartridge-1g-1970?stockType=Default",
+      "thc_percent": 86.9,
+      "cbd_percent": 0.19,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 3.7818,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Essentials Blackberry Kush All-In-One",
+      "category": "Vape",
+      "weight": "0.3g",
+      "price": 16.25,
+      "product_id": "1891",
+      "product_slug": "all-in-one-indica-essentials-blackberry-kush-all-in-one-0.3g-1526?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/all-in-one-indica-essentials-blackberry-kush-all-in-one-0.3g-1526?stockType=Default",
+      "thc_percent": 93.1,
+      "cbd_percent": 0.22,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 5.57,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Essentials Green Crush All-In-One",
+      "category": "Vape",
+      "weight": "0.3g",
+      "price": 16.25,
+      "product_id": "1899",
+      "product_slug": "all-in-one-sativa-essentials-green-crush-all-in-one-0.3g-1534?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/all-in-one-sativa-essentials-green-crush-all-in-one-0.3g-1534?stockType=Default",
+      "thc_percent": 88.8,
+      "cbd_percent": 0.13,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": 4.75,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Munson C02 Cartridge",
+      "category": "Vape",
+      "weight": "1g",
+      "price": 35.75,
+      "product_id": "1624",
+      "product_slug": "cartridge-indica-munson-c02-cartridge-1g-1973?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/cartridge-indica-munson-c02-cartridge-1g-1973?stockType=Default",
+      "thc_percent": 86.2,
+      "cbd_percent": 0.18,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 6.34,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Essentials Grape Ape All-In-One",
+      "category": "Vape",
+      "weight": "0.3g",
+      "price": 16.25,
+      "product_id": "1897",
+      "product_slug": "all-in-one-indica-essentials-grape-ape-all-in-one-0.3g-1532?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/all-in-one-indica-essentials-grape-ape-all-in-one-0.3g-1532?stockType=Default",
+      "thc_percent": 90.9,
+      "cbd_percent": 0.15,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 4.275,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Outer Space C02 Cartridge",
+      "category": "Vape",
+      "weight": "1g",
+      "price": 35.75,
+      "product_id": "1625",
+      "product_slug": "cartridge-sativa-outer-space-c02-cartridge-1g-1974?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/cartridge-sativa-outer-space-c02-cartridge-1g-1974?stockType=Default",
+      "thc_percent": 88.0,
+      "cbd_percent": 0.17,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": 4.6684,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Essentials Lemon Cheese Cake All-In-One",
+      "category": "Vape",
+      "weight": "0.3g",
+      "price": 16.25,
+      "product_id": "1900",
+      "product_slug": "all-in-one-sativa-essentials-lemon-cheese-cake-all-in-one-0.3g-1535?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/all-in-one-sativa-essentials-lemon-cheese-cake-all-in-one-0.3g-1535?stockType=Default",
+      "thc_percent": null,
+      "cbd_percent": null,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": null,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Blue Cheese C02 Cartridge",
+      "category": "Vape",
+      "weight": "1g",
+      "price": 35.75,
+      "product_id": "1620",
+      "product_slug": "cartridge-indica-blue-cheese-c02-cartridge-1g-1969?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/cartridge-indica-blue-cheese-c02-cartridge-1g-1969?stockType=Default",
+      "thc_percent": 85.5,
+      "cbd_percent": 0.19,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 4.309,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Linalool"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Sky OG CLIQ",
+      "category": "Vape",
+      "weight": "1g",
+      "price": 35.75,
+      "product_id": "2276",
+      "product_slug": "cliq-indica-sky-og-cliq-1g-2502?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/cliq-indica-sky-og-cliq-1g-2502?stockType=Default",
+      "thc_percent": 89.1,
+      "cbd_percent": 0.18,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 5.74,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Essentials Berry Gelato All-In-One",
+      "category": "Vape",
+      "weight": "0.3g",
+      "price": 16.25,
+      "product_id": "1890",
+      "product_slug": "all-in-one-hybrid-essentials-berry-gelato-all-in-one-0.3g-1525?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/all-in-one-hybrid-essentials-berry-gelato-all-in-one-0.3g-1525?stockType=Default",
+      "thc_percent": 85.0,
+      "cbd_percent": 0.19,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 5.8614,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Tahoe OG CLIQ",
+      "category": "Vape",
+      "weight": "1g",
+      "price": 35.75,
+      "product_id": "1837",
+      "product_slug": "cliq-indica-tahoe-og-cliq-1g-2023?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/cliq-indica-tahoe-og-cliq-1g-2023?stockType=Default",
+      "thc_percent": 86.6,
+      "cbd_percent": 0.17,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 6.16,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Linalool"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Garlic Cookies C02 Cartridge",
+      "category": "Vape",
+      "weight": "1g",
+      "price": 35.75,
+      "product_id": "1623",
+      "product_slug": "cartridge-hybrid-garlic-cookies-c02-cartridge-1g-1972?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/cartridge-hybrid-garlic-cookies-c02-cartridge-1g-1972?stockType=Default",
+      "thc_percent": 89.1,
+      "cbd_percent": 0.19,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 4.3204,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Essentials London Pound Cake Cartridge",
+      "category": "Vape",
+      "weight": "1g",
+      "price": 32.5,
+      "product_id": "1677",
+      "product_slug": "cartridge-hybrid-essentials-london-pound-cake-cartridge-1g-1993?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/cartridge-hybrid-essentials-london-pound-cake-cartridge-1g-1993?stockType=Default",
+      "thc_percent": 86.3,
+      "cbd_percent": 0.13,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 3.8536,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Deleted Scene Live Resin Cartridge",
+      "category": "Vape",
+      "weight": "0.5g",
+      "price": 27.62,
+      "product_id": "8606",
+      "product_slug": "cartridge-indica-deleted-scene-live-resin-cartridge-0.5g-19365?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/cartridge-indica-deleted-scene-live-resin-cartridge-0.5g-19365?stockType=Default",
+      "thc_percent": 88.8,
+      "cbd_percent": 0.2,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 6.8598,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Apple Mochi Live Resin Cartridge",
+      "category": "Vape",
+      "weight": "0.5g",
+      "price": 27.62,
+      "product_id": "7803",
+      "product_slug": "cartridge-hybrid-apple-mochi-live-resin-cartridge-0.5g-18326?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/cartridge-hybrid-apple-mochi-live-resin-cartridge-0.5g-18326?stockType=Default",
+      "thc_percent": 86.6,
+      "cbd_percent": 0.14,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 8.1799,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Blue Breath Mints Live Resin Cartridge",
+      "category": "Vape",
+      "weight": "0.5g",
+      "price": 27.62,
+      "product_id": "1710",
+      "product_slug": "cartridge-hybrid-blue-breath-mints-live-resin-cartridge-0.5g-1350?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/vape-66/cartridge-hybrid-blue-breath-mints-live-resin-cartridge-0.5g-1350?stockType=Default",
+      "thc_percent": 83.04,
+      "cbd_percent": 0.11,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 5.565,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Cap Junky Crumble",
+      "category": "Concentrates",
+      "weight": "1g",
+      "price": 32.5,
+      "product_id": "2142",
+      "product_slug": "crumble-hybrid-cap-junky-crumble-1g-2277?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/concentrates-67/crumble-hybrid-cap-junky-crumble-1g-2277?stockType=Default",
+      "thc_percent": 77.9,
+      "cbd_percent": 0.14,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 3.14,
+      "top_terpenes": "Caryophyllene, Limonene, Linalool",
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Baba Yaga Crumble",
+      "category": "Concentrates",
+      "weight": "1g",
+      "price": 32.5,
+      "product_id": "2213",
+      "product_slug": "crumble-indica-baba-yaga-crumble-1g-2377?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/concentrates-67/crumble-indica-baba-yaga-crumble-1g-2377?stockType=Default",
+      "thc_percent": 71.5,
+      "cbd_percent": 0.17,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 1.2671,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Singapore Sling Shatter",
+      "category": "Concentrates",
+      "weight": "1g",
+      "price": 32.5,
+      "product_id": "2260",
+      "product_slug": "shatter-sativa-singapore-sling-shatter-1g-2437?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/concentrates-67/shatter-sativa-singapore-sling-shatter-1g-2437?stockType=Default",
+      "thc_percent": 66.37,
+      "cbd_percent": 0.13,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": 1.536,
+      "top_terpenes": "Caryophyllene, Limonene, Myrcene",
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Singapore Sling Wax",
+      "category": "Concentrates",
+      "weight": "1g",
+      "price": 32.5,
+      "product_id": "2279",
+      "product_slug": "wax-sativa-singapore-sling-wax-1g-2505?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/concentrates-67/wax-sativa-singapore-sling-wax-1g-2505?stockType=Default",
+      "thc_percent": 72.47,
+      "cbd_percent": 0.22,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": 4.219,
+      "top_terpenes": "Caryophyllene, Limonene, Myrcene",
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Cheddar Cheeze Wax",
+      "category": "Concentrates",
+      "weight": "1g",
+      "price": 32.5,
+      "product_id": "6957",
+      "product_slug": "wax-indica-cheddar-cheeze-wax-1g-17072?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/concentrates-67/wax-indica-cheddar-cheeze-wax-1g-17072?stockType=Default",
+      "thc_percent": 69.32,
+      "cbd_percent": 0.12,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 2.406,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Ocifer Crumble",
+      "category": "Concentrates",
+      "weight": "1g",
+      "price": 32.5,
+      "product_id": "8562",
+      "product_slug": "crumble-sativa-ocifer-crumble-1g-19311?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/concentrates-67/crumble-sativa-ocifer-crumble-1g-19311?stockType=Default",
+      "thc_percent": null,
+      "cbd_percent": null,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": null,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Ocifer Wax",
+      "category": "Concentrates",
+      "weight": "1g",
+      "price": 32.5,
+      "product_id": "8563",
+      "product_slug": "wax-sativa-ocifer-wax-1g-19313?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/concentrates-67/wax-sativa-ocifer-wax-1g-19313?stockType=Default",
+      "thc_percent": 71.64,
+      "cbd_percent": 0.13,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": 5.8855,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Apple Mochi Crumble",
+      "category": "Concentrates",
+      "weight": "1g",
+      "price": 32.5,
+      "product_id": "8980",
+      "product_slug": "crumble-hybrid-apple-mochi-crumble-1g-19828?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/concentrates-67/crumble-hybrid-apple-mochi-crumble-1g-19828?stockType=Default",
+      "thc_percent": 75.6,
+      "cbd_percent": 0.13,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": 4.076,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Banana Papaya Crumble",
+      "category": "Concentrates",
+      "weight": "1g",
+      "price": 32.5,
+      "product_id": "8999",
+      "product_slug": "crumble-indica-banana-papaya-crumble-1g-19866?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/concentrates-67/crumble-indica-banana-papaya-crumble-1g-19866?stockType=Default",
+      "thc_percent": 75.2,
+      "cbd_percent": 0.31,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 2.76,
+      "top_terpenes": null,
+      "terpene_list": [],
+      "lab_test_url": null
+    },
+    {
+      "name": "Peanut Butter Muffin Crumble",
+      "category": "Concentrates",
+      "weight": "1g",
+      "price": 32.5,
+      "product_id": "9007",
+      "product_slug": "crumble-sativa-peanut-butter-muffin-crumble-1g-19882?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/concentrates-67/crumble-sativa-peanut-butter-muffin-crumble-1g-19882?stockType=Default",
+      "thc_percent": 72.5,
+      "cbd_percent": 0.06,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": 5.17,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Relieve Lemongrass Gel",
+      "category": "Topical",
+      "weight": "650mg",
+      "price": 30.0,
+      "product_id": "1619",
+      "product_slug": "gel-hybrid-relieve-lemongrass-gel-650mg-1280?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/topical-64/gel-hybrid-relieve-lemongrass-gel-650mg-1280?stockType=Default",
+      "thc_percent": null,
+      "cbd_percent": null,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": null,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Relieve Lavender Gel",
+      "category": "Topical",
+      "weight": "650mg",
+      "price": 30.0,
+      "product_id": "5157",
+      "product_slug": "gel-hybrid-relieve-lavender-gel-650mg-6052?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/topical-64/gel-hybrid-relieve-lavender-gel-650mg-6052?stockType=Default",
+      "thc_percent": null,
+      "cbd_percent": null,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": null,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Watermelon Fruit Chew",
+      "category": "Edibles",
+      "weight": null,
+      "price": null,
+      "product_id": "4955",
+      "product_slug": "fruit-chew-sativa-watermelon-fruit-chew-10mg-10-pack-5800?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/edibles-65/fruit-chew-sativa-watermelon-fruit-chew-10mg-10-pack-5800?stockType=Default",
+      "thc_percent": null,
+      "cbd_percent": null,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": null,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Orange Z Pre-Roll",
+      "category": "Pre-Rolls",
+      "weight": "1g",
+      "price": 6.0,
+      "product_id": "7435",
+      "product_slug": "pre-roll-sativa-orange-z-pre-roll-1g-17778?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/pre-rolls-69/pre-roll-sativa-orange-z-pre-roll-1g-17778?stockType=Default",
+      "thc_percent": 27.17,
+      "cbd_percent": 0.06,
+      "strain_type": "Sativa",
+      "total_terpenes_percent": 0.933,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Zesty Garlic Cookies Smalls",
+      "category": "Flower",
+      "weight": "3.5g",
+      "price": 30.0,
+      "product_id": "7664",
+      "product_slug": "smalls-indica-zesty-garlic-cookies-smalls-3.5g-18153?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/smalls-indica-zesty-garlic-cookies-smalls-3.5g-18153?stockType=Default",
+      "thc_percent": 30.0,
+      "cbd_percent": 0.21,
+      "strain_type": "Indica",
+      "total_terpenes_percent": 2.2565,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Blueberry Classic Fruit Chew",
+      "category": "Edibles",
+      "weight": null,
+      "price": null,
+      "product_id": "4954",
+      "product_slug": "fruit-chew-indica-blueberry-classic-fruit-chew-10mg-10-pack-5799?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/edibles-65/fruit-chew-indica-blueberry-classic-fruit-chew-10mg-10-pack-5799?stockType=Default",
+      "thc_percent": null,
+      "cbd_percent": null,
+      "strain_type": "Indica",
+      "total_terpenes_percent": null,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    },
+    {
+      "name": "Moonbeam Gelato Smalls",
+      "category": "Flower",
+      "weight": "3.5g",
+      "price": 30.0,
+      "product_id": "7541",
+      "product_slug": "smalls-hybrid-moonbeam-gelato-smalls-3.5g-17930?stockType=Default",
+      "detail_url": "https://curaleaf.com/shop/florida/curaleaf-tampa-dale-mabry-midtown/menu/flower-68/smalls-hybrid-moonbeam-gelato-smalls-3.5g-17930?stockType=Default",
+      "thc_percent": null,
+      "cbd_percent": null,
+      "strain_type": "Hybrid",
+      "total_terpenes_percent": null,
+      "top_terpenes": null,
+      "terpene_list": [
+        "Myrcene"
+      ],
+      "lab_test_url": null
+    }
+  ],
+  "metadata": {
+    "platform": "SweedPOS",
+    "platform_type": "html_scraping",
+    "terpene_source": "product_detail_page",
+    "downloader_version": "1.1",
+    "batch": null,
+    "stores_per_batch": 15
+  },
+  "raw_response_size": 51533
+}

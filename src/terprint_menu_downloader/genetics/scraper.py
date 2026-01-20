@@ -393,7 +393,8 @@ class GeneticsScraper:
             # Check informations dict
             info = product.get("informations", {})
             if isinstance(info, dict):
-                genetics_text = info.get("genetics") or info.get("lineage") or ""
+                # Cookies uses "cross" field for genetics (e.g., "Lemon Cherry Gelato x Pina Acai")
+                genetics_text = info.get("cross") or info.get("genetics") or info.get("lineage") or ""
                 if genetics_text:
                     parent_1, parent_2 = self._parse_lineage(genetics_text)
             

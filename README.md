@@ -13,29 +13,78 @@ This project provides:
 
 ## Architecture
 
+**5-Stage Data Pipeline:**
+
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         Azure Function App                           │
-│              (terprint-menu-downloader.azurewebsites.net)           │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│   Timer Trigger (7x daily)          HTTP Triggers                    │
-│   ┌────────────────────┐            ┌──────────────────────────┐    │
-│   │  Menu Downloader   │            │  /api/stock/search       │    │
-│   │  - MÜV (86 stores) │            │  /api/stock/{disp}/{id}  │    │
-│   │  - Trulieve (162)  │            │  /api/stock/build-index  │    │
-│   │  - Cookies (18)    │            │  /api/run                │    │
-│   │  - Flowery (15+)   │            │  /api/status             │    │
-│   └────────┬───────────┘            └────────────┬─────────────┘    │
-│            │                                      │                  │
-│            ▼                                      ▼                  │
-│   ┌────────────────────┐            ┌──────────────────────────┐    │
-│   │  Azure Data Lake   │◄──────────►│    Strain Index          │    │
-│   │  (JSON files)      │            │  (strain_index.json)     │    │
-│   └────────────────────┘            └──────────────────────────┘    │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                         Terprint Menu Downloader                              │
+│            (ca-terprint-menudownloader.kindmoss-c6723cbe.eastus2...)         │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│   Stage 2: Menu Downloads (Every 2hrs, 8am-10pm EST)                        │
+│   ┌─────────────────────────────────────────────────────┐                   │
+│   │  Scheduled Timer (APScheduler)                      │                   │
+│   │  - MÜV (86 stores)                                  │                   │
+│   │  - Trulieve (162 stores × 4 categories)            │                   │
+│   │  - Cookies (18 stores)                              │                   │
+│   │  - Flowery (16 locations)                           │                   │
+│   │  - Curaleaf (45-60 stores)                          │                   │
+│   └──────────────┬──────────────────────────────────────┘                   │
+│                  │ Raw menu JSONs saved to:                                  │
+│                  │ dispensaries/{dispensary}/{year}/{month}/{day}/*.json     │
+│                  ▼                                                            │
+│   Stage 2.5: Batch Creator (Triggered after downloads)                      │
+│   ┌─────────────────────────────────────────────────────┐                   │
+│   │  POST ca-terprint-batches/api/create-batches       │                   │
+│   │  Consolidates all menu files into batch file:      │                   │
+│   │  batches/consolidated_batches_YYYYMMDD.json        │                   │
+│   └──────────────┬──────────────────────────────────────┘                   │
+│                  │ Automatically triggers ↓                                  │
+│                  ▼                                                            │
+│   Stage 3: COA Processor (Triggered by Batch Creator)                       │
+│   ┌─────────────────────────────────────────────────────┐                   │
+│   │  ca-terprint-batchprocessor/api/run-batch-processor│                   │
+│   │  Extracts batch codes, fetches COAs, writes to SQL  │                   │
+│   └──────────────┬──────────────────────────────────────┘                   │
+│                  │                                                            │
+│                  ▼                                                            │
+│   Stock Index Build (After batch creation)                                  │
+│   ┌─────────────────────────────────────────────────────┐                   │
+│   │  StockIndexer.build_index_from_latest()            │                   │
+│   │  Reads consolidated batch files + fills missing    │                   │
+│   │  dispensaries from raw menus                        │                   │
+│   │  Output: stock-index/current.json                   │                   │
+│   └─────────────────────────────────────────────────────┘                   │
+│                                                                               │
+│   HTTP Triggers (Available via APIM)                                        │
+│   ┌──────────────────────────────────┬──────────────────────────────────┐   │
+│   │  Download Controls               │  Stock API                        │   │
+│   │  - POST /run (manual trigger)    │  - GET /api/stock/status         │   │
+│   │  - GET /status                   │  - GET /api/stock/search?strain= │   │
+│   │  - GET /health                   │  - GET /api/stock/{dispensary}   │   │
+│   │  - POST /build-stock-index       │  - GET /api/stock/{disp}/{batch} │   │
+│   └──────────────────────────────────┴──────────────────────────────────┘   │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+                    Azure Data Lake Storage Gen2
+                    (stterprintsharedgen2/jsonfiles)
+                    ├── dispensaries/            (Stage 2 output)
+                    ├── batches/                 (Stage 2.5 output)
+                    └── stock-index/             (Stock index files)
 ```
+
+**Pipeline Flow:**
+1. **Stage 2 (Download)**: Menu Downloader runs every 2 hours → Saves raw JSON files
+2. **Stage 2.5 (Batch Creator)**: Auto-triggered after downloads → Creates `consolidated_batches_YYYYMMDD.json`
+3. **Stage 3 (COA Processor)**: Auto-triggered by Batch Creator → Extracts batch codes, fetches COAs, writes to SQL
+4. **Stock Index Build**: Auto-triggered after batch creation → Builds searchable index from consolidated batches + raw menus
+
+**APIM Integration:**
+- Base URL: `https://apim-terprint-dev.azure-api.net/menus`
+- All stock endpoints available through APIM gateway
+- See [openapi.json](./openapi.json) for complete API spec
 
 ## Supported Dispensaries
 

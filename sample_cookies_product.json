@@ -1,0 +1,656 @@
+{
+  "product": {
+    "id": "691f685e1fb6b85bcec8f823",
+    "name": "Prickly Pear",
+    "description": null,
+    "informations": {
+      "flavor": "Gassy, earthy, and floral on the inhale with notes of candy and funk on the exhale.",
+      "aroma": "Fruity, earthy, floral, and lavender engulfed in gasoline.",
+      "experience": "Heavy eyes, pressure, relaxation, mood boost."
+    },
+    "link": "https://cookiesflorida.co/bradenton/shop/prickly-pear-1-8oz/",
+    "slug": "prickly-pear-1-8oz",
+    "images": [
+      {
+        "id": null,
+        "url": "https://images.dutchie.com/fef8ef64465f7163af1646b1f2374c34",
+        "label": null,
+        "description": null
+      }
+    ],
+    "staff_pick": true,
+    "category": "Premium Flower",
+    "subcategory": "Default",
+    "brand": {
+      "id": "5f1b2f15-3a64-45de-8731-52009ea38009",
+      "name": "Turtle Pie Co. (T.P.C.)",
+      "description": "Turtle Pie Co. (T.P.C.) brings handcrafted, small-batch cannabis to Massachusetts with a focus on unique flavor profiles and smooth, enjoyable experiences \u2014 from artisan pre-rolls to premium flower, T.P.C. combines quality, creativity, and community to make every session memorable for connoisseurs and newcomers alike.",
+      "informations": [],
+      "images": [
+        "https://cookiesflorida.co/wp-content/uploads/2025/11/Turtle-Pie.png"
+      ],
+      "slug": "turtle-pie-co-t-p-c",
+      "link": "https://cookiesflorida.co/brands/turtle-pie-co-t-p-c/"
+    },
+    "strain_type": "Hybrid",
+    "potency_thc": {
+      "formatted": "20.5%",
+      "range": [
+        20.5
+      ],
+      "unit": "%"
+    },
+    "potency_cbd": {
+      "formatted": "0.05%",
+      "range": [
+        0.05
+      ],
+      "unit": "%"
+    },
+    "effects": [
+      "Calm",
+      "Happy",
+      "Relaxed",
+      "Energetic"
+    ],
+    "specials": null,
+    "sku": null,
+    "split_source": null,
+    "tags": [
+      "Prickly Pear"
+    ],
+    "terpenes": [
+      {
+        "id": "72c8ee05-44e7-4147-9c89-380c804d344a",
+        "name": "Alpha Pinene",
+        "description": "A commonly found terpene in cannabis, Alpha-pinene lends it's name to it's easily recognized signature scent, that of pine trees. Alpha-pinene is already being used in plants to limit the growth of undesired bacteria as it is the most commonly found terpene in nature. Many users report a boost of energy or brain function when consuming a cannabis product high in Alpha-pinene. ",
+        "unit": "PERCENTAGE",
+        "unit_symbol": "%",
+        "value": 0.04,
+        "aromas": [
+          "Pine"
+        ],
+        "effects": [
+          "Calm",
+          "Clear Mind",
+          "Creative",
+          "Energetic",
+          "Focused",
+          "Happy",
+          "Inspired",
+          "Relaxed",
+          "Sleepy",
+          "Uplifted"
+        ],
+        "benefits": [
+          "Anti-inflammatory",
+          "Brain Function",
+          "Respiratory Function",
+          "Cancer Fighting",
+          "Pain Relief",
+          "Anti-anxiety"
+        ]
+      },
+      {
+        "id": "7c0dfdd7-3dae-46e6-b9ee-c90bea8e342a",
+        "name": "Beta Caryophyllene",
+        "description": "Beta-caryophyllene is known for it's wide variety of potential health benefits both physically & mentally. This terpene has a unique ability to bind to the CB2 receptors; CB2 receptors are targeted when treating pain & inflammation with cannabis. Beta-caryophyllene is also approved for use in food by the FDA & is commonly found in black pepper, cinnamon, & basil. ",
+        "unit": "PERCENTAGE",
+        "unit_symbol": "%",
+        "value": 0.31,
+        "aromas": [
+          "Sharp",
+          "Spice",
+          "Sweet",
+          "Wood"
+        ],
+        "effects": [
+          "Calm",
+          "Energetic",
+          "Inspired",
+          "Relaxed"
+        ],
+        "benefits": [
+          "Anti-inflammatory",
+          "Gastrointestinal",
+          "Cancer Fighting",
+          "Anti-depression",
+          "Anti-anxiety",
+          "Pain Relief",
+          "Brain Function",
+          "Anti-diabetic"
+        ]
+      },
+      {
+        "id": "e5791769-cbcb-4e97-a4be-b822e7f560cb",
+        "name": "Beta Myrcene",
+        "description": "beta-Myrcene a.k.a. Myrcene is one of the most common terpenes found in cannabis. Myrcene is known to increase the effects of the psychoactive properties of THC and enhance the health benefits found in CBD. Commonly found in parsley, mangoes & hops, Myrcene is a good option for those looking to add a little relaxation to their overall experience. ",
+        "unit": "PERCENTAGE",
+        "unit_symbol": "%",
+        "value": 0.14,
+        "aromas": [
+          "Earthy",
+          "Musk",
+          "Cloves"
+        ],
+        "effects": [
+          "Calm",
+          "Happy",
+          "Inspired",
+          "Relaxed",
+          "Sleepy",
+          "Uplifted"
+        ],
+        "benefits": [
+          "Anti-inflammatory",
+          "Cancer Fighting",
+          "Pain Relief"
+        ]
+      },
+      {
+        "id": "b6fe2efe-a41c-4dd6-9a1f-5ea60f46c1ba",
+        "name": "Beta Pinene",
+        "description": "beta-Pinene is a monoterpene and one of the two isomer compounds that make up Pinene. This terpene is commonly associated with use in turpentine and luxury goods like perfumes and colognes. Users report an increase in mental clarity and executive function when using strains high in beta-Pinene. \n",
+        "unit": "PERCENTAGE",
+        "unit_symbol": "%",
+        "value": 0.04,
+        "aromas": [
+          "Woody",
+          "Pine"
+        ],
+        "effects": [
+          "Calm",
+          "Clear Mind",
+          "Creative",
+          "Energetic",
+          "Focused",
+          "Happy",
+          "Inspired",
+          "Relaxed",
+          "Sleepy",
+          "Uplifted"
+        ],
+        "benefits": [
+          "Brain Function",
+          "Cancer Fighting",
+          "Pain Relief",
+          "Respiratory Function"
+        ]
+      },
+      {
+        "id": "607b00ea-17c4-45d8-9f09-fa5781fd9d50",
+        "name": "Bisabolol",
+        "description": "A secondary terpene found in cannabis, a-Bisabolol is an aromatic terpene that also carries a slew of potential health benefits. Most notably present in German chamomile, a-bisabolol may also act as a relaxant for those with insomnia & anxiety. While secondary terpenes take a back seat to the primary terpenes , they may act synergistically with other terpenes & cannabinoids to enhance a desired effect or potential health benefit.",
+        "unit": "PERCENTAGE",
+        "unit_symbol": "%",
+        "value": 0.05,
+        "aromas": [
+          "Citrus",
+          "Floral",
+          "Spice"
+        ],
+        "effects": [
+          "Calm",
+          "Creative",
+          "Focused",
+          "Happy",
+          "Inspired",
+          "Relaxed",
+          "Sleepy",
+          "Uplifted"
+        ],
+        "benefits": [
+          "Pain Relief",
+          "Anti-inflammatory",
+          "Brain Function",
+          "Cancer Fighting",
+          "Anti-depression",
+          "Stress Relief",
+          "Anti-anxiety"
+        ]
+      },
+      {
+        "id": "fcebae03-ff91-4a9c-b4f7-4515dfd847f6",
+        "name": "Camphene",
+        "description": "Camphene is a minor terpene that can be found in turpentine, valerian, ginger oil and camphor oil. It has a musty doug fir and earth scent that sometimes gets mistaken for myrcene which is usually found in higher concentrations. Camphene historically was used in traditional medicine for treating bacterial and fungal infections and also for treating athletes foot, psoriasis and eczema. More recently Camphene has been found to have a wide array of potential health benefits; it has antioxidant and analgesic effects even when applied topically. It acts as an antioxidant on inflammatory lung disease and has even been shown to lower cholesterol and triglyceride levels. ",
+        "unit": "PERCENTAGE",
+        "unit_symbol": "%",
+        "value": 0.01,
+        "aromas": [
+          "Herbal",
+          "Woody"
+        ],
+        "effects": [
+          "Calm",
+          "Clear Mind",
+          "Creative",
+          "Energetic",
+          "Focused",
+          "Happy",
+          "Inspired"
+        ],
+        "benefits": [
+          "Anti-inflammatory",
+          "Pain Relief",
+          "Respiratory Function",
+          "Anti-bacterial",
+          "Anti-fungal"
+        ]
+      },
+      {
+        "id": "68b82a48-6067-46a0-b388-7d8976cc555c",
+        "name": "Caryophyllene Oxide",
+        "description": "Caryophyllene oxide is a sesquiterpene known best for its cancer fighting and anti-fungal properties. It can be found in rosemary, basil, hops and of course Cannabis. ",
+        "unit": "PERCENTAGE",
+        "unit_symbol": "%",
+        "value": 0.04,
+        "aromas": [
+          "Spice",
+          "Woody"
+        ],
+        "effects": [
+          "Calm",
+          "Clear Mind",
+          "Focused",
+          "Relaxed"
+        ],
+        "benefits": [
+          "Anti-fungal",
+          "Cancer Fighting"
+        ]
+      },
+      {
+        "id": "7968cc06-e4a7-4df5-87ce-f0c177b7de24",
+        "name": "Eucalyptol",
+        "description": "Considered to be one of the more studied terpenes, Eucalyptol (Cineole) has shown the potential to improve memory and learning through several randomized placebo-controlled studies conducted by the Natural Health Research Institute. The possible increase in cognitive abilities coupled with a variety of potential health benefits make Eucalyptol a terpene worth having in your next strain. ",
+        "unit": "PERCENTAGE",
+        "unit_symbol": "%",
+        "value": null,
+        "aromas": [
+          "Spice"
+        ],
+        "effects": [
+          "Calm",
+          "Clear Mind",
+          "Focused",
+          "Inspired"
+        ],
+        "benefits": [
+          "Anti-inflammatory",
+          "Brain Function",
+          "Pain Relief",
+          "Respiratory Function",
+          "Gastrointestinal",
+          "Cancer Fighting"
+        ]
+      },
+      {
+        "id": "f0f14f51-3cbd-41c4-9b09-838341eb03e0",
+        "name": "Geraniol",
+        "description": "Geraniol is the terpene most commonly associated with the beautiful smell of geranium. This flavorful terpene is also found in roses, lemongrass, carrots, lemon zest and of course our personal favorite cannabis. Therapeutically Geraniol has shown efficacy as a neuroprotectant, anti-inflammatory and an inhibitor of the proliferation of certain types of cancer cells. ",
+        "unit": "PERCENTAGE",
+        "unit_symbol": "%",
+        "value": null,
+        "aromas": [
+          "Citrus",
+          "Floral",
+          "Sweet"
+        ],
+        "effects": [
+          "Calm",
+          "Clear Mind",
+          "Creative",
+          "Energetic",
+          "Focused",
+          "Happy",
+          "Inspired",
+          "Relaxed",
+          "Sleepy",
+          "Uplifted"
+        ],
+        "benefits": [
+          "Pain Relief",
+          "Anti-depression",
+          "Anti-inflammatory"
+        ]
+      },
+      {
+        "id": "1df213c3-e8c1-4ef5-85c0-5a7489df19ce",
+        "name": "Guaiol",
+        "description": "Guaiol is a terpene that contributes its pine fragrance to the overall aroma of some strains in cannabis. Found in cypress pine and guaiacum plants, this terpene carries the potential for anti-inflammatory benefits as well as antimicrobial properties. ",
+        "unit": "PERCENTAGE",
+        "unit_symbol": "%",
+        "value": null,
+        "aromas": [
+          "Musk",
+          "Pine",
+          "Wood"
+        ],
+        "effects": [
+          "Calm",
+          "Creative",
+          "Energetic",
+          "Happy",
+          "Inspired",
+          "Relaxed",
+          "Sleepy"
+        ],
+        "benefits": [
+          "Anti-inflammatory",
+          "Anti-bacterial"
+        ]
+      },
+      {
+        "id": "108eefed-dc5b-436f-b929-46e1c17773de",
+        "name": "Humulene",
+        "description": "Commonly found in ginseng, ginger, & hops, Humulene is known to lend its robust characteristics to the different scents of cannabis. This terpene has been used in holistic practices for hundreds of years due to its strong anti-inflammatory properties. Humulene has also been reported to act as an appetite suppressant. ",
+        "unit": "PERCENTAGE",
+        "unit_symbol": "%",
+        "value": 0.1,
+        "aromas": [
+          "Herbal",
+          "Spice",
+          "Woody",
+          "Earthy"
+        ],
+        "effects": [
+          "Calm",
+          "Creative",
+          "Energetic",
+          "Focused",
+          "Happy",
+          "Inspired",
+          "Uplifted"
+        ],
+        "benefits": [
+          "Anti-inflammatory",
+          "Cancer Fighting",
+          "Appetite Suppressant"
+        ]
+      },
+      {
+        "id": "6de85657-643d-40ec-bbbd-6d440cf463e5",
+        "name": "Isopulegol",
+        "description": "Isopulegol is a terpene that is the chemical precursor to menthol and is known to have a rather fresh, minty flavor and scent and has long been used in the perfume and fragrance industry. This terpene has also been found to have anti-inflammatory, anti-viral and also gastroprotective properties. ",
+        "unit": "PERCENTAGE",
+        "unit_symbol": "%",
+        "value": 0.06,
+        "aromas": [
+          "Mint",
+          "Herbal"
+        ],
+        "effects": [
+          "Calm",
+          "Clear Mind",
+          "Creative",
+          "Energetic",
+          "Focused",
+          "Happy",
+          "Inspired",
+          "Sleepy",
+          "Uplifted"
+        ],
+        "benefits": [
+          "Gastrointestinal",
+          "Anti-inflammatory"
+        ]
+      },
+      {
+        "id": "0b06cb0c-507e-4319-b1a7-591bfa1d2eec",
+        "name": "Limonene",
+        "description": "Limonene is found in citrus rinds and is the second most commonly occurring terpene in nature. This terpene has been used in high dosages as a catalyst in topical products to allow other chemical compounds to pass through the skin for absorption in the blood. ",
+        "unit": "PERCENTAGE",
+        "unit_symbol": "%",
+        "value": 0.24,
+        "aromas": [
+          "Citrus",
+          "Lemon",
+          "Herbal"
+        ],
+        "effects": [
+          "Happy",
+          "Focused"
+        ],
+        "benefits": [
+          "Cancer Fighting",
+          "Anti-anxiety",
+          "Anti-depression",
+          "Stress Relief",
+          "Brain Function",
+          "Gastrointestinal",
+          "Anti-inflammatory"
+        ]
+      },
+      {
+        "id": "f9b7122e-eebe-467f-9998-b99a68727a61",
+        "name": "Linalool",
+        "description": "Linalool is a multi-use terpene that carries a strong calming effect as well as an ability to act as an anticonvulsant in epileptic patients. Found in the plants rosewood, coriander, & lavender, Linalool is a popular terpene commonly present in over 200 species of plants across the world. Linalool is a good addition to your terpene selection when looking for a little R & R. ",
+        "unit": "PERCENTAGE",
+        "unit_symbol": "%",
+        "value": 0.13,
+        "aromas": [
+          "Floral",
+          "Herbal",
+          "Lavender"
+        ],
+        "effects": [
+          "Comfort",
+          "Calm",
+          "Clear Mind",
+          "Creative",
+          "Energetic",
+          "Focused",
+          "Happy",
+          "Inspired",
+          "Relaxed",
+          "Sleepy",
+          "Uplifted"
+        ],
+        "benefits": [
+          "Anti-anxiety",
+          "Anti-inflammatory",
+          "Sedative",
+          "Pain Relief",
+          "Stress Relief",
+          "Sleep aid",
+          "Cancer Fighting"
+        ]
+      },
+      {
+        "id": "39bfe316-39eb-4f9a-836f-d145f964c376",
+        "name": "Nerolidol",
+        "description": "Nerolidol also known as trans-nerolidol is a secondary terpene that gives depth of field to scents of plants like ginger, lavender, oranges, lemongrass and tea tree. Nerolidol has a sweet and flowery smell with hints of apple, rose and citrus. It has been found to have anti-insomnia and sedative properties in addition to acting as an anti-microbial and anti-fungal agent.",
+        "unit": "PERCENTAGE",
+        "unit_symbol": "%",
+        "value": 0.13,
+        "aromas": [
+          "Floral",
+          "Sweet",
+          "Woody"
+        ],
+        "effects": [
+          "Calm",
+          "Clear Mind",
+          "Creative",
+          "Energetic",
+          "Happy",
+          "Inspired",
+          "Relaxed",
+          "Sleepy",
+          "Uplifted"
+        ],
+        "benefits": [
+          "Sedative",
+          "Stress Relief"
+        ]
+      },
+      {
+        "id": "52094a9e-52a5-4e45-9cf9-c5a7a41f844c",
+        "name": "Ocimene",
+        "description": "Ocimene is a terpene that is commonly found in cannabis as well as in a wide array of fruits and vegetables. Some familiar fruits and spices that contain Ocimene are; parsley, mango, basil, allspice and pepper. Historically it has been widely used in perfumes, but has recently been shown to have possible potential benefits to health as an anti-inflammatory, anti-viral and anti-bacterial compound. ",
+        "unit": "PERCENTAGE",
+        "unit_symbol": "%",
+        "value": 0.06,
+        "aromas": [
+          "Herbal",
+          "Sweet",
+          "Woody"
+        ],
+        "effects": [
+          "Calm",
+          "Creative",
+          "Energetic",
+          "Happy",
+          "Inspired",
+          "Uplifted"
+        ],
+        "benefits": [
+          "Anti-inflammatory",
+          "Anti-bacterial"
+        ]
+      },
+      {
+        "id": "b2ede56c-6d46-4b85-9093-82fcb3ceb8a5",
+        "name": "Terpinene",
+        "description": "Terpinene is a terpene that is found in cardamom and marjoram oil, and also in cannabis. It has a scent that is citrusy but at the same time dank and musky. Terpinene has been found to have anti-oxidant properties as well as being known for being a strong anti-inflammatory.",
+        "unit": "PERCENTAGE",
+        "unit_symbol": "%",
+        "value": 0.01,
+        "aromas": [
+          "Musk",
+          "Lemon"
+        ],
+        "effects": [
+          "Creative",
+          "Energetic",
+          "Focused",
+          "Happy",
+          "Inspired",
+          "Relaxed",
+          "Uplifted"
+        ],
+        "benefits": [
+          "Anti-inflammatory"
+        ]
+      },
+      {
+        "id": "14a7b4a6-86db-4bc6-bd1a-d8c8a4534b77",
+        "name": "Terpinolene",
+        "description": "Terpinolene is a cannabis terpene with strong aromatic properties which makes it a popular ingredient in perfumes, lotions & soaps. While this may not be a prevailing terpene such as myrcene or linalool, it still has the potential to positively effect the endocannabinoid system through its numerous potential health benefits. Also found naturally occurring in apples, tea trees & sage. ",
+        "unit": "PERCENTAGE",
+        "unit_symbol": "%",
+        "value": 0.02,
+        "aromas": [
+          "Citrus",
+          "Woody",
+          "Spice"
+        ],
+        "effects": [
+          "Clear Mind",
+          "Creative",
+          "Energetic",
+          "Happy",
+          "Inspired",
+          "Sleepy",
+          "Uplifted"
+        ],
+        "benefits": [
+          "Cancer Fighting",
+          "Sedative",
+          "Stress Relief",
+          "Anti-anxiety"
+        ]
+      },
+      {
+        "id": "f4bc6638-3423-4334-b83f-d495775e4282",
+        "name": "Trans-Nerolidol",
+        "description": "Trans-Nerolidol is an aromatic secondary terpene found in a wide variety of botanicals, including cannabis. It has a scent that contains woody, citrus and floral notes, and can be found in high concentrations in plants like lemongrass, ginger, tea tree and jasmine. \n\nTrans - Nerolidol has a long history of being used for its relaxing and lightly sedative effects. More recently it has been thoroughly studied for its anti-bacterial, anti-fungal and anti-parasitic properties. If you're looking to find a strain that contains higher concentrations of Trans - Nerolidol, look for Tangilope and Sour Kush or strains that are closely related to them. ",
+        "unit": "PERCENTAGE",
+        "unit_symbol": "%",
+        "value": 0.07,
+        "aromas": [
+          "Citrus",
+          "Woody",
+          "Floral"
+        ],
+        "effects": [
+          "Calm",
+          "Happy",
+          "Relaxed",
+          "Sleepy"
+        ],
+        "benefits": [
+          "Sedative",
+          "Anti-fungal",
+          "Anti-bacterial"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "id": "691f685e1fb6b85bcec8f823~1/8oz",
+        "name": "1/8oz",
+        "option": "1/8oz",
+        "quantity": 25,
+        "price": 22.75,
+        "regular_price": 35,
+        "special_ids": [],
+        "images": null
+      }
+    ],
+    "cannabinoids": [
+      {
+        "id": "4771fe48-39ed-41e5-9006-160fac465aab",
+        "name": "CBDA (Cannabidiolic acid)",
+        "description": "CBDA is a derivative of CBGA and the precursor to the well known cannabinoid CBD. Over the last decade scientists have found that CBDA has a very similar chemical structure to that of nonsteroidal anti-inflammatory drugs (NSAIDs) and thus has shown promise in treating pain due to inflammation by inhibiting COX-2 receptors in the brain that register pain. CBDA has also been shown to help regulate the over release of serotonin that causes severe nausea and vomiting in patients receiving chemotherapy, and while more thorough research is needed these results are very promising.",
+        "unit": "PERCENTAGE",
+        "unit_symbol": "%",
+        "value": 0.06
+      },
+      {
+        "id": "226a487e-1eaf-4f7f-b09d-4d4b52b4cfba",
+        "name": "CBG (Cannabigerol)",
+        "description": "Cannabinoids are synthesized by Cannabigerolic Acid. CBG is the decarboxylated form of this acid that appears at low levels in most cannabis plants. Because its properties are beneficial to multiple parts of the endocannabinoid system, CBG has a wide range of therapeutic uses. It is non-psychotropic and can provide analgesic and antidepressant qualities.",
+        "unit": "PERCENTAGE",
+        "unit_symbol": "%",
+        "value": 0.11
+      },
+      {
+        "id": "50856e95-ddb7-4930-8a8b-9cd38d2617a7",
+        "name": "CBGA (Cannabigerolic acid)",
+        "description": "CBGA is often referred to as the, \u201cFather or Mother of all Cannabinoids\u201d. This is because CBGA is situated at the very top of the cascading reaction that creates THCA, CBDA and CBCA which, through decarboxylation, are turned into the three major cannabinoids THC, CBD and CBC. Currently there is little research being conducted on the medical benefits of CBGA, although it has shown extremely promising results when looking at the interaction between CBGA and colon cancer cells. When CBGA was applied directly to colon cancer cells not only did it destroy the cancer cells, but it also stopped the proliferation of new cancer cells. More research is certainly needed, but these preliminary results are extremely encouraging.",
+        "unit": "PERCENTAGE",
+        "unit_symbol": "%",
+        "value": 0.35
+      },
+      {
+        "id": "15cdb297-c8a3-4e54-a73d-e9e9bfd83ddf",
+        "name": "THC-D9 (Delta 9\u2013tetrahydrocannabinol)",
+        "description": "Delta 9 THC is the primary compound found in the resinous glands of a cannabis plant, and is directly responsible for psychoactive effects. It mirrors the body\u2019s naturally occurring cannabinoids and attaches to these receptors to alter and enhance sensory perception. THC can create a feeling of euphoria by enhancing dopamine levels in the brain. The amount of THC in a cannabis product can vary widely based on the method of consumption and the strain at the source of that product. The high that is produced is often enhanced by the \u201centourage effect\u201d  which is a combination of multiple cannabinoids in conjunction with various terpenes and individual body chemistry.",
+        "unit": "PERCENTAGE",
+        "unit_symbol": "%",
+        "value": 0.49
+      },
+      {
+        "id": "25e0ef30-6d24-4c6c-a8c4-6ccd8da7ece4",
+        "name": "THCA (\u03949-tetrahydrocannabinolic acid)",
+        "description": "THCA is a cannabis compound with a laundry list of potential mental and physical health benefits. THCA is the non-psychoactive precursor to THC, the most famous cannabinoid of all. While THC is responsible for the psychoactive \u201chigh\u201d that so many of us enjoy, THCA has shown great promise as an anti-inflammatory, neuroprotectant and anti-emetic for appetite loss and treatment of nausea. THCA is found in its highest levels in living or freshly harvested cannabis samples. For this reason some users choose to juice fresh cannabis leaves and flowers to get as much THCA as possible.",
+        "unit": "PERCENTAGE",
+        "unit_symbol": "%",
+        "value": 22.9
+      }
+    ],
+    "meta_data": {
+      "id": "4406769",
+      "category": "Packed",
+      "sku": "41739178",
+      "batch_id": "6888608",
+      "batch_name": "F23H425S10839-BIG",
+      "alternate_name": null,
+      "lab_result_url": "https://coa.moderncanna.com/coa/JK10014-01_F23H425S10839-BIG.pdf",
+      "packaged_date": "2025-11-10T05:00:00.000Z"
+    },
+    "options": null,
+    "collections": null
+  }
+}

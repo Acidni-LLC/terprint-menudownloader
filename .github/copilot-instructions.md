@@ -1,10 +1,16 @@
 # Terprint AI Software Engineer & Architect Guidelines
 
+**Version:** 2.1.10
+**Last Updated:** January 19, 2026 19:41:31
+**terprint-config Package Version:** 4.6.0
+
 ---
 
-> **📚 INHERITANCE**: This file contains **Terprint-specific** instructions.
-> It inherits from and extends the **[Acidni Master Instructions](../shared/acidni-copilot-instructions.md)**.
-> See also: **[.github/instructions/](./instructions/)** for technology-specific guidance.
+> **📚 INHERITANCE**: This file contains comprehensive **Terprint-specific** instructions.
+> It extends the **[Acidni Master Instructions](https://github.com/Acidni-LLC/terprint-config/blob/main/shared/acidni-copilot-instructions.md)** (`../terprint-config/shared/acidni-copilot-instructions.md`).
+> See also: **[.github/instructions/](https://github.com/Acidni-LLC/terprint-config/tree/main/.github/instructions)** (`../terprint-config/.github/instructions/`) for technology-specific guidance.
+> 
+> **🔄 SYNC SCRIPT**: Run `copy-instructions-to-repos.ps1` to distribute this file to all Terprint repos.
 
 ---
 
@@ -24,537 +30,600 @@ The following standards are inherited from `shared/acidni-copilot-instructions.m
 - Terprint service configurations and ports
 - Dispensary API mappings and integrations
 - Azure Marketplace metering
+- Poetry package management requirement
 
 ---
 
-## 🚨 CRITICAL DIRECTIVES — READ FIRST 🚨
+## 🚨 CRITICAL DIRECTIVES — ABSOLUTE RULES 🚨
 
-> **THESE RULES ARE MANDATORY. VIOLATIONS WILL BREAK THE SYSTEM.**
+> **These rules are MANDATORY. Violations will break the system.**
 
-### DIRECTIVE 1: NEVER MODIFY CODE OUTSIDE YOUR APP'S HOME REPO
+### DIRECTIVE 0: USE GITHUB ACTIONS FOR ALL CI/CD
+- **ALL Terprint services use GitHub Actions for CI/CD** — NEVER use Azure Pipelines
+- **GitHub is the source control AND CI/CD platform** — Azure DevOps is only for work item tracking
+- **Deployment target**: Azure Container Apps through APIM gateway
+- **Organization secrets**: Use ORG_* prefixed secrets and variables for consistency
 
+### DIRECTIVE 1: REPOSITORY BOUNDARIES
 - **EACH APP LIVES IN ITS OWN REPOSITORY** — Do NOT edit files in sibling repos
-- **ALL CODE CHANGES ARE COORDINATED BY `terprint-config`** — Cross-cutting changes go through the config project
-- **CREATE DEVOPS WORK ITEMS** to track config changes needed across repos
+- **ALL CODE CHANGES ARE COORDINATED BY `terprint-config`** — Cross-cutting changes go through the config project  
+- **CREATE AZURE DEVOPS WORK ITEMS** to track config changes needed across GitHub repos
 - If you need changes in another repo, document the requirement and create a work item
-- Example: If `terprint-ai-chat` needs a config update, create WI in DevOps, don't edit `terprint-config` directly
 
-### DIRECTIVE 2: USE `pymssql` NOT `pyodbc` FOR SQL
+> **IMPORTANT**: Repositories are hosted on **GitHub** (`github.com/Acidni-LLC`). Work items, project management, and artifacts are managed in **Azure DevOps** (`dev.azure.com/Acidni/Terprint`).
 
+### DIRECTIVE 2: ALL PYTHON APPS MUST USE POETRY
+
+> **MANDATORY: Poetry is the ONLY supported Python package manager for Terprint**
+
+- **NEVER use `pip install` directly** — Always use `poetry add`
+- **NEVER use `requirements.txt` as source of truth** — Use `pyproject.toml`
+- **ALWAYS activate Poetry environment** before running Python code
+- **Export requirements.txt for Docker** only when building containers
+
+**Poetry Setup (New Project):**
+```powershell
+# Initialize new project
+poetry init --name "terprint-myservice" --python "^3.12"
+
+# Add dependencies
+poetry add fastapi uvicorn azure-identity azure-storage-blob
+poetry add --group dev pytest ruff mypy
+
+# Install all dependencies
+poetry install
+
+# Activate environment
+poetry shell
+# OR run commands directly:
+poetry run python main.py
+poetry run pytest
+```
+
+**Poetry Setup (Existing Project):**
+```powershell
+# Install dependencies from pyproject.toml
+poetry install
+
+# Update lock file
+poetry lock
+
+# Activate and run
+poetry shell
+python main.py
+```
+
+**pyproject.toml Standard Structure:**
+```toml
+[tool.poetry]
+name = "terprint-myservice"
+version = "1.0.0"
+description = "Terprint service description"
+authors = ["Acidni LLC <dev@acidni.net>"]
+readme = "README.md"
+packages = [{include = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.109.0"
+uvicorn = "^0.27.0"
+azure-identity = "^1.15.0"
+azure-storage-blob = "^12.19.0"
+terprint-config = {version = "^4.0.0", source = "terprint"}
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+pytest-asyncio = "^0.23.0"
+ruff = "^0.2.0"
+mypy = "^1.8.0"
+
+[[tool.poetry.source]]
+name = "terprint"
+url = "https://pkgs.dev.azure.com/Acidni/Terprint/_packaging/terprint/pypi/simple/"
+priority = "supplemental"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+```
+
+**Docker Integration with Poetry:**
+```dockerfile
+# Multi-stage build with Poetry
+FROM python:3.12-slim AS builder
+WORKDIR /app
+
+# Install Poetry
+RUN pip install --no-cache-dir poetry==1.7.1
+RUN poetry config virtualenvs.create false
+
+# Copy dependency files first (for layer caching)
+COPY pyproject.toml poetry.lock ./
+
+# Export to requirements.txt for production (without dev dependencies)
+RUN poetry export -f requirements.txt --output requirements.txt --without-hashes --without dev
+
+FROM python:3.12-slim AS runtime
+RUN groupadd -r terprint && useradd -r -g terprint terprint
+WORKDIR /app
+
+COPY --from=builder /app/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY src/ ./src/
+
+RUN chown -R terprint:terprint /app
+USER terprint
+
+ENV PYTHONUNBUFFERED=1 PORT=80
+EXPOSE 80
+
+CMD ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "80"]
+```
+
+**VS Code Settings for Poetry:**
+```json
+// .vscode/settings.json
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.terminal.activateEnvironment": true,
+  "python.analysis.typeCheckingMode": "strict"
+}
+```
+
+**Migration Checklist (requirements.txt → Poetry):**
+- [ ] Run `poetry init` in project root
+- [ ] Add dependencies: `poetry add <package>` for each requirement
+- [ ] Add dev dependencies: `poetry add --group dev <package>`
+- [ ] Configure Azure Artifacts source for terprint-config
+- [ ] Update Dockerfile to use Poetry export pattern
+- [ ] Update CI/CD to use `poetry install` instead of `pip install`
+- [ ] Remove requirements.txt (or keep only as generated export)
+- [ ] Update .gitignore to include `.venv/` and `poetry.lock` (lock should be committed)
+
+### DIRECTIVE 3: USE `pymssql` NOT `pyodbc` FOR SQL
 - Azure Functions Consumption Plan runs on **Linux without ODBC drivers**
 - `pyodbc` WILL FAIL in production
 - Always use `pymssql` with `%s` placeholders (not `?`)
 
-### DIRECTIVE 3: USE ENTRA ID FOR SERVICE-TO-SERVICE AUTH
+```python
+# ✅ CORRECT - pymssql style
+cursor.execute("SELECT * FROM Users WHERE Id = %s", (user_id,))
 
+# ❌ WRONG - pyodbc style (will NOT work)
+cursor.execute("SELECT * FROM Users WHERE Id = ?", (user_id,))
+```
+
+### DIRECTIVE 4: USE ENTRA ID FOR SERVICE-TO-SERVICE AUTH
 - **NEVER use function keys** for app-to-app API calls
 - **NEVER hard-code API keys** in source code
 - **ALWAYS use managed identities** and Bearer tokens
 - **ALWAYS validate token audience** to prevent reuse attacks
 
-### DIRECTIVE 4: MAINTAIN OPENAPI SPECS FOR ALL HTTP APIS
+### DIRECTIVE 5: ALL INTER-SERVICE CALLS THROUGH APIM
+- **ALL** API calls between Terprint services MUST route through APIM gateway
+- **Base URL**: `https://apim-terprint-dev.azure-api.net`
+- **NEVER** call function apps directly (e.g., `func-terprint-communications.azurewebsites.net`)
 
+### DIRECTIVE 6: ALL SECRETS IN AZURE KEY VAULT
+- **NEVER commit** API keys, connection strings, or passwords to source control
+- **ALWAYS use** Key Vault references in Azure app settings: `@Microsoft.KeyVault(SecretUri=...)`
+- **local.settings.json** is for local dev only and MUST be in `.gitignore`
+
+### DIRECTIVE 7: GITHUB ACTIONS DEPLOYMENT WITH ORG SECRETS
+- **ALL repositories MUST have GitHub Actions workflows** for deployment
+- **USE ORGANIZATION SECRETS** (ORG_*) instead of repository secrets
+- **TRIGGER integration tests** after successful deployment
+- Test dashboard: https://brave-stone-0d8700d0f.3.azurestaticapps.net
+
+**Required Workflow Pattern:**
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy to Azure
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.ORG_AZURE_CREDENTIALS }}
+      
+      - name: Login to ACR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.ORG_ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ORG_ACR_USERNAME }}
+          password: ${{ secrets.ORG_ACR_PASSWORD }}
+      
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t ${{ vars.ORG_ACR_LOGIN_SERVER }}/terprint-ai-chat:latest .
+          docker push ${{ vars.ORG_ACR_LOGIN_SERVER }}/terprint-ai-chat:latest
+      
+      - name: Deploy to Container Apps
+        run: |
+          az containerapp update \
+            --name ca-terprint-ai-chat \
+            --resource-group rg-dev-terprint-ca \
+            --image ${{ vars.ORG_ACR_LOGIN_SERVER }}/terprint-ai-chat:latest
+```
+
+### DIRECTIVE 8: OPENAPI SPECS FOR ALL HTTP APIS
 - Every Azure Function with HTTP triggers **MUST have `openapi.json`** in repo root
 - Follow OpenAPI 3.0.x specification
 - Include all endpoints, auth requirements, request/response schemas
-- These are collected by `create-consolidated-readme.ps1` for APIM configuration
 
-### DIRECTIVE 5: MAINTAIN DOCUMENTATION
-
+### DIRECTIVE 9: MAINTAIN DOCUMENTATION
 - Every repo **MUST have** `README.md`, `docs/ARCHITECTURE.md`, `docs/INTEGRATION.md`
 - Keep docs in sync with code changes (update in same PR)
-- Run `copy-instructions.ps1` to get latest shared guidelines
+- Run `copy-instructions-to-repos.ps1` to distribute updated standards
 
-### DIRECTIVE 6: TRIGGER INTEGRATION TESTS AFTER DEPLOYMENT
+### DIRECTIVE 10: BUSINESS LOGIC IN SHARED PACKAGES
+- **Business logic belongs in `terprint-core`** packages (Python + NuGet)
+- **Application code consumes** business logic, doesn't implement it
 
-- All deployments **SHOULD trigger** `Terprint.Tests` pipeline
-- See [CI_CD_INTEGRATION.md](../Terprint.Tests/docs/CI_CD_INTEGRATION.md) for setup
-- Test dashboard: https://brave-stone-0d8700d0f.3.azurestaticapps.net
+| Language | Package | Feed |
+|----------|---------|------|
+| Python | `terprint-core` | Azure Artifacts PyPI |
+| .NET | `Terprint.Core` | Azure Artifacts NuGet |
 
-### DIRECTIVE 7: CI/CD PIPELINE CONFIGURATION
+### DIRECTIVE 11: SYSTEM VERSIONING & MULTI-TENANT ARCHITECTURE (V2.0)
 
-- **All deployments are managed by `terprint-pipeline`** — Do NOT create custom pipelines in component repos
-- **Pipeline Documentation**: [terprint-pipeline/docs](https://github.com/Acidni-LLC/terprint-pipeline/tree/main/docs)
-- **Build Order**: Dependencies must build before dependents (see pipeline docs)
-- **Environment Promotion**: dev → staging → prod with manual approval gates
-- **Secrets**: All secrets must be in Azure Key Vault, referenced by pipeline variables
-- **Deployment Triggers**: Automatic for dev, manual approval for prod
-- **Artifact Publishing**: All builds publish to Azure Artifacts feed
+> **Terprint Platform Version:** 2.0 (Multi-Tenant Architecture)  
+> **terprint-config version:** 4.6.0  
+> **Individual App Versions:** Track independently per repository
 
----
+**System vs. App Versioning:**
+- **Platform Version** (e.g., v2.0): Major architectural changes affecting all services
+  - v1.0: Single-tenant architecture (legacy)
+  - **v2.0**: Multi-tenant with CDES format, tenant isolation, tier-based access
+- **App Version** (e.g., terprint-ai-chat v1.3.2): Individual service releases
+  - Follow semantic versioning within each repository
+  - Apps can be on different versions while sharing platform infrastructure
 
-## Project Context
+**V2 Multi-Tenant Requirements:**
 
-You are an expert software engineer and architect working on **Terprint** - a data pipeline system that aggregates, processes, and presents cannabis dispensary menu data for Florida medical marijuana dispensaries. The system collects product information including strain names, batch numbers, terpene profiles, and cannabinoid percentages.
+| Feature | Implementation | Configuration |
+|---------|---------------|---------------|
+| **Tenant Context** | `TenantContext` from `terprint_config.v2` | `X-Tenant-ID`, `X-Tenant-Tier` headers |
+| **API Format** | CDES (Cannabis Data Exchange Standard) | `V2Response` wrapper |
+| **Data Isolation** | Tenant filtering in queries | Database row-level security |
+| **Access Control** | Dispensary access by tier | See Tenant Tier Matrix below |
+| **API Client** | `TerprintV2Client` for inter-service calls | Auto tenant propagation |
 
-### Business Domain
-- **Industry**: Cannabis/Medical Marijuana Data Analytics
-- **Geography**: Florida dispensaries
-- **Data Types**: Strains, batches, terpenes, cannabinoids, COA (Certificate of Analysis)
-- **End Users**: Medical marijuana patients, dispensary staff, data analysts, business stakeholders
+**Tenant Tier Access Matrix:**
 
-### System Purpose
-1. **Data Aggregation**: Collect menu data from multiple Florida dispensaries
-2. **Data Extraction**: Parse and extract batch, strain, terpene, and cannabinoid information
-3. **Data Presentation**: Provide searchable strain/terpene data via website
-4. **Analytics**: Generate business intelligence reports via Power BI
-5. **Marketplace**: Azure Marketplace SaaS offering with metering and subscriptions
+| Tier | Dispensary Access | API Rate Limit | Metering |
+|------|-------------------|----------------|----------|
+| FREE | Demo only (ID 0) | 100/day | Tracked, not billed |
+| STARTER | 2 dispensaries | 1000/day | Overage billing |
+| PROFESSIONAL | 5 dispensaries | 10000/day | Overage billing |
+| ENTERPRISE | All dispensaries | Unlimited | Custom contract |
+| INTERNAL | All (admin) | Unlimited | Not metered |
 
-## Core Development Principles
+**V2 Deployment Checklist:** See [V2_DEPLOYMENT_CHECKLIST.md](https://github.com/Acidni-LLC/terprint-config/blob/main/V2_DEPLOYMENT_CHECKLIST.md) (`../terprint-config/V2_DEPLOYMENT_CHECKLIST.md`)  
+**V2 API Guide:** See [docs/V2_API_GUIDE.md](https://github.com/Acidni-LLC/terprint-config/blob/main/docs/V2_API_GUIDE.md) (`../terprint-config/docs/V2_API_GUIDE.md`)
 
-### Agile & Iterative Approach
-- Break work into small, incremental changes aligned with 5-stage pipeline
-- Deliver working software frequently (sprint-based delivery)
-- Respond to dispensary API changes quickly (APIs can change without notice)
-- Prioritize working code over comprehensive documentation (but maintain essential docs)
-- Collaborate continuously with stakeholders
-- Reflect and adjust processes regularly in retrospectives
+### DIRECTIVE 12: APIM SUBSCRIPTION KEYS & METERING
 
-### Code Quality Standards
-- Write clean, readable, maintainable Python 3.12 code
-- Follow SOLID principles and design patterns
-- Implement comprehensive error handling (dispensary APIs are unreliable)
-- Write self-documenting code with clear naming (domain terms: strain, batch, terpene, COA)
-- Keep functions small and focused (single responsibility)
-- Optimize for readability first, performance second (unless processing large JSON files)
+> **CRITICAL**: All APIM subscription keys are managed in Azure Key Vault  
+> **Reference Documentation**: [docs/API_MANAGER.md](https://github.com/Acidni-LLC/terprint-config/blob/main/docs/API_MANAGER.md) (`../terprint-config/docs/API_MANAGER.md`)
 
-## Technology Stack
+### DIRECTIVE 13: USE ORGANIZATION SECRETS FOR CI/CD
 
-### Critical Development Directives
+> **Migration Status**: 🚀 Ready for Implementation  
+> **Reference Documentation**: [docs/ORGANIZATION_SECRETS_MIGRATION.md](https://github.com/Acidni-LLC/terprint-config/blob/main/docs/ORGANIZATION_SECRETS_MIGRATION.md) (`../terprint-config/docs/ORGANIZATION_SECRETS_MIGRATION.md`)  
+> **Migration Tracking**: See migration table in terprint-config repo for repo-by-repo status
 
-> ⚠️ **MANDATORY RULES** - Follow these directives without exception unless explicitly approved.
+**ALL Terprint repositories MUST use GitHub Organization-level secrets instead of repository-level secrets.**
 
-#### SQL Database Drivers (Python)
-| DO NOT USE | USE INSTEAD | Reason |
-|------------|-------------|--------|
-| `pyodbc` | `pymssql` | Azure Functions Consumption Plan lacks ODBC drivers (Linux) |
+**Benefits:**
+- **Single Source of Truth** - Update credentials once, applies to all repos
+- **Easier Secret Rotation** - Rotate in one place instead of 50+ repos
+- **Reduced Configuration** - New repos inherit org secrets automatically
+- **Better Security** - Fewer places secrets can leak
+- **Operational Excellence** - Aligns with Azure Well-Architected Framework
 
-**Placeholder Syntax Difference:**
+#### Organization Secrets (Prefix: `ORG_`)
+
+| Secret Name | Description | How to Obtain |
+|-------------|-------------|---------------|
+| `ORG_AZURE_CREDENTIALS` | Azure Service Principal JSON | Create with `az ad sp create-for-rbac --sdk-auth` |
+| `ORG_AZURE_SUBSCRIPTION_ID` | Azure Subscription ID | `bb40fccf-9ffa-4bad-b9c0-ea40e326882c` |
+| `ORG_AZURE_TENANT_ID` | Azure AD Tenant ID | `3278dcb1-0a18-42e7-8acf-d3b5f8ae33cd` |
+| `ORG_ACR_USERNAME` | Azure Container Registry username | `crterprint` |
+| `ORG_ACR_PASSWORD` | Azure Container Registry password | From Key Vault or `az acr credential show` |
+| `ORG_APIM_SUBSCRIPTION_KEY` | APIM gateway subscription key | From Key Vault `apim-subscription-key` |
+| `ORG_GH_PAT_TERPRINT_TESTS` | PAT for triggering integration tests | GitHub Settings > Developer settings |
+| `ORG_AZURE_ARTIFACTS_TOKEN` | Azure DevOps Artifacts PAT | Azure DevOps > Personal Access Tokens |
+
+#### Organization Variables (Non-Sensitive Config)
+
+| Variable Name | Value | Description |
+|---------------|-------|-------------|
+| `ORG_ACR_LOGIN_SERVER` | `crterprint.azurecr.io` | Primary ACR |
+| `ORG_APIM_BASE_URL` | `https://apim-terprint-dev.azure-api.net` | APIM gateway |
+| `ORG_CONTAINER_ENV` | `kindmoss-c6723cbe.eastus2.azurecontainerapps.io` | Container Apps Environment |
+| `ORG_PYTHON_VERSION` | `3.12` | Default Python version |
+| `ORG_DOTNET_VERSION` | `8.0` | Default .NET version |
+
+#### Workflow Pattern (Use Reusable Workflow)
+
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    uses: Acidni-LLC/terprint-config/.github/workflows/reusable-deploy.yml@main
+    with:
+      app-name: 'ai-chat'
+      environment: 'dev'
+    secrets: inherit  # ✅ Inherits all ORG_* secrets automatically
+```
+
+#### Setting Organization Secrets (GitHub CLI)
+
+```bash
+# Set organization secrets
+gh secret set ORG_AZURE_CREDENTIALS --org Acidni-LLC --body "$(cat azure-credentials.json)" --visibility all
+gh secret set ORG_ACR_PASSWORD --org Acidni-LLC --body "$(az acr credential show --name crterprint --query 'passwords[0].value' -o tsv)" --visibility all
+gh secret set ORG_APIM_SUBSCRIPTION_KEY --org Acidni-LLC --body "$(az keyvault secret show --vault-name kv-terprint-dev --name apim-subscription-key --query value -o tsv)" --visibility all
+
+# Set organization variables
+gh variable set ORG_ACR_LOGIN_SERVER --org Acidni-LLC --body "crterprint.azurecr.io" --visibility all
+gh variable set ORG_PYTHON_VERSION --org Acidni-LLC --body "3.12" --visibility all
+```
+
+#### Migration Checklist
+
+When migrating a repository to organization secrets:
+
+- [ ] Update workflow to use `reusable-deploy.yml` with `secrets: inherit`
+- [ ] Verify workflow runs successfully with org secrets
+- [ ] Remove duplicate repository-level secrets:
+  ```bash
+  gh secret delete AZURE_CREDENTIALS --repo Acidni-LLC/{repo-name}
+  gh secret delete ACR_USERNAME --repo Acidni-LLC/{repo-name}
+  gh secret delete ACR_PASSWORD --repo Acidni-LLC/{repo-name}
+  ```
+- [ ] Update migration tracking table in `docs/ORGANIZATION_SECRETS_MIGRATION.md`
+- [ ] Commit changes and verify CI/CD passes
+- [ ] Run integration tests to confirm deployment works
+
+#### Secret Rotation (Organization-Wide)
+
+```bash
+# ✅ New way - rotate once for all repos
+gh secret set ORG_AZURE_CREDENTIALS --org Acidni-LLC --body "$(cat new-creds.json)" --visibility all
+
+# ❌ Old way - update 50+ repos individually (NO LONGER NEEDED)
+```
+
+**Key Vault Secret Names:**
+```
+apim-subscription-key          # Primary APIM gateway key
+svc-{service-name}-key         # Service-specific keys (e.g., svc-ai-chat-key)
+```
+
+**Access Pattern (PowerShell):**
+```powershell
+# Get APIM subscription key
+$key = az keyvault secret show --vault-name kv-terprint-dev --name apim-subscription-key --query value -o tsv
+
+# Use in API calls
+$headers = @{"Ocp-Apim-Subscription-Key" = $key}
+Invoke-RestMethod -Uri "https://apim-terprint-dev.azure-api.net/data/api/health" -Headers $headers
+```
+
+**Access Pattern (Python - from terprint-metering or any service):**
 ```python
-# ❌ WRONG - pyodbc style (will NOT work with pymssql)
-cursor.execute("SELECT * FROM Users WHERE Id = ?", (user_id,))
-
-# ✅ CORRECT - pymssql style
-cursor.execute("SELECT * FROM Users WHERE Id = %s", (user_id,))
-```
-
-**Exception**: Only use `pyodbc` if running on Windows App Service Plan with ODBC drivers installed, and document the exception in the code.
-
-#### Azure Functions Authentication
-| DO NOT USE | USE INSTEAD | Reason |
-|------------|-------------|--------|
-| `AuthorizationLevel.Anonymous` | `AuthorizationLevel.Function` | Security - all endpoints must require function keys |
-
-**Python (function.json):**
-```json
-// ❌ WRONG - Anonymous access (NO authentication)
-{
-  "authLevel": "anonymous",
-  "type": "httpTrigger"
-}
-
-// ✅ CORRECT - Function key required
-{
-  "authLevel": "function",
-  "type": "httpTrigger"
-}
-```
-
-**C# (.NET):**
-```csharp
-// ❌ WRONG - Anonymous access
-[Function("MyFunction")]
-public IActionResult Run([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req)
-
-// ✅ CORRECT - Function key required
-[Function("MyFunction")]
-public IActionResult Run([HttpTrigger(AuthorizationLevel.Function)] HttpRequest req)
-```
-
-**Exception**: Only use `Anonymous` for public health check endpoints (e.g., `/api/health`) that return no sensitive data, and document the exception. Alternative: Use `Anonymous` with manual API key validation when supporting multiple auth header formats (X-API-Key, x-functions-key, code query param) - document the validation pattern.
-
-#### Component Documentation Requirements
-
-> 📚 **MANDATORY**: Every Terprint component MUST maintain its own documentation.
-
-Each component repository must include:
-
-| Document | Purpose | Required |
-|----------|---------|----------|
-| `README.md` | Overview, setup, quick start | ✅ Yes |
-| `openapi.json` | OpenAPI 3.0 spec for all HTTP endpoints | ✅ Yes (for APIs) |
-| `docs/ARCHITECTURE.md` | System design, data flow diagrams, dependencies | ✅ Yes |
-| `docs/INTEGRATION.md` | How other apps integrate with this component | ✅ Yes |
-| `docs/USAGE.md` | API reference, endpoints, examples | ✅ Yes |
-| `docs/TESTING.md` | Test strategy, how to run tests, coverage | ✅ Yes |
-| `docs/ADMIN_GUIDE.md` | Deployment, configuration, monitoring | For services |
-| `docs/USER_GUIDE.md` | End-user documentation | For user-facing apps |
-
-**OpenAPI Specification Requirements (for all Azure Functions with HTTP triggers):**
-- Place `openapi.json` in the repository root
-- Follow OpenAPI 3.0.x specification
-- Include all HTTP-triggered endpoints with request/response schemas
-- Document authentication requirements (Bearer token, scopes)
-- Include example requests and responses
-- Used by APIM for automatic API configuration
-- Run `create-consolidated-readme.ps1` to collect all OpenAPI specs centrally
-
-**Documentation Quality Standards:**
-- Include Mermaid diagrams for architecture and data flows
-- Document all environment variables and configuration
-- Provide troubleshooting guides for common issues
-- Keep docs in sync with code changes (update docs in same PR as code)
-
-**Backup Process:**
-- Component docs are periodically gathered into `terprint-config` for centralized backup
-- If a component has better docs than central config, the component's docs become authoritative
-- Run `copy-instructions.ps1` to distribute updated standards to all repos
-
-#### App-to-App Authentication (Entra ID)
-
-> 🔐 **MANDATORY**: All service-to-service API calls MUST use Entra ID app-to-app authentication.
-
-| DO NOT DO | DO INSTEAD | Reason |
-|-----------|------------|--------|
-| Use function keys for app-to-app calls | Use Entra ID Bearer tokens | Proper identity-based security |
-| Hard-code API keys in code | Use managed identities | Keys can leak, identities can't |
-| Trust any incoming request | Validate Bearer tokens | Verify caller identity and permissions |
-| Skip audience validation | Always validate token audience | Prevent token reuse attacks |
-
-**Architecture Overview:**
-Each Terprint service has its own Entra ID app registration:
-- Apps expose API scopes (e.g., `Communications.Send`, `BatchProcessor.Execute`)
-- Apps request permissions to call other apps' APIs
-- Managed Identity (in Azure) acquires tokens automatically
-- APIs validate incoming tokens for audience, issuer, and scopes
-
-**App Registration Names:**
-| App | Application ID URI | Primary Scopes |
-|-----|-------------------|----------------|
-| `func-terprint-communications` | `api://func-terprint-communications` | Communications.Send, Communications.Read |
-| `func-terprint-batchprocessor` | `api://func-terprint-batchprocessor` | BatchProcessor.Execute, BatchProcessor.Read |
-| `func-terprint-menudownloader` | `api://func-terprint-menudownloader` | MenuDownloader.Download, MenuDownloader.StockCheck |
-| `func-terprint-ai-chat` | `api://func-terprint-ai-chat` | AIChat.Query, AIChat.History |
-| `func-terprint-ai-recommender` | `api://func-terprint-ai-recommender` | AIRecommender.GetRecommendations |
-| `func-terprint-ai-deals` | `api://func-terprint-ai-deals` | AIDeals.Analyze, AIDeals.Read |
-| `func-terprint-ai-health` | `api://func-terprint-ai-health` | AIHealth.Monitor, AIHealth.Alerts |
-| `terprint-marketplace-webhook` | `api://terprint-marketplace-webhook` | Marketplace.Webhook |
-
-**Permission Matrix (who can call whom):**
-```
-Menu Downloader → Batch Processor, Communications
-Batch Processor → Communications, AI Chat, AI Recommender
-AI Chat → AI Recommender, AI Deals, Communications, Menu Downloader
-AI Recommender → AI Deals, Communications
-AI Deals → Communications
-AI Health → ALL services (monitoring)
-Marketplace Webhook → Communications
-Web App → Communications, Menu Downloader, AI Chat, AI Recommender, AI Deals
-```
-
-**Calling Another Service (Python):**
-```python
-from terprint_config.auth import get_auth_header, get_access_token
-
-# Option 1: Get auth header directly
-headers = get_auth_header("func-terprint-communications")
-response = requests.post(url, headers=headers, json=data)
-
-# Option 2: Get token for more control
-result = get_access_token("func-terprint-communications")
-if result.success:
-    headers = {"Authorization": f"Bearer {result.token}"}
-    response = requests.post(url, headers=headers, json=data)
-```
-
-**Validating Incoming Tokens (Python):**
-```python
-from terprint_config.auth import validate_token, require_auth
+from terprint_config.metering import UsageEvent, MeteringDimension
 import os
 
-# Option 1: Manual validation
-auth_header = request.headers.get("Authorization")
-result = validate_token(
-    auth_header,
-    expected_audience=os.environ["AZURE_CLIENT_ID"],
-    required_scopes=["Communications.Send"]
+# Record metered usage (automatically sent to terprint-metering)
+event = UsageEvent(
+    customer_id="customer-uuid",
+    dimension=MeteringDimension.API_CALLS.value,
+    quantity=1.0,
+    api_name="terprint-data",
+    operation_id="/v2/strains"
 )
-if not result.valid:
-    return {"error": result.error}, 401
 
-# Option 2: Decorator (Azure Functions)
-@require_auth(required_scopes=["Communications.Send"])
-def send_email(req: func.HttpRequest) -> func.HttpResponse:
-    # Token already validated, proceed with logic
-    pass
+# Submit to metering service via APIM
+import requests
+response = requests.post(
+    "https://apim-terprint-dev.azure-api.net/metering/api/record",
+    headers={"Ocp-Apim-Subscription-Key": os.environ["APIM_SUBSCRIPTION_KEY"]},
+    json=event.to_dict()
+)
 ```
 
-**Required Environment Variables:**
-```json
-{
-  "AZURE_TENANT_ID": "3278dcb1-0a18-42e7-8acf-d3b5f8ae33cd",
-  "AZURE_CLIENT_ID": "<your-app-client-id>"
-}
-```
+**Metering Dimensions:** All dimensions defined in `terprint_config/metering.py`
+- Reference path: `terprint-config/terprint_config/metering.py`
+- Marketplace config: `terprint-config/shared/marketplace-config.json`
 
-**Required Packages:**
-```
-azure-identity>=1.15.0    # For token acquisition
-PyJWT[crypto]>=2.8.0      # For token validation
-```
+**APIM Products (Subscription Tiers):**
 
-**Migration Path (function keys → Entra ID):**
-1. Add Entra ID auth alongside existing function keys
-2. Update callers to send both Bearer token AND function key
-3. Verify all callers are sending Bearer tokens
-4. Remove function key validation from endpoints
-5. Remove function keys from callers
-
-**Exception**: Health check endpoints (`/api/health`) may remain anonymous for load balancer probes.
-
-#### Sample Code Usage Requirements
-
-> 🔍 **MANDATORY**: Apps MUST search for existing sample code before writing new implementations.
-
-| DO NOT DO | DO INSTEAD | Reason |
-|-----------|------------|--------|
-| Write JSON parsing from scratch | Find sample code in `shared/samples/` | Reduces coding errors |
-| Create new API integration patterns | Reference existing dispensary integrations | Proven patterns work |
-| Implement data mappings manually | Use `shared/dispensary-mappings.json` | Centralized, tested configs |
-| Build communications features | Use `func-terprint-communications` helpers | Single source of truth |
-
-**Before writing any new code:**
-1. Check `shared/samples/` for JSON samples of the data you're working with
-2. Check `shared/` for existing mapping configurations
-3. Check `terprint_config/` for helper functions and utilities
-4. Check existing dispensary implementations for proven patterns
-5. If sample code exists, COPY and ADAPT it - don't reinvent
-
-**Why this matters:**
-- Too many simple mistakes happen when writing code from scratch
-- Sample code has been tested and validated
-- Using existing patterns ensures consistency across all apps
-- Reduces debugging time and integration issues
-
-**Exception**: Only write from scratch when no suitable sample exists, and then CREATE a sample for others to use.
-
-#### Local Function App Testing Requirements
-
-> 🧪 **MANDATORY**: Always test Azure Function Apps locally before deploying to Azure.
-
-| DO NOT DO | DO INSTEAD | Reason |
-|-----------|------------|--------|
-| Deploy untested functions directly to Azure | Run `func host start` locally first | Catch errors before deployment |
-| Test only in Azure portal | Test all endpoints with local URLs | Faster iteration, no deployment wait |
-| Skip local environment setup | Configure `local.settings.json` properly | Consistent local/cloud behavior |
-
-**Local Testing Process:**
-1. **Build the project first**: `dotnet build` (C#) or ensure `requirements.txt` installed (Python)
-2. **Run the function host**: Use VS Code task `func: host start` or terminal `func host start`
-3. **Test ALL endpoints**: Use REST client, Postman, or curl against `http://localhost:7071`
-4. **Verify logs**: Check terminal output for errors and expected behavior
-5. **Test error cases**: Try invalid inputs, missing parameters, auth failures
-
-**Assigned Local Testing Ports:**
-Each app has 5 dedicated ports to allow running multiple services simultaneously:
-
-| App | Ports | Default | Window Title |
-|-----|-------|---------|--------------|
-| `func-terprint-communications` | 7071-7075 | 7071 | 🔔 Communications |
-| `func-terprint-batchprocessor` | 7076-7080 | 7076 | 📦 Batch Processor |
-| `func-terprint-menudownloader` | 7081-7085 | 7081 | 📥 Menu Downloader |
-| `func-terprint-ai-chat` | 7086-7090 | 7086 | 💬 AI Chat |
-| `func-terprint-ai-recommender` | 7091-7095 | 7091 | 🎯 AI Recommender |
-| `func-terprint-ai-deals` | 7096-7100 | 7096 | 💰 AI Deals |
-| `func-terprint-ai-health` | 7101-7105 | 7101 | 🏥 AI Health |
-| `terprint-marketplace-webhook` | 7106-7110 | 7106 | 🏪 Marketplace Webhook |
-| `func-terprint-infographics` | 7111-7115 | 7111 | 🎨 Infographics |
-| `func-terprint-metering` | 7116-7120 | 7116 | 📊 Metering |
-| `func-terprint-data-api` | 7121-7125 | 7121 | 📡 Data API |
-
-#### Deployment Targets (Where to Deploy Each App)
-
-> 🚀 **MANDATORY**: Deploy to the correct Azure resource. Each app has a specific deployment target.
-
-| App | Type | Azure Resource | Resource Group | URL |
-|-----|------|----------------|----------------|-----|
-| `func-terprint-communications` | Azure Functions | `func-terprint-communications` | `rg-dev-terprint-shared` | `func-terprint-communications.azurewebsites.net` |
-| `func-terprint-batchprocessor` | Azure Functions | `func-terprint-batchprocessor` | `rg-dev-terprint-batchprocessor` | `func-terprint-batchprocessor.azurewebsites.net` |
-| `func-terprint-menudownloader` | Azure Functions | `func-terprint-menudownloader` | `rg-dev-terprint-menudownloader` | `func-terprint-menudownloader.azurewebsites.net` |
-| `func-terprint-ai-chat` | Azure Functions | `func-terprint-ai-chat` | `rg-dev-terprint-shared` | `func-terprint-ai-chat.azurewebsites.net` |
-| `func-terprint-ai-recommender` | Azure Functions | `func-terprint-ai-recommender` | `rg-dev-terprint-shared` | `func-terprint-ai-recommender.azurewebsites.net` |
-| `func-terprint-ai-deals` | Azure Functions | `func-terprint-ai-deals` | `rg-dev-terprint-shared` | `func-terprint-ai-deals.azurewebsites.net` |
-| `func-terprint-ai-health` | Azure Functions | `func-terprint-ai-health` | `rg-dev-terprint-shared` | `func-terprint-ai-health.azurewebsites.net` |
-| `terprint-marketplace-webhook` | Azure Functions (.NET) | `func-terprint-marketplace` | `rg-terprint-marketplace` | `func-terprint-marketplace.azurewebsites.net` |
-| `func-terprint-infographics` | Azure Functions | `func-terprint-infographics` | `rg-dev-terprint-shared` | `func-terprint-infographics.azurewebsites.net` |
-| `func-terprint-metering` | Azure Functions | `func-terprint-metering` | `rg-dev-terprint-shared` | `func-terprint-metering.azurewebsites.net` |
-| `func-terprint-data-api` | Azure Functions | `func-terprint-data-api` | `rg-dev-terprint-shared` | `func-terprint-data-api.azurewebsites.net` |
-| `terprint-sales` | Static Web App | `swa-terprint-sales` | `rg-dev-terprint-shared` | `sales.terprint.com`, `terprint.com`, `www.terprint.com` |
-| `Terprint.Web` | App Service | `terprint-web` | `rg-terprint-web` | `terprint.acidni.net` |
-| `terprint-powerbi-visuals` | Power BI AppSource | Partner Center | N/A | AppSource |
-
-**Deployment Commands:**
-
-```bash
-# Azure Functions (Python) - from function app directory
-func azure functionapp publish <function-app-name>
-
-# Azure Functions (.NET) - from project directory
-dotnet publish -c Release
-func azure functionapp publish <function-app-name>
-
-# Static Web App - from site directory
-swa deploy . --deployment-token "<token>" --env production
-
-# App Service (.NET) - from project directory
-dotnet publish -c Release -o ./publish
-az webapp deploy --resource-group <rg> --name <app> --src-path ./publish.zip
-
-# Power BI Visual - from visual directory
-pbiviz package
-# Then submit to Partner Center
-```
-
-**Getting Deployment Tokens (Static Web Apps):**
-```bash
-# Get SWA deployment token
-az staticwebapp secrets list --name "swa-terprint-sales" --resource-group "rg-dev-terprint-shared" --query "properties.apiKey" -o tsv
-```
-
-**VS Code Extension Deployment:**
-For Azure Functions, use the Azure Functions VS Code extension:
-1. Right-click on the function app in Azure explorer
-2. Select "Deploy to Function App..."
-3. Choose the correct function app from the list
-
-**IMPORTANT**: Always verify you're deploying to the correct resource before executing deployment commands!
-
-**Use `terprint_config` helpers for local testing:**
-```python
-from terprint_config import get_default_port, get_window_title, get_local_start_command
-
-# Get the default port for an app
-port = get_default_port("func-terprint-communications")  # 7071
-
-# Get window title with emoji
-title = get_window_title("func-terprint-communications")  # "🔔 Communications (7071)"
-
-# Get full PowerShell command to start with titled window
-cmd = get_local_start_command("func-terprint-communications")
-# '$Host.UI.RawUI.WindowTitle = "🔔 Communications (7071)"; func host start --port 7071'
-```
-
-**Starting multiple apps locally:**
-```powershell
-# Terminal 1 - Communications (port 7071)
-$Host.UI.RawUI.WindowTitle = "🔔 Communications (7071)"; func host start --port 7071
-
-# Terminal 2 - Batch Processor (port 7076)  
-$Host.UI.RawUI.WindowTitle = "📦 Batch Processor (7076)"; func host start --port 7076
-
-# Terminal 3 - Menu Downloader (port 7081)
-$Host.UI.RawUI.WindowTitle = "📥 Menu Downloader (7081)"; func host start --port 7081
-```
-
-**VS Code Integration:**
-```json
-// Use existing VS Code tasks for local testing:
-// "func: 4" task runs the function app locally after build
-// Tasks > Run Task > "func: 4" (or F5 with launch.json configured)
-```
-
-**Environment Setup:**
-```json
-// local.settings.json must include all required settings:
-{
-  "IsEncrypted": false,
-  "Values": {
-    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
-    // Add all connection strings and app settings
-  }
-}
-```
-
-**Exception**: Quick configuration-only changes (not code) may skip local testing if they've been validated in a staging environment.
-
-### Integration Testing
-
-**HTTP Integration Tests** (`Terprint.IntegrationTests` project):
-Tests run against deployed services - no local project references needed.
-
-```bash
-# Run communications tests
-dotnet test --filter "Component=Communications"
-
-# Run all integration tests
-cd Terprint.IntegrationTests
-dotnet test
-```
-
-**Service Documentation Scavenging** 📚
-
-> **Before writing tests, scan other repo READMEs for API documentation!**
-
-Each component repo contains API documentation in its README:
-
-| Service | Repo README | Key Endpoints |
-|---------|-------------|---------------|
-| AI Chat | `terprint-ai-chat/README.md` | `/api/chat`, `/api/health` |
-| AI Recommender | `terprint-ai-recommender/README.md` | `/api/recommend`, `/api/health` |
-| AI Deals | `terprint-ai-deals/README.md` | `/api/deals`, `/api/health` |
-| Menu Downloader | `func-terprint-menudownloader/README.md` | `/api/menu`, `/api/stock-check` |
-| Batch Processor | `func-terprint-batchprocessor/README.md` | `/api/run-batch-processor` |
-| Communications | `func-terprint-communications/README.md` | `/api/send-email`, `/api/send-sms` |
-| Marketplace Webhook | `terprint-marketplace-webhook/README.md` | `/api/marketplace-webhook` |
-| Health Dashboard | `terprint-ai-health/README.md` | `/api/health`, `/api/diagram` |
-
-**Configuration**: See `Terprint.Tests/test-config.json` for all service endpoints.
+| Product | Rate Limit | Quota | APIs Included |
+|---------|------------|-------|---------------|
+| Free Tier | 10 req/min | 100/day | Data API (read-only) |
+| Starter | 60 req/min | 1,000/day | Data API, Chat |
+| Professional | 300 req/min | 10,000/day | All APIs |
+| Enterprise | 1,000 req/min | Unlimited | All APIs + SLA |
 
 ---
 
-### Required Technologies
-| Component | Technology | Notes |
-|-----------|------------|-------|
-| **Cloud Platform** | Microsoft Azure | All resources in Azure |
-| **Primary Language** | Python 3.12 | Azure Functions, data processing |
-| **Secondary Language** | .NET (C#) | Marketplace metering service, admin site, webhook processor |
-| **Compute** | Azure Functions | Serverless, timer-triggered & HTTP-triggered |
-| **Storage** | Azure Blob Storage | Data lake for raw JSON files |
-| **Database (Analytics)** | Azure Event House (Kusto/KQL) | Processed data: batch, strain, terpene, cannabinoid tables |
-| **Database (Marketplace)** | Azure SQL | Subscriptions, metering, webhooks |
-| **Queues** | Azure Storage Queues | Reliable event processing for marketplace |
-| **Identity** | Azure Managed Identities | `mi-terprint-devops`, `terprint-menu-downloader`, `func-terprint-batchprocessor` |
-| **Configuration** | terprint-config package | Centralized config via PyPI feed |
-| **DevOps** | Azure DevOps | Acidni organization, Terprint project |
-| **Monitoring** | Application Insights + Log Analytics | Observability for all components |
-| **BI Tools** | Power BI + Custom Visuals | TypeScript + D3, packaged with pbiviz |
+## 🏢 System Identity & Boundaries
 
-### Key Azure Resources
-- **Function Apps**: `func-terprint-menudownloader`, `func-terprint-batchprocessor`
-- **Storage Account**: `storageacidnidatamover` (jsonfiles container)
-- **Resource Groups**: `rg-dev-terprint-menudownloader`, `rg-dev-terprint-batchprocessor`, `rg-dev-terprint-visuals`
-- **Marketplace Stack**: App Service (landing/admin), Azure SQL, Key Vault, Function App (webhook), Storage Account
+| Property | Value |
+|----------|-------|
+| Platform Owner | Acidni LLC |
+| Domain | Cannabis/Medical Marijuana Data Analytics |
+| Geography | Florida dispensaries |
+| Active Dispensaries | Cookies, MÜV, Flowery, Trulieve, Curaleaf |
+| Architecture | 5-stage data pipeline with microservices deployed as Azure Container Apps behind APIM |
 
 ---
 
-## 📋 AZURE RESOURCES QUICK REFERENCE
+## 🔧 Azure Well-Architected Framework Application
 
-> **DO NOT ASK** about these resources. This is the authoritative reference.
+Apply these pillars to ALL architectural decisions:
+
+| Pillar | Terprint Application |
+|--------|---------------------|
+| **Reliability** | Idempotent batch processing, retry policies with exponential backoff, health probes, circuit breakers |
+| **Security** | Managed identities (no secrets in code), APIM gateway as single entry point, Key Vault for all secrets, zero-trust service-to-service auth via Entra ID |
+| **Cost Optimization** | Consumption-based Container Apps, scale-to-zero patterns, right-sized SKUs |
+| **Operational Excellence** | Centralized config (terprint-config), conventional commits, runbooks for incident response, DORA metrics tracking |
+| **Performance Efficiency** | Response caching via APIM policies, async processing for long operations, blob storage for large payloads |
+
+---
+
+## 📊 5-Stage Pipeline Architecture
+
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│  Stage 1    │    │  Stage 2    │    │ Stage 2.5   │    │  Stage 3    │    │  Stage 4/5  │
+│  Discovery  │ -> │  Ingestion  │ -> │   Batch     │ -> │    COA      │ -> │ Presentation│
+│             │    │             │    │ Extraction  │    │ Processing  │    │ & Analytics │
+└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+     Manual         Every 2hrs         Daily 7AM         3x Daily           On-demand
+                    8am-10pm EST                         9:30am/3:30pm
+                                                         9:30pm
+```
+
+### Pipeline Stage Details
+
+| Stage | Application | Type | Trigger | Output |
+|-------|-------------|------|---------|--------|
+| 1 - Discovery | Menu Discoverer | Development | Manual | DevOps work items |
+| 2 - Ingestion | Menu Downloader | Container App | Every 2 hrs (8am-10pm EST) | Raw menu JSONs |
+| 2.5 - Batch Extraction | Batch Creator | Container App | Daily 7:00 AM ET | `consolidated_batches_YYYYMMDD.json` |
+| 3 - COA Processing | Batch Processor | Container App | 3x daily | SQL records |
+| 4 - Presentation | Terprint.Web | App Service | On-demand | Web UI |
+| 5 - Analytics | Power BI | Scheduled refresh | Daily | Reports + custom visuals |
+
+---
+
+## 🗂️ Service Catalog (All Terprint Components)
+
+### AI Services
+
+| Service | Repo | APIM Path | Local Port | Emoji |
+|---------|------|-----------|------------|-------|
+| AI Chat | terprint-ai-chat | `/chat` | 7091 | 💬 |
+| AI Recommender | terprint-ai-recommender | `/recommend` | 7096 | 🎯 |
+| AI Deals | terprint-ai-deals | `/deals` | 7101 | 💰 |
+| AI Lab | terprint-ai-lab | `/lab` | 7126 | 🔬 |
+| AI Health | terprint-ai-health | `/health` | 7106 | 🏥 |
+
+### Data Processing Pipeline
+
+| Service | Repo | APIM Path | Local Port | Emoji |
+|---------|------|-----------|------------|-------|
+| Menu Downloader | terprint-menudownloader | `/menus` | 7086 | 📥 |
+| Batch Creator | terprint-batches | `/batches` | 7076 | 📦 |
+| Batch Processor | terprint-batch-processor | `/processor` | 7081 | 🔧 |
+| COA Extractor | terprint-coa-extractor | `/coa` | 7131 | 📄 |
+| Data API | terprint-data | `/data` | 7121 | 📡 |
+
+### Communications & Notifications
+
+| Service | Repo | APIM Path | Local Port | Emoji |
+|---------|------|-----------|------------|-------|
+| Communications | terprint-communications | `/communications` | 7071 | 🔔 |
+
+### Core Platform
+
+| Component | Repo | Type | Description |
+|-----------|------|------|-------------|
+| terprint-config | terprint-config | Python Package | Central configuration (PyPI) - source of truth |
+| Terprint.Web | Terprint.Web | .NET Blazor | Main website |
+| Terprint.Tests | terprint-tests | .NET Tests | Integration test suite |
+
+---
+
+## 🔗 Azure Resources Reference
+
+### Core Infrastructure
+
+| Resource Type | Name | Resource Group |
+|---------------|------|----------------|
+| Storage Account | `stterprintsharedgen2` | rg-dev-terprint-shared |
+| Container | `jsonfiles` | (within storage account) |
+| APIM | `apim-terprint-dev` | rg-terprint-apim-dev |
+| Key Vault | `kv-terprint-dev` | rg-dev-terprint-shared |
+| Container Registry | `crterprint.azurecr.io` | rg-dev-terprint-health |
+| Container Apps Environment | `kindmoss-c6723cbe.eastus2.azurecontainerapps.io` | rg-dev-terprint-ca |
+
+### Azure Identifiers
+
+| Property | Value |
+|----------|-------|
+| Tenant ID | `3278dcb1-0a18-42e7-8acf-d3b5f8ae33cd` |
+| Subscription ID | `bb40fccf-9ffa-4bad-b9c0-ea40e326882c` |
+| DevOps Organization | `Acidni` |
+| DevOps Project | `Terprint` |
+
+### Container Registries (Use Correct ACR!)
+
+| Registry Login Server | Purpose |
+|-----------------------|---------|
+| `crterprint.azurecr.io` | **PRIMARY** - Main Terprint services |
+| `acrterprint7py7rei2pjnwq.azurecr.io` | AI Deals service |
+| `caad4cae72c4acr.azurecr.io` | Doctor Portal |
+
+### Blob Storage Structure
+
+```
+jsonfiles/
+├── dispensaries/                    # Raw menu downloads (Stage 2 output)
+│   ├── cookies/{year}/{month}/{day}/{timestamp}.json
+│   ├── muv/...
+│   ├── flowery/...
+│   ├── trulieve/...
+│   └── curaleaf/...
+├── menus/                           # Processed menu data
+│   └── {dispensary}/{year}/{month}/{day}/*.json
+└── batches/                         # Consolidated batch files (Stage 2.5 output)
+    └── consolidated_batches_YYYYMMDD.json
+```
 
 ### Function Apps (Complete List)
 
-| Function App | Resource Group | Purpose | State |
-|--------------|----------------|---------|-------|
-| `func-dev-terprint-ai-chat` | `rg-dev-terprint-ai-chat` | AI Chat service | Running |
-| `terprint-menu-downloader` | `rg-dev-terprint-menudownloader` | Menu data ingestion | Running |
-| `func-terprint-ai-recommender` | `rg-dev-terprint-ai-recommender` | Strain recommendations | Running |
-| `func-terprint-batchprocessor` | `rg-dev-terprint-batchprocessor` | COA data extraction | Running |
-| `func-terprint-ai-deals` | `rg-dev-terprint-ai-deals` | Deal analysis | Running |
-| `func-terprint-infographics` | `rg-dev-terprint-infographics` | Image generation | Running |
-| `func-terprint-coadataextractor` | `rg-dev-terprint-coadataextractor` | COA parsing | Running |
-| `func-terprint-data-api` | `rg-dev-terprint-data-api` | Data access API | Running |
-| `func-terprint-marketplace` | `rg-dev-terprint-marketplace` | Marketplace webhooks | Running |
+| Function App | Resource Group | Purpose |
+|--------------|----------------|---------|
+| `func-dev-terprint-ai-chat` | `rg-dev-terprint-ai-chat` | AI Chat service |
+| `terprint-menu-downloader` | `rg-dev-terprint-menudownloader` | Menu data ingestion |
+| `func-terprint-ai-recommender` | `rg-dev-terprint-ai-recommender` | Strain recommendations |
+| `func-terprint-batchprocessor` | `rg-dev-terprint-batchprocessor` | COA data extraction |
+| `func-terprint-ai-deals` | `rg-dev-terprint-ai-deals` | Deal analysis |
+| `func-terprint-infographics` | `rg-dev-terprint-infographics` | Image generation |
+| `func-terprint-data-api` | `rg-dev-terprint-data-api` | Data access API |
+| `func-terprint-marketplace` | `rg-dev-terprint-marketplace` | Marketplace webhooks |
 
 ### Static Web Apps
 
@@ -562,478 +631,605 @@ Each component repo contains API documentation in its README:
 |-----|----------|---------|
 | `swa-terprint-sales` | `green-forest-02ff0c80f.3.azurestaticapps.net` | Sales website (sales.terprint.com) |
 | `swa-terprint-tests-dev` | `brave-stone-0d8700d0f.3.azurestaticapps.net` | Test dashboard |
-| `swa-acidni-website` | `zealous-stone-0fafe420f.6.azurestaticapps.net` | Acidni corporate site |
 
-### APIM (apim-terprint-dev) - API Gateway
+---
+
+## 🌐 APIM API Catalog
 
 **Base URL**: `https://apim-terprint-dev.azure-api.net`
 
-| API ID | Display Name | Path | Backend |
-|--------|--------------|------|---------|
-| `terprint-communications` | Communications API | `/communications` | func-terprint-communications |
-| `terprint-ai-chat-api` | Terprint AI Chat API | `/chat` | func-dev-terprint-ai-chat |
-| `terprint-ai-recommender-api` | Terprint AI Recommender API | `/recommend` | func-terprint-ai-recommender |
-| `terprint-data-api` | Terprint Data API | `/data` | func-terprint-data-api |
-| `terprint-infographics` | Terprint Infographics API | `/infographics` | func-terprint-infographics |
-| `terprint-stock-api` | Terprint Stock API | `/stock` | terprint-menu-downloader |
-| `terprint-ai-lab` | Terprint AI Lab API | `/lab` | Experimental |
+| API ID | Path | Backend | Caching |
+|--------|------|---------|---------|
+| `terprint-communications` | `/communications` | func-terprint-communications | 60s |
+| `terprint-ai-chat-api` | `/chat` | func-dev-terprint-ai-chat | 300s |
+| `terprint-ai-recommender-api` | `/recommend` | func-terprint-ai-recommender | 600s |
+| `terprint-data-api` | `/data` | func-terprint-data-api | 300s |
+| `terprint-infographics` | `/infographics` | func-terprint-infographics | 86400s |
+| `terprint-stock-api` | `/stock` | terprint-menu-downloader | 3600s |
 
-### Communications API Endpoints (terprint-communications)
+### Communications API Endpoints
 
-| Method | Endpoint | Operation | Description |
-|--------|----------|-----------|-------------|
-| POST | `/communications/send-email` | send-email | Send email via Azure Communication Services |
-| POST | `/communications/send-sms` | send-sms | Send SMS via Azure Communication Services |
-| POST | `/communications/send-batch-notification` | send-batch-notification | Batch notifications |
-| POST | `/communications/ai-chat/send-email` | ai-chat-send-email | AI Chat email integration |
-| POST | `/communications/ai-chat/send-sms` | ai-chat-send-sms | AI Chat SMS integration |
-| GET | `/communications/ai-chat/conversation` | ai-chat-conversation | Get SMS conversation history |
-| POST | `/communications/chat-messages` | chat-messages | Chat webhook |
-| POST | `/communications/email-events` | email-events | Email event webhook |
-| POST | `/communications/sms-inbound` | sms-inbound | Inbound SMS webhook |
-| GET | `/communications/health` | health | Health check |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/communications/send-email` | Send email via Azure Communication Services |
+| POST | `/communications/send-sms` | Send SMS via Azure Communication Services |
+| POST | `/communications/send-batch-notification` | Batch notifications |
+| GET | `/communications/health` | Health check |
 
-### Key Vaults
+### Python APIM Client Pattern
 
-| Vault | Resource Group | Purpose |
-|-------|----------------|---------|
-| `acidni-keyvault` | `rg-dev` | Acidni shared secrets (IONOS API, etc.) |
-| `kv-terprint` | `rg-dev-terprint-shared` | Terprint product secrets |
+```python
+import os
+import requests
 
-### DNS Domains (IONOS)
-
-| Domain | Provider | Notes |
-|--------|----------|-------|
-| `acidni.net` | IONOS | Corporate domain, M365, Azure apps |
-| `terprint.com` | IONOS | Product domain, sales site |
-| `acidni.com` | NOT in IONOS | Check GoDaddy |
+class TerprintAPIClient:
+    """Client for calling Terprint services through APIM."""
+    
+    def __init__(self):
+        self.base_url = os.environ.get("APIM_GATEWAY_URL", "https://apim-terprint-dev.azure-api.net")
+        self.subscription_key = os.environ.get("APIM_SUBSCRIPTION_KEY")
+        
+    def _get_headers(self) -> dict:
+        return {
+            "Ocp-Apim-Subscription-Key": self.subscription_key,
+            "Content-Type": "application/json"
+        }
+    
+    def call_ai_chat(self, message: str, session_id: str = None) -> dict:
+        response = requests.post(
+            f"{self.base_url}/chat/api/chat",
+            headers=self._get_headers(),
+            json={"message": message, "session_id": session_id}
+        )
+        response.raise_for_status()
+        return response.json()
+```
 
 ---
 
-## Architecture Guidelines
+## 🐳 Container App Standards
 
-### 5-Stage Pipeline Architecture
+### Container App Naming Convention
 
-When working on any component, understand its position in the pipeline:
+```
+ca-terprint-{service-name}
+```
 
-**Stage 1: Discovery (Development)**
-- **Application**: Menu Discoverer
-- **Purpose**: Find and validate NEW dispensary APIs before production
-- **Activities**: API interception, request/response analysis, data structure mapping
-- **Output**: Discovery findings → Azure DevOps → Validated configs → Menu Downloader
+### Dockerfile Standards (Python Services with Poetry)
 
-**Stage 2: Data Ingestion**
-- **Application**: Menu Downloader (`func-terprint-menudownloader`)
-- **Trigger**: Timer (daily 6 AM)
-- **Process**: Fetch menus → Store raw JSON → Blob Storage (`dispensaries/{dispensary}/{year}/{month}/{day}/{timestamp}.json`)
-- **Output**: Triggers Batch Processor
-- **Production Dispensaries**: Cookies, MÜV, Flowery, Trulieve
-- **Discovery Targets**: Sunnyside, Curaleaf, Liberty Health Sciences, Fluent, VidaCann, RISE
+```dockerfile
+# Multi-stage build with Poetry
+FROM python:3.12-slim AS builder
+WORKDIR /app
 
-**Stage 3: Data Processing**
-- **Application**: COA Data Extractor (Batch Processor) (`func-terprint-batchprocessor`)
-- **Trigger**: HTTP (called by Menu Downloader)
-- **Process**: Read JSON → Apply dispensary-specific mappings → Extract & normalize → Ingest to Event House
-- **Records**: Batch, Strain, Terpene, Cannabinoid
-- **Output**: Triggers website cache refresh
+# Install Poetry
+RUN pip install --no-cache-dir poetry==1.7.1
+RUN poetry config virtualenvs.create false
 
-**Stage 4: Data Presentation**
-- **Application**: Terprint Website
-- **Process**: Query Event House → Serve search/filter UI → Display product details
-- **Users**: Medical marijuana patients, dispensary staff
+# Copy dependency files first (for layer caching)
+COPY pyproject.toml poetry.lock ./
 
-**Stage 5: Analytics**
-- **Application**: Power BI Reports + Custom Visuals
-- **Process**: Connect to Event House → Trend analysis → Scheduled reports
-- **Custom Visuals**: TypeScript + D3 (terprint-powerbi-visuals/TerpeneRadar)
+# Export to requirements.txt for production (without dev dependencies)
+RUN poetry export -f requirements.txt --output requirements.txt --without-hashes --without dev
 
-### Marketplace Integration Architecture
-- **Azure SQL**: Plans, Subscriptions, UsageEvents, WebhookEvents (see `marketplace/database/schema.sql`)
-- **Metering Service**: .NET background service → Aggregates usage → Submits to Microsoft Marketplace
-- **Webhook Processor**: Azure Function (dotnet-isolated) → Receives Partner Center events → Updates subscriptions
-- **Key Vault**: Partner Center credentials, SQL connection strings
-- **Storage Queues**: Reliable webhook/usage event processing
+FROM python:3.12-slim AS runtime
+RUN groupadd -r terprint && useradd -r -g terprint terprint
+WORKDIR /app
 
-### Architecture Decision Considerations
-- **Service boundaries**: Each stage is a separate application with clear responsibilities
-- **Communication**: Timer triggers (Stage 2) → HTTP triggers (Stage 3) → Cache refresh (Stage 4)
-- **Data consistency**: Eventual consistency acceptable (daily batch processing)
-- **Scalability**: Serverless functions auto-scale, Blob Storage handles large JSON files
-- **Observability**: Application Insights for all stages, Log Analytics for queries
+# Install production dependencies
+COPY --from=builder /app/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-### Domain-Specific Design Patterns
-- **Adapter Pattern**: Dispensary-specific field mappings (each dispensary API differs)
-- **ETL Pattern**: Extract (download) → Transform (process) → Load (Event House)
-- **Data Lake Pattern**: Store raw JSON in Blob Storage, process on-demand
-- **Configuration as Code**: terprint-config package centralizes all configs
+# Copy application code
+COPY src/ ./src/
 
-## Testing Framework
+RUN chown -R terprint:terprint /app
+USER terprint
 
-### Testing Pyramid (Cannabis Data Pipeline Context)
+ENV PYTHONUNBUFFERED=1 PORT=80
+EXPOSE 80
 
-**Unit Tests (70% of tests)**
-- Test individual dispensary API parsers in isolation
-- Mock HTTP responses from dispensary APIs
-- Test field mapping logic (strain name extraction, terpene percentage parsing)
-- Verify COA data extraction accuracy
-- Test Event House query builders
-- Fast execution (< 1ms per test)
-- Cover edge cases: missing fields, malformed JSON, null values
-- Aim for 80%+ code coverage
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:80/api/health || exit 1
 
-**Integration Tests (20% of tests)**
-- Test Menu Downloader → Blob Storage → Batch Processor flow
-- Use Azure Storage Emulator or Azurite for local testing
-- Test Event House ingestion with test database
-- Verify dispensary config loading from terprint-config
-- Test marketplace webhook processing end-to-end
-- Test Power BI visual interactions with sample data
+CMD ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "80"]
+```
 
-**End-to-End Tests (10% of tests)**
-- Test complete pipeline: Download → Process → Query → Display
-- Run against staging environment with test dispensary APIs
-- Verify data appears correctly on website
-- Test Power BI report refresh with real data
-- Focus on critical paths: strain search, terpene filtering
+### Required Health Endpoint
+
+Every Container App MUST expose:
+
+```
+GET /api/health
+```
+
+Response (200 OK):
+```json
+{
+  "status": "healthy",
+  "service": "ai-chat",
+  "version": "1.2.3",
+  "timestamp": "2026-01-07T12:00:00Z"
+}
+```
+
+---
+
+## 🚀 CI/CD Standards (GitHub Actions with Organization Secrets)
+
+> **📚 Comprehensive CI/CD Guide**: For complete CI/CD standards including deployment workflows, rollback strategies, security scanning, and integration testing, see **[terprint-cicd.instructions.md](https://github.com/Acidni-LLC/terprint-config/blob/main/.github/instructions/terprint-cicd.instructions.md)** (`../terprint-config/.github/instructions/terprint-cicd.instructions.md`)
+
+**ALL Terprint repositories MUST use GitHub Actions workflows with organization secrets for deployment.**
+
+### Standard Workflow Structure
+
+Every repo needs `.github/workflows/deploy.yml`:
+
+```yaml
+name: Deploy to Azure
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.ORG_AZURE_CREDENTIALS }}
+
+      - name: Setup Python (if Python app)
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ vars.ORG_PYTHON_VERSION }}
+
+      - name: Install Poetry (if Python app)
+        run: pip install poetry
+
+      - name: Install dependencies (if Python app)
+        run: poetry install --without dev
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ vars.ORG_ACR_LOGIN_SERVER }}/your-app:${{ github.sha }} .
+
+      - name: Login to ACR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.ORG_ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ORG_ACR_USERNAME }}
+          password: ${{ secrets.ORG_ACR_PASSWORD }}
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ vars.ORG_ACR_LOGIN_SERVER }}/your-app:${{ github.sha }}
+
+      - name: Deploy to Container Apps
+        run: |
+          az containerapp update \
+            --name ca-your-app \
+            --resource-group rg-dev-terprint-ca \
+            --image ${{ vars.ORG_ACR_LOGIN_SERVER }}/your-app:${{ github.sha }}
+```
+
+### Organization Secrets Usage
+
+**✅ CORRECT - Use organization secrets:**
+```yaml
+with:
+  creds: ${{ secrets.ORG_AZURE_CREDENTIALS }}  # From organization
+  registry: ${{ vars.ORG_ACR_LOGIN_SERVER }}   # From organization variables
+```
+
+**❌ WRONG - Don't use repo secrets:**
+```yaml
+with:
+  creds: ${{ secrets.AZURE_CREDENTIALS }}     # Old way - don't use
+```
+
+### Deployment Process
+
+1. **Developer**: Push code to GitHub repo (`main` branch)
+2. **GitHub Actions**: Workflow triggers automatically
+3. **Build**: Docker image built using organization secrets
+4. **Push**: Image pushed to ACR using `ORG_ACR_*` secrets
+5. **Deploy**: Container App updated with new image
+6. **Test**: Integration tests can be triggered via API call
+
+---
+
+## 🔐 Authentication Patterns
+
+### Entra ID App-to-App Authentication
+
+```python
+from terprint_config.auth import get_auth_header, validate_token
+import os
+
+# Outbound: Get token for calling another service
+headers = get_auth_header("func-terprint-communications")
+response = requests.post(url, headers=headers, json=data)
+
+# Inbound: Validate incoming tokens
+result = validate_token(
+    request.headers.get("Authorization"),
+    expected_audience=os.environ["AZURE_CLIENT_ID"],
+    required_scopes=["Communications.Send"]
+)
+if not result.valid:
+    return {"error": result.error}, 401
+```
+
+### App Registration Names
+
+| App | Application ID URI | Primary Scopes |
+|-----|-------------------|----------------|
+| `func-terprint-communications` | `api://func-terprint-communications` | Communications.Send, Communications.Read |
+| `terprint-batches` | `api://terprint-batches` | BatchCreator.Process, BatchCreator.Backfill |
+| `terprint-batch-processor` | `api://terprint-batch-processor` | COAProcessor.Execute, COAProcessor.Read |
+| `func-terprint-menudownloader` | `api://func-terprint-menudownloader` | MenuDownloader.Download, MenuDownloader.StockCheck |
+| `func-terprint-ai-chat` | `api://func-terprint-ai-chat` | AIChat.Query, AIChat.History |
+
+---
+
+## 🛠️ Operational Commands
+
+### Service Health Verification
+
+```powershell
+# Check all services through APIM
+$key = (az keyvault secret show --vault-name kv-terprint-dev --name apim-subscription-key --query value -o tsv)
+$services = @("chat", "data", "recommend", "communications", "stock")
+foreach ($svc in $services) {
+    $url = "https://apim-terprint-dev.azure-api.net/$svc/api/health"
+    try {
+        $result = Invoke-RestMethod -Uri $url -Headers @{"Ocp-Apim-Subscription-Key"=$key}
+        Write-Host "✅ $svc: $($result.status)" -ForegroundColor Green
+    } catch {
+        Write-Host "❌ $svc: FAILED" -ForegroundColor Red
+    }
+}
+```
+
+### Trigger Pipeline Stages Manually
+
+```powershell
+# Stage 2.5: Batch Creator
+Invoke-RestMethod -Uri "https://ca-terprint-batches.kindmoss-c6723cbe.eastus2.azurecontainerapps.io/api/trigger" `
+    -Method POST -Body '{"preset": "today"}' -ContentType "application/json"
+
+# Stage 2.5: Batch Creator (specific date backfill)
+Invoke-RestMethod -Uri "https://ca-terprint-batches.kindmoss-c6723cbe.eastus2.azurecontainerapps.io/api/trigger" `
+    -Method POST -Body '{"date": "2026-01-17"}' -ContentType "application/json"
+
+# Stage 3: Batch Processor
+Invoke-RestMethod -Uri "https://ca-terprint-batchprocessor.kindmoss-c6723cbe.eastus2.azurecontainerapps.io/api/run-batch-processor" `
+    -Method POST -Body '{"date": "2026-01-17"}' -ContentType "application/json"
+```
+
+### Blob Storage Operations
+
+```powershell
+# List dispensary folders
+az storage blob list --account-name stterprintsharedgen2 --container-name jsonfiles `
+    --prefix "dispensaries/" --auth-mode login -o table
+
+# Check if batch file exists
+az storage blob exists --account-name stterprintsharedgen2 --container-name jsonfiles `
+    --name "batches/consolidated_batches_20260117.json" --auth-mode login
+
+# Download a menu file
+az storage blob download --account-name stterprintsharedgen2 --container-name jsonfiles `
+    --name "dispensaries/curaleaf/2026/01/07/menu.json" --file ./menu.json --auth-mode login
+```
+
+### Container App Management
+
+```powershell
+# View logs (follow mode)
+az containerapp logs show --name ca-terprint-batches --resource-group rg-dev-terprint-ca --follow
+
+# Restart current revision
+$revision = (az containerapp revision list --name ca-terprint-batches --resource-group rg-dev-terprint-ca --query "[0].name" -o tsv)
+az containerapp revision restart --name ca-terprint-batches --resource-group rg-dev-terprint-ca --revision $revision
+
+# Update to latest image
+az containerapp update --name ca-terprint-batches --resource-group rg-dev-terprint-ca `
+    --image crterprint.azurecr.io/terprint-batches:latest
+```
+
+### Docker Build and Push
+
+```powershell
+# Login to Azure Container Registry
+az acr login --name crterprint
+
+# Build image
+docker build -t crterprint.azurecr.io/terprint-batches:latest .
+
+# Push to ACR
+docker push crterprint.azurecr.io/terprint-batches:latest
+```
+
+### Local Development with Poetry
+
+```powershell
+# Start a service locally
+$Host.UI.RawUI.WindowTitle = "📦 Batch Creator (7076)"
+cd terprint-batches
+poetry install
+poetry run uvicorn src.main:app --port 7076 --reload
+
+# Run tests
+poetry run pytest tests/ -v
+
+# Run linting
+poetry run ruff check .
+poetry run mypy src/
+```
+
+---
+
+## 📋 Troubleshooting Runbooks
+
+### Runbook: Pipeline Data Gap
+
+**Symptom:** No data for a specific date in the database
+
+**Resolution Steps:**
+
+1. **Check Menu Downloader ran:**
+   ```powershell
+   az containerapp logs show --name ca-terprint-menudownloader --resource-group rg-dev-terprint-ca --tail 100
+   ```
+
+2. **Verify raw files exist:**
+   ```powershell
+   az storage blob list --account-name stterprintsharedgen2 --container-name jsonfiles `
+       --prefix "dispensaries/cookies/2026/01/17/" --auth-mode login -o table
+   ```
+
+3. **Check Batch Creator output:**
+   ```powershell
+   az storage blob exists --account-name stterprintsharedgen2 --container-name jsonfiles `
+       --name "batches/consolidated_batches_20260117.json" --auth-mode login
+   ```
+
+4. **Manual recovery - trigger each stage:**
+   ```powershell
+   # Re-run Batch Creator for specific date
+   Invoke-RestMethod -Uri "https://ca-terprint-batches.kindmoss-c6723cbe.eastus2.azurecontainerapps.io/api/trigger" `
+       -Method POST -Body '{"date": "2026-01-17"}' -ContentType "application/json"
+   ```
+
+### Runbook: Service Health Failure
+
+**Symptom:** APIM returns 5xx errors for a service
+
+1. **Check Container App status:**
+   ```powershell
+   az containerapp show --name ca-terprint-batches --resource-group rg-dev-terprint-ca --query "properties.runningStatus"
+   ```
+
+2. **View recent logs:**
+   ```powershell
+   az containerapp logs show --name ca-terprint-batches --resource-group rg-dev-terprint-ca --tail 200
+   ```
+
+3. **Restart if needed:**
+   ```powershell
+   $revision = (az containerapp revision list --name ca-terprint-batches --resource-group rg-dev-terprint-ca --query "[0].name" -o tsv)
+   az containerapp revision restart --name ca-terprint-batches --resource-group rg-dev-terprint-ca --revision $revision
+   ```
+
+---
+
+## 🏷️ Local Development Ports
+
+| App | Default Port | Window Title |
+|-----|--------------|--------------|
+| Communications | 7071 | 🔔 Communications |
+| Batch Creator | 7076 | 📦 Batch Creator |
+| COA Processor | 7081 | 🔧 COA Processor |
+| Menu Downloader | 7086 | 📥 Menu Downloader |
+| AI Chat | 7091 | 💬 AI Chat |
+| AI Recommender | 7096 | 🎯 AI Recommender |
+| AI Deals | 7101 | 💰 AI Deals |
+| AI Health | 7106 | 🏥 AI Health |
+| Infographics | 7111 | 🎨 Infographics |
+| Metering | 7116 | 📊 Metering |
+| Data API | 7121 | 📡 Data API |
+
+**Starting an App Locally:**
+```powershell
+$Host.UI.RawUI.WindowTitle = "🔔 Communications (7071)"
+func host start --port 7071
+```
+
+---
+
+## 🌿 Dispensary Configuration
+
+| Dispensary | Grower ID | Status | Notes |
+|------------|-----------|--------|-------|
+| Cookies | 1 | ✅ Active | Stable |
+| MÜV | 2 | ✅ Active | Stable |
+| Flowery | 3 | ✅ Active | All FL locations |
+| Trulieve | 4 | ✅ Active | 162 stores, 4 categories |
+| Curaleaf | 10 | ✅ Active | ~45-60 stores |
+| Sunnyside | 5 | 🔴 Discovery | In progress |
+| Liberty | 6 | 🔴 Discovery | Planned |
+| Fluent | 7 | 🔴 Discovery | Planned |
+| VidaCann | 8 | 🔴 Discovery | Planned |
+| RISE | 9 | 🔴 Discovery | Planned |
+
+---
+
+## 🧪 Testing Framework
+
+> **📚 Detailed CI/CD & Testing Instructions**: For comprehensive testing, deployment workflows, and integration test patterns, see **[terprint-cicd.instructions.md](https://github.com/Acidni-LLC/terprint-config/blob/main/.github/instructions/terprint-cicd.instructions.md)** (`../terprint-config/.github/instructions/terprint-cicd.instructions.md`)
+
+### Testing Pyramid
+
+| Level | Coverage | What to Test |
+|-------|----------|--------------|
+| Unit Tests | 70% | Dispensary parsers, field mappings, COA extraction |
+| Integration Tests | 20% | Pipeline flow, Event House ingestion |
+| E2E Tests | 10% | Full pipeline, website queries |
 
 ### Domain-Specific Testing
-- **API Contract Tests**: Verify dispensary API responses match expected schema (APIs change!)
-- **Data Quality Tests**: Validate extracted terpene percentages sum correctly, batch numbers are valid
-- **Idempotency Tests**: Ensure reprocessing same menu doesn't create duplicates
-- **Resilience Tests**: Test behavior when dispensary APIs are down or return errors
-- **Marketplace Tests**: Verify metering events, webhook processing, subscription lifecycle
+- **API Contract Tests**: Verify dispensary API responses match expected schema
+- **Data Quality Tests**: Validate terpene percentages sum correctly
+- **Idempotency Tests**: Ensure reprocessing doesn't create duplicates
+- **Resilience Tests**: Test behavior when dispensary APIs are down
 
-### Test Data Management
-- Maintain sample JSON files from each dispensary in `tests/fixtures/`
-- Anonymize real dispensary data for test cases
-- Version control test fixtures alongside code
-- Update fixtures when dispensary APIs change
+### Integration Test Trigger (REQUIRED)
 
-## Security Best Practices
+> **CRITICAL**: ALL deployments MUST trigger integration tests after successful deployment
 
-### Application Security (Cannabis Data Context)
-- **Input Validation**: Sanitize all dispensary API responses (untrusted external data)
-- **Output Encoding**: Prevent XSS when displaying strain names, product descriptions
-- **Authentication**: Azure Managed Identities for all inter-service communication
-- **Secrets Management**: Use Azure Key Vault (never commit API keys, database connection strings)
-- **Rate Limiting**: Respect dispensary API rate limits, implement exponential backoff
-- **Data Privacy**: Handle patient data responsibly (if present in analytics)
-- **Partner Center Security**: Service Principal credentials in Key Vault, managed identities for API calls
+**Test Dashboard**: https://brave-stone-0d8700d0f.3.azurestaticapps.net
 
-### Infrastructure Security
-- **Managed Identities**: Use assigned identities for all Azure resources
-  - `mi-terprint-devops` - Project Administrator
-  - `terprint-menu-downloader` - Project Contributor
-  - `func-terprint-batchprocessor` - Project Contributor
-- **RBAC**: Principle of least privilege for all Azure resources
-- **Network Segmentation**: Function apps communicate via private endpoints (when possible)
-- **Blob Storage**: Secure access via managed identities, no public access
-- **Event House**: Restrict access via Azure AD authentication
-- **SQL Database**: Firewall rules, connection encryption, managed identity auth
-- **Audit Logging**: Enable Azure Monitor for all resource access
+Every GitHub Actions workflow MUST include this job after deployment:
 
-### Compliance Considerations
-- **Cannabis Industry**: Be aware of state/federal regulations around cannabis data
-- **HIPAA**: If handling patient information, ensure HIPAA compliance
-- **Data Retention**: Implement retention policies for raw JSON files in Blob Storage
+```yaml
+trigger-integration-tests:
+  needs: deploy
+  runs-on: ubuntu-latest
+  if: success()
+  steps:
+    - name: Trigger Terprint Integration Tests
+      uses: peter-evans/repository-dispatch@v3
+      with:
+        token: ${{ secrets.ORG_GH_PAT_TERPRINT_TESTS }}
+        repository: Acidni-LLC/terprint-tests
+        event-type: post-deploy-tests
+        client-payload: |
+          {
+            "service": "${{ env.APP_NAME }}",
+            "source_repo": "${{ github.repository }}",
+            "deploy_run": "${{ github.run_id }}",
+            "environment": "${{ env.ENVIRONMENT }}"
+          }
+```
 
-## CI/CD Pipeline Requirements
+**Services That MUST Trigger Tests:**
 
-### Azure DevOps Integration
-- **Organization**: Acidni
-- **Project**: Terprint
-- **Area Paths**:
-  - `Terprint` - Root (terprint-config)
-  - `Terprint\Menu Downloader` - Menu Downloader issues
-  - `Terprint\COA Data Extractor` - Batch Processor issues
-- **Artifacts Feed**: terprint (PyPI) - hosts terprint-config package
-
-### Continuous Integration
-- **Build Triggers**: Every commit to main branch
-- **Build Steps**:
-  1. Restore Python dependencies (requirements.txt)
-  2. Run unit tests (pytest)
-  3. Run integration tests
-  4. Code quality checks (pylint, black, mypy)
-  5. Security scanning (Bandit for Python, dependency vulnerabilities)
-  6. Build Azure Function zip packages
-  7. Publish terprint-config to Azure Artifacts feed
-- **Fast Feedback**: < 10 minutes for CI pipeline
-- **Build Artifacts**: Function app zip files, terprint-config wheel
-
-### Continuous Deployment
-- **Environments**: Development → Staging → Production
-- **Deployment Steps**:
-  1. Deploy to dev environment (automatic)
-  2. Run smoke tests (verify functions respond)
-  3. Deploy to staging (automatic)
-  4. Run E2E tests (verify full pipeline)
-  5. Deploy to production (manual approval gate)
-- **Rollback Strategy**: Redeploy previous version, restore Event House data from backup
-- **Database Migrations**: Run Kusto scripts before function deployment, SQL migrations for marketplace
-- **Configuration**: Update terprint-config package version in requirements.txt
-
-### Marketplace Deployment
-- **Bicep Templates**: `marketplace/infra/main.bicep`
-- **Parameter Files**: `parameters.dev.json`, `parameters.prod.json`
-- **Validation**: Non-interactive validation before deployment
-- **Power BI Visuals**: Package with `pbiviz package`, submit to Partner Center/AppSource
-
-## Code Review Guidelines
-
-### Terprint-Specific Review Checklist
-
-**When Submitting Code:**
-- Keep PRs small (< 400 lines when possible)
-- Include dispensary name in PR title if adding new dispensary support
-- Test with real dispensary API responses (include sample JSON)
-- Update terprint-config version and changelog
-- Verify changes don't break existing dispensary mappings
-- Include Event House query examples if schema changes
-- Update Power BI visual version if modifying visuals
-- Test marketplace metering/webhook locally before submission
-
-**When Reviewing Code:**
-- **Data Accuracy**: Verify field mappings are correct (strain name, terpene percentages)
-- **Error Handling**: Check dispensary API failure scenarios
-- **Performance**: Large JSON files can cause memory issues (check file size handling)
-- **Idempotency**: Ensure reprocessing doesn't create duplicate records
-- **Schema Compatibility**: Verify Event House schema changes are backward compatible
-- **Configuration**: Check terprint-config changes don't break existing deployments
-- **Security**: Verify managed identities used, no hardcoded secrets
-- **Marketplace**: Verify metering logic, webhook event handling, SQL schema changes
-
-### Domain-Specific Code Patterns to Watch For
-- **Hardcoded Dispensary Mappings**: Should be in terprint-config, not inline
-- **Brittle JSON Parsing**: Use safe dictionary access (`.get()` with defaults)
-- **Missing Null Checks**: Dispensary APIs often return null/missing fields
-- **Timezone Issues**: Timestamps should be UTC, display in EST for Florida users
-- **Percentage Validation**: Terpene/cannabinoid percentages should sum correctly
-
-## KPI Tracking & Metrics
-
-### DORA Metrics (Terprint Context)
-- **Deployment Frequency**: Target 2-3 deployments per week
-- **Lead Time for Changes**: Commit to production < 4 hours
-- **Change Failure Rate**: < 5% (critical: data accuracy errors)
-- **Time to Restore Service**: < 2 hours (daily pipeline must complete)
-
-### Data Pipeline Metrics
-- **Data Freshness**: Time since last successful menu download (target: < 24 hours)
-- **Dispensary Coverage**: % of Florida dispensaries with active data (currently 4, target: 10)
-- **Data Quality**: % of menus with complete terpene profiles (target: > 90%)
-- **Processing Time**: Time to process all menus (target: < 30 minutes)
-- **Error Rate**: % of menu downloads that fail (target: < 10%)
-- **Event House Ingestion Rate**: Records ingested per day (track growth)
-
-### Code Quality Metrics
-- **Code Coverage**: 80%+ for Python code
-- **Cyclomatic Complexity**: < 10 per function
-- **Code Duplication**: < 3%
-- **Critical Vulnerabilities**: Zero
-- **Technical Debt Ratio**: < 5%
-
-### Business Metrics
-- **Website Traffic**: Unique visitors per day
-- **Search Queries**: Strain/terpene searches per day
-- **Power BI Report Usage**: Report views per week
-- **Dispensary API Uptime**: % of successful API calls per dispensary
-- **Marketplace Subscriptions**: Active subscriptions, usage events submitted, webhook success rate
-
-## Problem-Solving Workflow
-
-### Dispensary API Troubleshooting
-When a dispensary API fails or changes:
-
-1. **Investigate**: Check Application Insights logs for error messages
-2. **Reproduce**: Use Menu Discoverer to test API endpoint locally
-3. **Analyze**: Compare old vs new API response structure
-4. **Design**: Update field mappings in terprint-config
-5. **Implement**: Modify Batch Processor to handle new structure
-6. **Test**: Verify with real API responses (save sample JSON)
-7. **Deploy**: Publish terprint-config, update Menu Downloader/Batch Processor
-8. **Monitor**: Watch Application Insights for 24 hours
-
-### Adding New Dispensary (Discovery → Production)
-1. **Discovery**: Use Menu Discoverer to find API endpoint
-2. **Validation**: Test API reliability, data quality
-3. **Mapping**: Create field mappings (strain, terpene, cannabinoid extraction)
-4. **Configuration**: Add to terprint-config package
-5. **Testing**: Write unit tests for new mappings
-6. **Integration**: Add to Menu Downloader configuration
-7. **Monitoring**: Track data quality in Event House
-8. **Documentation**: Update dispensary list in docs
-
-### Event House Schema Changes
-1. **Backward Compatibility**: Ensure existing queries still work
-2. **Migration Plan**: Write Kusto script to backfill existing data
-3. **Power BI Updates**: Update reports to use new schema
-4. **Website Updates**: Update website queries
-5. **Testing**: Verify all downstream consumers work
-6. **Rollout**: Deploy schema changes before application changes
-
-### Marketplace Issues (Metering/Webhooks)
-1. **Check Logs**: Application Insights for metering service and webhook function
-2. **Verify Events**: Check Azure SQL tables (UsageEvents, WebhookEvents)
-3. **Partner Center**: Verify events received by Microsoft Marketplace
-4. **Queue Messages**: Check Storage Queue for failed messages
-5. **Credentials**: Verify Key Vault secrets, managed identity permissions
-6. **Retry Logic**: Ensure idempotent processing for replayed events
-
-## Communication Standards
-
-### Documentation Requirements
-- **README**: Each application (menu-downloader, coa-data-extractor, menu-discoverer, marketplace)
-  - Setup instructions
-  - Architecture overview
-  - API documentation
-  - Local development guide
-- **terprint-config**: Comprehensive dispensary mapping documentation
-- **Event House Schema**: Table definitions, sample queries
-- **Power BI Visuals**: Development, packaging, submission guide
-- **Marketplace**: Infrastructure deployment, parameters, SQL schema
-- **ADR (Architecture Decision Records)**: Document major decisions (e.g., why Event House vs SQL for analytics)
-
-### Azure DevOps Work Items
-- **Bug**: Critical data accuracy issues, pipeline failures
-- **Task**: New dispensary support, feature enhancements, medium/low priority
-- **Area Path**: Assign to correct area (Terprint, Menu Downloader, COA Data Extractor)
-- **Tags**: Use dispensary names, "data-quality", "performance", "security", "marketplace"
-- **Discovery Findings**: Report in Menu Downloader area
-
-### Commit Message Format
-Use conventional commits:
-- `feat(cookies): add support for new terpene fields`
-- `fix(batch-processor): handle missing strain names`
-- `chore(config): bump terprint-config to v1.2.3`
-- `docs(readme): update Event House query examples`
-- `test(muv): add fixtures for MÜV menu structure`
-- `refactor(marketplace): extract metering logic into separate service`
-
-### Sprint Planning
-- **Sprint Duration**: 2 weeks
-- **Velocity Tracking**: Story points per sprint
-- **Priorities**:
-  1. Critical bugs (data accuracy, pipeline failures)
-  2. New dispensary support (expand coverage)
-  3. Data quality improvements
-  4. Performance optimizations
-  5. Technical debt reduction
-  6. Marketplace enhancements
-
-### Stand-up Format
-- **What I did**: Completed Flowery API update, fixed terpene parsing bug
-- **What I'm doing**: Adding Sunnyside dispensary support
-- **Blockers**: Waiting for Sunnyside API documentation
-- **Dispensary Status**: All 4 production dispensaries healthy
-
-## Iterative Improvement
-
-This framework is a living document specific to Terprint. Regularly:
-
-### Technical Improvements
-- Review dispensary API reliability, consider backup data sources
-- Optimize Batch Processor for larger JSON files
-- Improve Event House query performance
-- Enhance Power BI visual performance (TerpeneRadar render time)
-- Reduce marketplace metering latency
-
-### Process Improvements
-- Refine discovery process for new dispensaries
-- Streamline deployment pipeline (reduce manual steps)
-- Improve monitoring dashboards (Application Insights queries)
-- Enhance code review checklist based on common issues
-- Document tribal knowledge about dispensary API quirks
-
-### Business Improvements
-- Expand dispensary coverage (target: 10 dispensaries)
-- Improve data quality (complete terpene profiles)
-- Reduce pipeline processing time
-- Enhance website search relevance
-- Add new Power BI visuals and reports
-- Grow marketplace subscriptions and usage
-
-## Current Sprint Focus
-
-### Sprint Goals
-[Update this section each sprint with specific goals, priorities, and context]
-
-**Example:**
-- **Goal 1**: Add Sunnyside and Curaleaf dispensary support
-- **Goal 2**: Improve Batch Processor performance (reduce processing time by 30%)
-- **Goal 3**: Launch marketplace metering service to production
-- **Priority Bugs**: Fix MÜV terpene parsing for new menu format
-- **Technical Debt**: Refactor Menu Downloader error handling
-
-### Dispensary Status
-- ✅ **Cookies**: Stable
-- ✅ **MÜV**: Stable
-- ✅ **Flowery**: Stable
-- ✅ **Trulieve**: Stable
-- ✅ **Curaleaf**: Active (GrowerID 10)
-- 🔴 **Sunnyside**: Discovery in progress
-
-### Key Metrics This Sprint
-- Pipeline Success Rate: 95%
-- Data Freshness: < 24 hours
-- Event House Records: 50K+ (growing)
-- Website Uptime: 99.9%
-- Marketplace Subscriptions: [Update with current count]
+| Service | Trigger Tests | Reason |
+|---------|---------------|--------|
+| terprint-data-api | ✅ **Yes** | Core API - validates data endpoints |
+| terprint-ai-chat | ✅ **Yes** | Customer-facing - APIM tests |
+| terprint-ai-recommender | ✅ **Yes** | Customer-facing - APIM tests |
+| terprint-ai-deals | ✅ **Yes** | Customer-facing - APIM tests |
+| terprint-infographics | ✅ **Yes** | Customer-facing - APIM tests |
+| terprint-ai-lab | ✅ **Yes** | Integration tests |
+| terprint-metering | ✅ **Yes** | Billing validation critical |
+| terprint-marketplace-webhook | ✅ **Yes** | Subscription tests |
+| terprint-menudownloader | ⚠️ Optional | Data pipeline (health only) |
+| terprint-batch-processor | ⚠️ Optional | Data pipeline (health only) |
 
 ---
 
-**Remember**: 
+## 📊 DORA Metrics Targets
+
+| Metric | Current | Target |
+|--------|---------|--------|
+| Deployment Frequency | Weekly | 2-3x per week |
+| Lead Time for Changes | ~8 hours | < 4 hours |
+| Change Failure Rate | ~10% | < 5% |
+| Mean Time to Recovery | ~4 hours | < 2 hours |
+
+---
+
+## ✅ Code Review Checklist
+
+Before approving any PR, verify:
+
+- [ ] Uses Poetry for Python dependency management
+- [ ] Uses `terprint_config.settings` for ALL configuration values
+- [ ] All service calls route through APIM gateway
+- [ ] No hardcoded secrets, API keys, or connection strings
+- [ ] Uses `pymssql` (not `pyodbc`) for SQL connections
+- [ ] Function auth level is `function` (not `anonymous`)
+- [ ] Managed identity used for Azure resource access
+- [ ] Tests added/updated for new functionality
+- [ ] Documentation updated in same PR
+- [ ] Conventional commit message format used
+
+---
+
+## 📝 Conventional Commit Format
+
+```
+feat(batch-creator): add retry logic for blob storage failures
+fix(menu-downloader): handle null terpene values in Curaleaf response
+docs(readme): update deployment instructions for Container Apps
+chore(deps): bump terprint-config to v4.5.0
+test(coa-processor): add fixtures for Curaleaf menu format
+refactor(ai-chat): extract embedding logic to shared module
+```
+
+---
+
+## 🔗 Quick Reference Links
+
+| Resource | URL |
+|----------|-----|
+| Azure DevOps | https://dev.azure.com/Acidni/Terprint |
+| APIM Gateway | https://apim-terprint-dev.azure-api.net |
+| Test Dashboard | https://brave-stone-0d8700d0f.3.azurestaticapps.net |
+| Sales Site | https://sales.terprint.com |
+| Main Web App | https://terprint.acidni.net |
+| Container Registry | crterprint.azurecr.io |
+| Key Vault | https://kv-terprint-dev.vault.azure.net |
+| Storage Account | https://stterprintsharedgen2.blob.core.windows.net/jsonfiles |
+
+---
+
+## 🎯 Key Reminders
+
 - **Data Accuracy is Critical**: Cannabis patients rely on accurate terpene/cannabinoid data
 - **Dispensary APIs Change Often**: Build resilient, flexible parsers
 - **Azure Managed Identities**: Never hardcode credentials
 - **Domain Knowledge Matters**: Understand cannabis terminology (strain types, terpene effects, COA interpretation)
 - **Quality Over Speed**: Accurate data > fast but wrong data
-- **Marketplace Reliability**: Customers depend on metering accuracy and webhook processing
-
-**Key Commands**:
-```bash
-# Local development
-cd menu-downloader && func start
-cd coa-data-extractor && func start
-cd terprint-powerbi-visuals/TerpeneRadar && npm run start:TerpeneRadar
-
-# Packaging
-cd terprint-config && python -m build
-cd TerpeneRadar && pbiviz package
-
-# Deployment
-az deployment group create -g rg-dev-terprint-visuals -f marketplace/infra/main.bicep -p @parameters.dev.json
-
-# Testing
-pytest tests/ --cov=terprint --cov-report=html
-```
-
-**Useful Resources**:
-- Azure DevOps: https://dev.azure.com/Acidni/Terprint
-- terprint-config docs: Azure Artifacts feed
-- Power BI Visual Tools: https://github.com/microsoft/PowerBI-visuals-tools
-- Kusto Query Language: https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/
+- **Idempotency**: The consolidated batch file is overwritten throughout the day—Batch Processor runs multiple times to catch updates
+- **Poetry for Python**: All Python apps must use Poetry for dependency management
 
 ---
 
-## Curaleaf Batch and Strain Name Mapping (2025-12-17)
+## 🔄 Sync Instructions to All Repos
 
-**GrowerID:** 10
+To distribute this file to all Terprint repositories, run:
 
-**Batch Name Mapping:**
-- Formula: `{batch_number}`
-- JSONPath: `$.products[*].batch_number`
-- Fallback: `{sku}`
+```powershell
+# From terprint-config repo root
+.\copy-instructions-to-repos.ps1
+```
 
-**Strain Name Mapping:**
-- Formula: `{strain}`
-- JSONPath: `$.products[*].strain`
-- Fallback: `{name}`
+This copies `.github/copilot-instructions.md` to:
+- terprint-ai-chat
+- terprint-ai-recommender
+- terprint-ai-deals
+- terprint-coa-extractor
+- terprint-batch-processor
+- terprint-powerbi-visuals
+- Terprint.Web
+- Terprint.Tests
+- func-terprint-communications
+- terprint-ai-health
+- And more...
 
-**Integration Steps:**
-1. Ensure menu-downloader and COA data extractor use the updated shared/dispensary-mappings.json.
-2. For Curaleaf, extract batch and strain names using the above mapping logic.
-3. Validate output using sample files and update tests/fixtures as needed.
-4. Review and monitor for any unmapped or malformed batch/strain values in production data.
 
-**Reference:** See shared/dispensary-mappings.json, shared/curaleaf-mapping.json for full mapping block and field details.
+
+
+
+
+
+

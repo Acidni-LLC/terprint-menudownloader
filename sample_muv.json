@@ -1,0 +1,888 @@
+{
+  "sample": [
+    {
+      "key": "quickFilter",
+      "type": "Multiple",
+      "options": [
+        {
+          "id": 2,
+          "name": "Deals",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 3,
+          "name": "Popular",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        }
+      ],
+      "uiLabel": "",
+      "expandedByDefault": true,
+      "presentation": "Tag"
+    },
+    {
+      "key": "strainPrevalence",
+      "type": "Multiple",
+      "options": [
+        {
+          "id": 9362,
+          "name": "Hybrid",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 9364,
+          "name": "Indica",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 9366,
+          "name": "Sativa",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        }
+      ],
+      "uiLabel": "Strain prevalence",
+      "expandedByDefault": true,
+      "presentation": "Tag"
+    },
+    {
+      "key": "promotion",
+      "type": "Multiple",
+      "options": [
+        {
+          "id": 981978,
+          "name": "$15 OFF",
+          "disabled": null,
+          "selected": false,
+          "tooltip": {
+            "title": "$15 OFF",
+            "description": "Offer valid until December 1  while strains and supplies last. Must have valid recommendation to receive offer. Offers may not be combined. We reserve the right to modify or cancel the promotion without notice. Excludes Savvy Reserve. "
+          }
+        },
+        {
+          "id": 863381,
+          "name": "30% OFF",
+          "disabled": null,
+          "selected": false,
+          "tooltip": {
+            "title": "30% OFF",
+            "description": "Offer valid on select products while strains and supplies last. Must have valid recommendation to receive offer. May not be combined with other offers. We reserve the right to modify or cancel the promotion without notice"
+          }
+        },
+        {
+          "id": 863382,
+          "name": "40% OFF",
+          "disabled": null,
+          "selected": false,
+          "tooltip": {
+            "title": "40% OFF",
+            "description": "Offer valid on select products while strains and supplies last. Must have valid recommendation to receive offer. May not be combined with other offers. We reserve the right to modify or cancel the promotion without notice"
+          }
+        },
+        {
+          "id": 1022482,
+          "name": "50% OFF",
+          "disabled": null,
+          "selected": false,
+          "tooltip": {
+            "title": "50% OFF",
+            "description": null
+          }
+        },
+        {
+          "id": 863384,
+          "name": "50% OFF",
+          "disabled": null,
+          "selected": false,
+          "tooltip": {
+            "title": "50% OFF",
+            "description": "Offer valid on select products while strains and supplies last. Must have valid recommendation to receive offer. May not be combined with other offers. We reserve the right to modify or cancel the promotion without notice"
+          }
+        },
+        {
+          "id": 1022483,
+          "name": "55% OFF",
+          "disabled": null,
+          "selected": false,
+          "tooltip": {
+            "title": "55% OFF",
+            "description": null
+          }
+        },
+        {
+          "id": 1022484,
+          "name": "55% OFF 2+",
+          "disabled": null,
+          "selected": false,
+          "tooltip": {
+            "title": "55% OFF 2+",
+            "description": null
+          }
+        },
+        {
+          "id": 1022490,
+          "name": "60% OFF",
+          "disabled": null,
+          "selected": false,
+          "tooltip": {
+            "title": "60% OFF",
+            "description": null
+          }
+        },
+        {
+          "id": 1022487,
+          "name": "60% OFF",
+          "disabled": null,
+          "selected": false,
+          "tooltip": {
+            "title": "60% OFF",
+            "description": null
+          }
+        },
+        {
+          "id": 1022486,
+          "name": "60% OFF 2",
+          "disabled": null,
+          "selected": false,
+          "tooltip": {
+            "title": "60% OFF 2",
+            "description": null
+          }
+        },
+        {
+          "id": 1022485,
+          "name": "60% OFF 4+",
+          "disabled": null,
+          "selected": false,
+          "tooltip": {
+            "title": "60% OFF 4+",
+            "description": null
+          }
+        },
+        {
+          "id": 1022493,
+          "name": "Up to 60% OFF",
+          "disabled": null,
+          "selected": false,
+          "tooltip": {
+            "title": "Up to 60% OFF",
+            "description": "50% OFF One 3.5g Flower, 55% OFF Two 3.5g or One 7g Flower, 60% OFF Four 3.5g, Two 7g, or One 14g Flower. \n\nOffer valid until November 29 - December 1 while strains and supplies last. Must have valid recommendation to receive offer. Offers may not be combined. We reserve the right to modify or cancel the promotion without notice. Valid on whole flower only. Cannot mix & match sizes. Excludes Savvy  & strains over 28% THC. "
+          }
+        }
+      ],
+      "uiLabel": "Deal",
+      "expandedByDefault": false,
+      "presentation": "Checkbox"
+    },
+    {
+      "key": "category",
+      "type": "Multiple",
+      "options": [
+        {
+          "id": 425003,
+          "name": "Flower",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 425004,
+          "name": "Pre-Rolls",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 425001,
+          "name": "Vapes",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 425006,
+          "name": "Edibles",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 425000,
+          "name": "Concentrates",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 425009,
+          "name": "Topicals",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 425010,
+          "name": "Oral Products",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 425007,
+          "name": "Apparel",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 425005,
+          "name": "Accessories",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        }
+      ],
+      "uiLabel": "Category",
+      "expandedByDefault": false,
+      "presentation": "Checkbox"
+    },
+    {
+      "key": "subcategory",
+      "type": "Multiple",
+      "options": [
+        {
+          "id": 425021,
+          "name": "Smalls",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 425019,
+          "name": "Whole",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        }
+      ],
+      "uiLabel": "Subcategory",
+      "expandedByDefault": false,
+      "presentation": "Checkbox"
+    },
+    {
+      "key": "totalSize",
+      "type": "Multiple",
+      "options": [
+        {
+          "id": -153884650,
+          "name": "14g",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 1921380536,
+          "name": "28g",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 243139977,
+          "name": "3.5g",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": -1077867793,
+          "name": "7g",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        }
+      ],
+      "uiLabel": "Total size",
+      "expandedByDefault": false,
+      "presentation": "Checkbox"
+    },
+    {
+      "key": "unitSize",
+      "type": "Multiple",
+      "options": [
+        {
+          "id": 424799,
+          "name": "14g",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 984523,
+          "name": "28g",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 424797,
+          "name": "3.5g",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 424798,
+          "name": "7g",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        }
+      ],
+      "uiLabel": "Unit size",
+      "expandedByDefault": false,
+      "presentation": "Checkbox"
+    },
+    {
+      "key": "thcRange",
+      "type": "Range",
+      "range": {
+        "min": 0,
+        "max": 100,
+        "unitAbbr": "%"
+      },
+      "uiLabel": "THC potency",
+      "expandedByDefault": false,
+      "presentation": "Checkbox"
+    },
+    {
+      "key": "cbdRange",
+      "type": "Range",
+      "range": {
+        "min": 0,
+        "max": 100,
+        "unitAbbr": "%"
+      },
+      "uiLabel": "CBD potency",
+      "expandedByDefault": false,
+      "presentation": "Checkbox"
+    },
+    {
+      "key": "brand",
+      "type": "Multiple",
+      "options": [
+        {
+          "id": 424987,
+          "name": "(the) Essence",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 424993,
+          "name": "M\u00dcV",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 424997,
+          "name": "Savvy",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 429833,
+          "name": "Savvy Reserve",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 424998,
+          "name": "Sweet Supply",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 424999,
+          "name": "Verano",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        }
+      ],
+      "uiLabel": "Brand",
+      "expandedByDefault": false,
+      "presentation": "Checkbox"
+    },
+    {
+      "key": "price",
+      "type": "Range",
+      "range": {
+        "min": 0,
+        "max": 300,
+        "unitAbbr": "$"
+      },
+      "uiLabel": "Price",
+      "expandedByDefault": false,
+      "presentation": "Checkbox"
+    },
+    {
+      "key": "strainTerpene",
+      "type": "Multiple",
+      "options": [
+        {
+          "id": 36,
+          "name": "A Pinene",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 31,
+          "name": "B Pinene",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 17,
+          "name": "Bisabolol",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 16,
+          "name": "Borneol",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 28,
+          "name": "Camphene",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 18,
+          "name": "Camphor",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 13,
+          "name": "Carene",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 5,
+          "name": "Caryophyllene",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 32,
+          "name": "Caryophyllene Oxide",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 22,
+          "name": "Cedrene",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 25,
+          "name": "Eucalyptol",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 37,
+          "name": "Farnesene",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 14,
+          "name": "Fenchol",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 27,
+          "name": "Guaiol",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 6,
+          "name": "Humulene",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 4,
+          "name": "Limonene",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 2,
+          "name": "Linalool",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 20,
+          "name": "Menthol",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 1,
+          "name": "Myrcene",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 21,
+          "name": "Nerolidol",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 7,
+          "name": "Ocimene",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 12,
+          "name": "Phellandrene",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 3,
+          "name": "Pinene",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 24,
+          "name": "Pulegone",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 15,
+          "name": "Terpinene",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 10,
+          "name": "Terpineol",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 8,
+          "name": "Terpinolene",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 11,
+          "name": "Valencene",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        }
+      ],
+      "uiLabel": "Terpene",
+      "expandedByDefault": false,
+      "presentation": "Checkbox"
+    },
+    {
+      "key": "strain",
+      "type": "Multiple",
+      "options": [
+        {
+          "id": 424825,
+          "name": "Apple MAC",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 727644,
+          "name": "Applescotti",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 424827,
+          "name": "B-52 Bomber",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 799693,
+          "name": "Black Amber",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 424849,
+          "name": "Cherry On Top",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 424850,
+          "name": "Cherry Punch",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 690467,
+          "name": "Dosilato",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 727647,
+          "name": "E85",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 424863,
+          "name": "Fruit Pops",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 424867,
+          "name": "Gelato",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 727645,
+          "name": "GG #4",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 727652,
+          "name": "Ghost Vapor OG",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 424872,
+          "name": "Glitter Bomb",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 424873,
+          "name": "GMO Jungle Cake",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 750731,
+          "name": "GMO S1",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 424876,
+          "name": "Grape Bubblegum",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 424880,
+          "name": "Grape Mint Gas",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 731195,
+          "name": "Gush Mints",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 424892,
+          "name": "Ice Cream Candy",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 727642,
+          "name": "Jokerz Candy",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 424916,
+          "name": "Mint Diesel",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 424917,
+          "name": "Mint Shake",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 424930,
+          "name": "Pineapple Upside Down Cake",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 897425,
+          "name": "Pineapple Wino",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 607804,
+          "name": "Pink Certz",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 424938,
+          "name": "Rocky Road",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 424952,
+          "name": "Strawberry Milkshake",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 799733,
+          "name": "Super Lemon G",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 424959,
+          "name": "The Soap",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 424963,
+          "name": "Tropical Teeth #2",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 424964,
+          "name": "Tropical Teeth #8",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 616232,
+          "name": "Wino #4",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        },
+        {
+          "id": 616233,
+          "name": "Wino #9",
+          "disabled": null,
+          "selected": false,
+          "tooltip": null
+        }
+      ],
+      "uiLabel": "Strain",
+      "expandedByDefault": false,
+      "presentation": "Checkbox"
+    }
+  ],
+  "count": 10
+}
