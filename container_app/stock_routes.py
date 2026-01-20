@@ -13,13 +13,20 @@ from pydantic import BaseModel
 try:
     from .stock_indexer import StockIndexer
     STOCK_INDEXER_AVAILABLE = True
-except ImportError:
+except ImportError as e1:
     try:
         # Fallback for direct execution
         from stock_indexer import StockIndexer
         STOCK_INDEXER_AVAILABLE = True
-    except ImportError:
+    except ImportError as e2:
         STOCK_INDEXER_AVAILABLE = False
+        import logging as _import_logger
+        _import_logger.warning(f"StockIndexer import failed (relative): {e1}")
+        _import_logger.warning(f"StockIndexer import failed (direct): {e2}")
+except Exception as e:
+    STOCK_INDEXER_AVAILABLE = False
+    import logging as _import_logger
+    _import_logger.error(f"Unexpected error importing StockIndexer: {e}", exc_info=True)
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +43,7 @@ def get_indexer() -> 'StockIndexer':
     if not STOCK_INDEXER_AVAILABLE:
         raise HTTPException(
             status_code=503,
-            detail="Stock indexer not available - terprint-core package required"
+            detail="Stock indexer not available - check logs for import errors"
         )
     
     if _stock_indexer is None:
