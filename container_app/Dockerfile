@@ -8,10 +8,11 @@ FROM python:3.11-slim AS builder
 
 WORKDIR /app
 
-# Install build dependencies
+# Install build dependencies (including FreeTDS for pymssql)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libffi-dev \
+    freetds-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install dependencies
@@ -31,6 +32,12 @@ FROM python:3.11-slim
 
 # Create non-root user for security
 RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Install runtime dependencies (FreeTDS for pymssql database connectivity)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    freetds-bin \
+    libsybdb5 \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
