@@ -30,6 +30,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import requests
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -472,6 +473,41 @@ app = FastAPI(
     description="Container App for downloading dispensary menus and uploading to Azure Data Lake",
     version="2.0.0",
     lifespan=lifespan
+)
+
+# ============================================================================
+# CORS CONFIGURATION
+# ============================================================================
+# Configure CORS to allow requests from:
+# 1. Local development (localhost:3000, localhost:8080, etc.)
+# 2. APIM gateway (apim-terprint-dev.azure-api.net)
+# 3. Terprint web app (terprint.acidni.net)
+# 4. Container app direct access (for testing)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        # Development
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:8080",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:8080",
+        # Production/APIM
+        "https://apim-terprint-dev.azure-api.net",
+        "https://apim-terprint.azure-api.net",
+        # Web app
+        "https://terprint.acidni.net",
+        "https://terprint-web.azurewebsites.net",
+        # Container app (for testing)
+        "https://ca-terprint-menudownloader.kindmoss-c6723cbe.eastus2.azurecontainerapps.io",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
+    expose_headers=["content-length", "x-json-response-size", "content-type"],
+    max_age=86400,  # Cache CORS preflight for 24 hours
 )
 
 # Include stock routes if available
