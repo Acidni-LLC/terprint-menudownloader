@@ -1,34 +1,33 @@
 ﻿"""
 Stock Index Builder
 
-Builds searchable stock index from consolidated batch files.
-Updated after each batch processing run to show current inventory.
+Builds searchable stock index from SQL database (Batch table).
+Reads enriched product data after COA Processor runs.
 
-Storage:
-- stock-index/current.json - Latest full index
-- stock-index/by-strain/{strain_normalized}.json - Per-strain lookups
-- stock-index/by-dispensary/{dispensary}.json - Per-dispensary inventory
-- stock-index/metadata.json - Index build metadata
+Data Source: Azure SQL Database (terprint.Batch table)
+- Enriched with terpene profiles, cannabinoid percentages
+- Includes pricing, weights, store locations
+- Updated 3x daily after batch processing runs
 
 Copyright (c) 2026 Acidni LLC
 """
 
 import json
 import logging
+import os
 import re
 from collections import defaultdict
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Set
-from azure.storage.blob import BlobServiceClient
-from azure.identity import DefaultAzureCredential
+import pymssql
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class StockItem:
-    """A product in stock."""
+    """A product in stock with full enriched data from database."""
     batch_id: str
     strain: str
     strain_normalized: str
@@ -36,12 +35,16 @@ class StockItem:
     category: str
     product_name: str
     
-    # Cannabis data
+    # Cannabis data (from COA Processor)
     thc_percent: Optional[float] = None
     cbd_percent: Optional[float] = None
+    cbg_percent: Optional[float] = None
+    thca_percent: Optional[float] = None
+    cbda_percent: Optional[float] = None
     terpenes: Optional[Dict[str, float]] = None
+    terpenes_total: Optional[float] = None
     
-    # Pricing/availability
+    # Pricing/availability (from menu data)
     price: Optional[float] = None
     weight_grams: Optional[float] = None
     in_stock: bool = True
@@ -55,7 +58,8 @@ class StockItem:
     
     # Metadata
     last_seen: str = None
-    source_file: str = None
+    source: str = "database"  # "database" or "blob_storage"
+    source: str = "database"  # Always "database" now
 
 
 @dataclass
@@ -71,31 +75,35 @@ class IndexMetadata:
 
 class StockIndexer:
     """
-    Builds searchable stock index from batch files.
+    Builds searchable stock index from SQL database.
+    
+    Data Source: Azure SQL Database (terprint.Batch table)
+    - Enriched with COA data (terpenes, cannabinoids)
+    - Includes pricing, weights, locations
+    - Only returns in-stock items
     
     Usage:
         indexer = StockIndexer()
         
-        # Build from today's batches
-        index = indexer.build_index_from_date('20260115')
-        indexer.save_index(index)
+        # Build from current database state
+        index = indexer.build_index_from_database()
         
-        # Or build from latest consolidated file
-        index = indexer.build_index_from_latest()
-        indexer.save_index(index)
+        # Get stock for specific dispensary
+        cookies_stock = indexer.get_dispensary_stock('cookies')
+        
+        # Search by strain name
+        results = indexer.search_by_strain('blue dream', lat=28.5, lng=-81.3)
     """
     
-    STORAGE_ACCOUNT = "stterprintsharedgen2"
-    CONTAINER_NAME = "jsonfiles"
-    INDEX_PREFIX = "stock-index"
+    # SQL Connection (use pymssql for Azure Functions Linux)
+    SQL_SERVER = "acidni-sql.database.windows.net"
+    SQL_DATABASE = "terprint"
+    SQL_USER = "adm"
+    SQL_PASSWORD = "sql1234%"  # Default - override with environment variable
     
     def __init__(self):
-        credential = DefaultAzureCredential()
-        self.blob_service = BlobServiceClient(
-            account_url=f"https://{self.STORAGE_ACCOUNT}.blob.core.windows.net",
-            credential=credential
-        )
-        self.container = self.blob_service.get_container_client(self.CONTAINER_NAME)
+        # Load SQL password from environment (override default)
+        self.sql_password = os.environ.get('SQL_PASSWORD', self.SQL_PASSWORD)
         
         # Load location reference data
         self.locations = self._load_locations()
@@ -110,6 +118,153 @@ class StockIndexer:
         except Exception as e:
             logger.warning(f"Could not load location data: {e}")
             return {}
+    
+    def _get_db_connection(self):
+        """Get database connection using pymssql."""
+        try:
+            conn = pymssql.connect(
+                server=self.SQL_SERVER,
+                user=self.SQL_USER,
+                password=self.sql_password,
+                database=self.SQL_DATABASE,
+                port=1433,
+                timeout=30
+            )
+            return conn
+        except Exception as e:
+            logger.error(f"Database connection failed: {e}")
+            raise
+    
+    def build_index_from_database(self, dispensary: str = None, max_age_days: int = 7) -> Dict:
+        """
+        Build stock index from SQL database.
+        
+        Args:
+            dispensary: Optional - filter by specific dispensary
+            max_age_days: Only include items seen in last N days (default: 7)
+        
+        Returns:
+            Complete stock index dictionary with enriched product data
+        """
+        logger.info(f"Building stock index from database (dispensary={dispensary}, max_age_days={max_age_days})...")
+        
+        try:
+            conn = self._get_db_connection()
+            cursor = conn.cursor(as_dict=True)
+            
+            # Query enriched batch data from database
+            # Note: Using %s placeholders for pymssql (not ? like pyodbc)
+            query = """
+            SELECT 
+                BatchId,
+                ProductName,
+                Strain,
+                Dispensary,
+                Category,
+                ThcPercent,
+                CbdPercent,
+                CbgPercent,
+                ThcaPercent,
+                CbdaPercent,
+                Terpenes,
+                TerpenesTotal,
+                Price,
+                WeightGrams,
+                InStock,
+                StoreLocation,
+                StoreName,
+                Latitude,
+                Longitude,
+                Address,
+                LastSeen,
+                ProcessedDate
+            FROM Batch
+            WHERE InStock = 1
+                AND LastSeen >= DATEADD(day, %s, GETDATE())
+            """
+            
+            params = [-max_age_days]
+            
+            if dispensary:
+                query += " AND LOWER(Dispensary) = %s"
+                params.append(dispensary.lower())
+            
+            query += " ORDER BY LastSeen DESC"
+            
+            cursor.execute(query, tuple(params))
+            rows = cursor.fetchall()
+            
+            logger.info(f"Retrieved {len(rows)} in-stock items from database")
+            
+            # Build stock items
+            stock_items = []
+            dispensaries_set = set()
+            strains_set = set()
+            
+            for row in rows:
+                # Parse terpenes JSON if present
+                terpenes_dict = None
+                if row.get('Terpenes'):
+                    try:
+                        terpenes_dict = json.loads(row['Terpenes'])
+                    except:
+                        logger.warning(f"Failed to parse terpenes for {row.get('BatchId')}")
+                
+                # Create stock item
+                item = StockItem(
+                    batch_id=row.get('BatchId', ''),
+                    strain=row.get('Strain', 'Unknown'),
+                    strain_normalized=self.normalize_strain_name(row.get('Strain', '')),
+                    dispensary=row.get('Dispensary', '').lower(),
+                    category=row.get('Category', ''),
+                    product_name=row.get('ProductName', ''),
+                    thc_percent=float(row['ThcPercent']) if row.get('ThcPercent') else None,
+                    cbd_percent=float(row['CbdPercent']) if row.get('CbdPercent') else None,
+                    cbg_percent=float(row['CbgPercent']) if row.get('CbgPercent') else None,
+                    thca_percent=float(row['ThcaPercent']) if row.get('ThcaPercent') else None,
+                    cbda_percent=float(row['CbdaPercent']) if row.get('CbdaPercent') else None,
+                    terpenes=terpenes_dict,
+                    terpenes_total=float(row['TerpenesTotal']) if row.get('TerpenesTotal') else None,
+                    price=float(row['Price']) if row.get('Price') else None,
+                    weight_grams=float(row['WeightGrams']) if row.get('WeightGrams') else None,
+                    in_stock=True,
+                    store_location=row.get('StoreLocation'),
+                    store_name=row.get('StoreName'),
+                    latitude=float(row['Latitude']) if row.get('Latitude') else None,
+                    longitude=float(row['Longitude']) if row.get('Longitude') else None,
+                    address=row.get('Address'),
+                    last_seen=row.get('LastSeen').isoformat() if row.get('LastSeen') else None,
+                    source="database"
+                )
+                
+                stock_items.append(item)
+                dispensaries_set.add(item.dispensary)
+                strains_set.add(item.strain_normalized)
+            
+            cursor.close()
+            conn.close()
+            
+            # Build index structure
+            index = {
+                "metadata": {
+                    "build_date": datetime.now(timezone.utc).isoformat(),
+                    "total_items": len(stock_items),
+                    "dispensaries": sorted(list(dispensaries_set)),
+                    "unique_strains": len(strains_set),
+                    "source": "database",
+                    "max_age_days": max_age_days
+                },
+                "items": [asdict(item) for item in stock_items],
+                "by_dispensary": self._group_by_dispensary(stock_items),
+                "by_strain": self._group_by_strain(stock_items)
+            }
+            
+            logger.info(f"Stock index built: {len(stock_items)} items, {len(strains_set)} unique strains")
+            return index
+            
+        except Exception as e:
+            logger.error(f"Failed to build index from database: {e}")
+            return self._empty_index()
     
     def _get_location_for_item(self, dispensary: str, store_location: str) -> Dict:
         """Get lat/lng/address for a store location."""
