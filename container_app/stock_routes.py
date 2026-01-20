@@ -9,12 +9,17 @@ from typing import Optional, List
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
-# Import stock indexer from terprint-core
+# Import stock indexer
 try:
-    from stock_indexer import StockIndexer
+    from .stock_indexer import StockIndexer
     STOCK_INDEXER_AVAILABLE = True
 except ImportError:
-    STOCK_INDEXER_AVAILABLE = False
+    try:
+        # Fallback for direct execution
+        from stock_indexer import StockIndexer
+        STOCK_INDEXER_AVAILABLE = True
+    except ImportError:
+        STOCK_INDEXER_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 

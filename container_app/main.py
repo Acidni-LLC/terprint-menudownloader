@@ -1,8 +1,24 @@
 """
 Terprint Menu Downloader - Container App Version
-FastAPI-based container app with APScheduler for scheduled downloads.
+FastAPI-based container app with configurable modes:
 
-Replaces the Azure Function with a container-native approach.
+DEPLOYMENT MODES:
+1. API-Only Mode (default):
+   - Environment: TERPRINT_RUN_MODE=api-only (or not set)
+   - Purpose: Stock checking, manual endpoints, health checks
+   - Lightweight, always available
+   - No scheduled downloads
+   
+2. Scheduler Mode:
+   - Environment: TERPRINT_RUN_MODE=scheduler  
+   - Purpose: Automated menu downloads (3x daily)
+   - Heavier workload, periodic execution
+   - Includes all API endpoints plus scheduling
+
+RECOMMENDED ARCHITECTURE:
+- Deploy separate container apps for each mode
+- API container: Always running, handles user requests
+- Scheduler container: Handles automated downloads
 """
 import os
 import json
@@ -21,19 +37,32 @@ from apscheduler.triggers.cron import CronTrigger
 
 # Import stock routes
 try:
-    from stock_routes import router as stock_router
+    from .stock_routes import router as stock_router
     STOCK_ROUTES_AVAILABLE = True
 except ImportError:
-    STOCK_ROUTES_AVAILABLE = False
-    stock_router = None
+    try:
+        # Fallback for direct execution
+        import sys
+        import os
+        sys.path.insert(0, os.path.dirname(__file__))
+        from stock_routes import router as stock_router
+        STOCK_ROUTES_AVAILABLE = True
+    except ImportError:
+        STOCK_ROUTES_AVAILABLE = False
+        stock_router = None
 
 # Import stock indexer for building index after downloads
 try:
-    from stock_indexer import StockIndexer
+    from .stock_indexer import StockIndexer
     STOCK_INDEXER_AVAILABLE = True
 except ImportError:
-    STOCK_INDEXER_AVAILABLE = False
-    StockIndexer = None
+    try:
+        # Fallback for direct execution
+        from stock_indexer import StockIndexer
+        STOCK_INDEXER_AVAILABLE = True
+    except ImportError:
+        STOCK_INDEXER_AVAILABLE = False
+        StockIndexer = None
 
 # Ensure writable directories for logs in container environment
 # Set log directory before any package imports that might try to create logs
@@ -398,25 +427,44 @@ async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
     # Startup
     app_state["startup_time"] = datetime.utcnow()
-    logger.info("Starting Terprint Menu Downloader Container App...")
     
-    # Schedule downloads every 2 hours from 8am-10pm EST (13:00-03:00 UTC)
-    # Runs at: 8am, 10am, 12pm, 2pm, 4pm, 6pm, 8pm, 10pm EST
-    scheduler.add_job(
-        scheduled_download_job,
-        CronTrigger(hour='1,3,13,15,17,19,21,23', minute=0, timezone='UTC'),
-        id='scheduled_download',
-        name='Menu Download Job',
-        replace_existing=True
-    )
-    scheduler.start()
-    logger.info("Scheduler started with cron: 0 2,14,20 * * * (UTC)")
+    # Check if this should run as API-only or with scheduler
+    run_mode = os.environ.get("TERPRINT_RUN_MODE", "api-only").lower()
+    
+    if run_mode == "scheduler":
+        logger.info("Starting Terprint Menu Downloader in SCHEDULER mode...")
+        
+        # Schedule downloads more conservatively:
+        # - 9:00 AM EST (2:00 PM UTC) - Morning run
+        # - 3:00 PM EST (8:00 PM UTC) - Afternoon run  
+        # - 9:00 PM EST (2:00 AM UTC) - Evening run
+        # This gives 6-hour intervals and avoids overwhelming dispensary APIs
+        scheduler.add_job(
+            scheduled_download_job,
+            CronTrigger(hour='14,20,2', minute=0, timezone='UTC'),
+            id='scheduled_download',
+            name='Menu Download Job (3x daily)',
+            replace_existing=True
+        )
+        scheduler.start()
+        logger.info("✅ SCHEDULER MODE: Menu downloads will run 3x daily: 9:00 AM, 3:00 PM, 9:00 PM EST")
+        logger.info("📋 No downloads at startup - waiting for scheduled times")
+        
+    else:  # api-only mode (default)
+        logger.info("Starting Terprint Menu Downloader in API-ONLY mode...")
+        logger.info("✅ API-ONLY MODE: Stock checking and manual endpoints available")
+        logger.info("📋 No scheduled downloads - use separate scheduler container for automation")
+        logger.info("🔗 Manual downloads available via POST /run endpoint")
     
     yield
     
     # Shutdown
-    scheduler.shutdown(wait=False)
-    logger.info("Scheduler shutdown complete")
+    run_mode = os.environ.get("TERPRINT_RUN_MODE", "api-only").lower()
+    if run_mode == "scheduler" and scheduler.running:
+        scheduler.shutdown(wait=False)
+        logger.info("Scheduler shutdown complete")
+    else:
+        logger.info("API-only mode shutdown - no scheduler to stop")
 
 
 app = FastAPI(
@@ -442,19 +490,27 @@ else:
 @app.get("/health")
 async def health_check():
     """Health check endpoint for Container Apps probes."""
-    return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+    run_mode = os.environ.get("TERPRINT_RUN_MODE", "api-only").lower()
+    return {
+        "status": "healthy", 
+        "timestamp": datetime.utcnow().isoformat(),
+        "mode": run_mode,
+        "scheduler_active": scheduler.running if run_mode == "scheduler" else False
+    }
 
 
 @app.get("/status", response_model=StatusResponse)
 async def get_status():
     """Get detailed status of the menu downloader."""
     uptime = (datetime.utcnow() - app_state["startup_time"]).total_seconds() if app_state["startup_time"] else 0
+    run_mode = os.environ.get("TERPRINT_RUN_MODE", "api-only").lower()
     
-    # Get next scheduled run time
+    # Get next scheduled run time (only in scheduler mode)
     next_run = None
-    job = scheduler.get_job('scheduled_download')
-    if job and job.next_run_time:
-        next_run = job.next_run_time.isoformat()
+    if run_mode == "scheduler":
+        job = scheduler.get_job('scheduled_download')
+        if job and job.next_run_time:
+            next_run = job.next_run_time.isoformat()
     
     return StatusResponse(
         status="running" if app_state["is_running"] else "idle",
@@ -473,9 +529,20 @@ async def get_status():
 
 @app.post("/run")
 async def manual_run(request: RunRequest, background_tasks: BackgroundTasks):
-    """Trigger a manual menu download."""
+    """
+    Trigger a manual menu download (MANUAL OVERRIDE).
+    
+    IMPORTANT: This bypasses the scheduled downloads and should only be used for:
+    - Testing and development
+    - Emergency data recovery
+    - One-off backfills
+    
+    Normal operation uses scheduled downloads (3x daily).
+    """
     if app_state["is_running"]:
         raise HTTPException(status_code=409, detail="Download already in progress")
+    
+    logger.warning("🚨 MANUAL DOWNLOAD TRIGGERED - This overrides the normal schedule!")
     
     app_state["is_running"] = True
     app_state["last_run"] = datetime.utcnow().isoformat()
@@ -540,12 +607,16 @@ async def build_stock_index():
 @app.get("/config")
 async def get_config():
     """Get current configuration (non-sensitive)."""
+    run_mode = os.environ.get("TERPRINT_RUN_MODE", "api-only").lower()
+    
     return {
+        "run_mode": run_mode,
+        "description": "API-only mode" if run_mode == "api-only" else "Scheduler mode with downloads",
         "terprint_config_available": TERPRINT_CONFIG_AVAILABLE,
         "batch_processor_url": BATCH_PROCESSOR_URL,
         "batch_processor_configured": bool(BATCH_PROCESSOR_KEY),
         "strain_index_container": STRAIN_INDEX_CONTAINER,
-        "scheduler_running": scheduler.running,
+        "scheduler_running": scheduler.running if run_mode == "scheduler" else False,
         "scheduled_jobs": [
             {
                 "id": job.id,
