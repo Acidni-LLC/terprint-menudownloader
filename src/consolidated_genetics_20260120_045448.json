@@ -1,0 +1,378 @@
+{
+  "consolidation_date": "2026-01-20T04:54:48.049774",
+  "stats": {
+    "total": 45,
+    "by_source": {
+      "Menu JSON Extraction": 0,
+      "Menu Description Parsing": 45
+    },
+    "unique": 45,
+    "duplicates": 0
+  },
+  "sources": [
+    "Menu JSON Extraction",
+    "Menu Description Parsing"
+  ],
+  "genetics": [
+    {
+      "strain_name": "Pineapple Upside Down Cake",
+      "parent1": "Pineapple Trainwreck",
+      "parent2": "Cookie Monster",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Jokerz Candy",
+      "parent1": "Gummiez",
+      "parent2": "Grape Gas Delivers A Perfectly Balanced High",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Minty Blizzard",
+      "parent1": "Amnesia Haze",
+      "parent2": "The Mentho",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Guava Casquitos",
+      "parent1": "Animal Cookies",
+      "parent2": "Guavaz",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Tropical Teeth #2",
+      "parent1": "Ice Cream Cake",
+      "parent2": "Grape Teeth",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Black Amber",
+      "parent1": "Gmo",
+      "parent2": "Oz Kush Bx",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Gelato",
+      "parent1": "Sunset Sherbet",
+      "parent2": "Thin Mint Cookies",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Triangle Kush",
+      "parent1": "Hindu Kush",
+      "parent2": "Lemon Thai",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Pink Certz",
+      "parent1": "The Menthol",
+      "parent2": "Grape Gasoline",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "The Soap",
+      "parent1": "Animal Mints",
+      "parent2": "Kush Mints That Will Leave You Feeling Squeaky Clean",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Tropical Teeth #8",
+      "parent1": "Ice Cream Cake",
+      "parent2": "Grape Teeth",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "E85",
+      "parent1": "Wedding Cake",
+      "parent2": "Project 4516",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Glitter Bomb",
+      "parent1": "Grape Gas 10",
+      "parent2": "Ogkb Blueberry Headband",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Mint Diesel",
+      "parent1": "The Menthol",
+      "parent2": "Grape Diesel Provides A Buzzy Yet Calming Boost",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Applescotti",
+      "parent1": "Apples",
+      "parent2": "Bananas And Biscotti Strikes The Perfect Balance Between Deep Relaxation And A Euphoric",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Rocky Road",
+      "parent1": "Root Beer Float",
+      "parent2": "Birthday Cake",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Berry Tart",
+      "parent1": "Triangle Kush",
+      "parent2": "Animal Mints\n\nEffects",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Grape Junky",
+      "parent1": "Animal Mints",
+      "parent2": "Grape Gas",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Dosilato",
+      "parent1": "Dos",
+      "parent2": "Gelato",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Grape Mint Gas",
+      "parent1": "The Menthol",
+      "parent2": "Grape Gasoline",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Ice Cream Candy",
+      "parent1": "Dolato",
+      "parent2": "Slurricane 23 Is Both Calming And Stimulating",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Mint Shake",
+      "parent1": "Wedding Cake",
+      "parent2": "Kush Mints",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Sherbert Haze",
+      "parent1": "Sherbert Bx1",
+      "parent2": "Neville'S Haze Blends Creamy Sherbet-Like Flavors With A Zesty Haze Kick",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Gush Mints",
+      "parent1": "Kush Mints With (F1 Durb",
+      "parent2": "Gushers)",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Grape Gasoline",
+      "parent1": "Grape Pie",
+      "parent2": "Jet Fuel Gelato",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Ghost Vapor OG",
+      "parent1": "Ghost Og",
+      "parent2": "Purple Vapor",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "GMO Jungle Cake",
+      "parent1": "Gmo",
+      "parent2": "Jungle Cake",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Cromagnon Man",
+      "parent1": "Triple Mints",
+      "parent2": "Facemints",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Purple Milk",
+      "parent1": "Horchata",
+      "parent2": "Grape Gasoline",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Georgia Pie x Gastro Pop",
+      "parent1": "Georgia Pie",
+      "parent2": "Gastro Pop",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "GMO S1",
+      "parent1": "Chemdawg 91",
+      "parent2": "Gsc",
+      "dispensary": "muv",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Zero Gravity",
+      "parent1": "Gmo",
+      "parent2": "Oreoz",
+      "dispensary": "cookies",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Blue Raz",
+      "parent1": "E85",
+      "parent2": "Doggy Bagg",
+      "dispensary": "cookies",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Emergen C",
+      "parent1": "Orange Push Pop",
+      "parent2": "Sunset Sherbet",
+      "dispensary": "cookies",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Red Velvet",
+      "parent1": "The Ever-Popular Lemon Cherry Gelato",
+      "parent2": "The In-House-Made Cross Pina Acai",
+      "dispensary": "cookies",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Emergen C (B)",
+      "parent1": "Orange Push Pop",
+      "parent2": "Sunset Sherbet",
+      "dispensary": "cookies",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Cookies Select - Apples & Bananas",
+      "parent1": "Platinum Cookies",
+      "parent2": "Granddaddy Purple",
+      "dispensary": "cookies",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Hylife Trix",
+      "parent1": "Hylyfe",
+      "parent2": "Gorilla Breath",
+      "dispensary": "cookies",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Moonwalkers",
+      "parent1": "Black Cherry Gelato",
+      "parent2": "Medellin With A Unique Terp Profile And High Potency",
+      "dispensary": "cookies",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Gelato X",
+      "parent1": "Gelato",
+      "parent2": "By Greendawg Has",
+      "dispensary": "cookies",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Nukenz - Manager's Special",
+      "parent1": "Shishkaberry",
+      "parent2": "Godbud",
+      "dispensary": "cookies",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Apples & Bananas",
+      "parent1": "Platinum Cookies",
+      "parent2": "Granddaddy Purple",
+      "dispensary": "cookies",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Hollywood",
+      "parent1": "By Crossing Lemon Cherry Gelato",
+      "parent2": "Runtz",
+      "dispensary": "cookies",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Space Lime Continuum - Manager's Special",
+      "parent1": "Tahiti Lime",
+      "parent2": "Oreoz",
+      "dispensary": "cookies",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    },
+    {
+      "strain_name": "Space Lime Continuum",
+      "parent1": "Tahiti Lime",
+      "parent2": "Oreoz",
+      "dispensary": "cookies",
+      "source": "Menu Description Parsing",
+      "confidence": "Medium"
+    }
+  ]
+}

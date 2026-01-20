@@ -1,0 +1,304 @@
+{
+  "extraction_date": "2026-01-20T03:07:25.099361",
+  "total_strains": 42,
+  "by_dispensary": {
+    "muv": 28,
+    "cookies": 14
+  },
+  "strains": [
+    {
+      "strain_name": "Apple MAC",
+      "parent1": "MAC 1",
+      "parent2": "Trophy Wife",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Applescotti",
+      "parent1": "Apples & Bananas",
+      "parent2": "Biscotti",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Berry Tart",
+      "parent1": "Triangle Kush",
+      "parent2": "Animal Mints",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Black Amber",
+      "parent1": "GMO",
+      "parent2": "OZ Kush Bx2",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Blue Raz",
+      "parent1": "Yadada",
+      "parent2": "E85",
+      "dispensary": "cookies",
+      "strain_type": "hybrid"
+    },
+    {
+      "strain_name": "Cinnamon Milk",
+      "parent1": "Cereal A La Mode",
+      "parent2": "Sherbz",
+      "dispensary": "cookies",
+      "strain_type": "indica hybrid"
+    },
+    {
+      "strain_name": "Cromagnon Man",
+      "parent1": "Triple Mints",
+      "parent2": "Facemints",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "GG #4",
+      "parent1": "Chocolate Diesel",
+      "parent2": "Chemdawg 91 X Sour Diesel",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "GMO Jungle Cake",
+      "parent1": "GMO",
+      "parent2": "Jungle Cake",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "GMO S1",
+      "parent1": "Chemdawg",
+      "parent2": "GSC",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Gary Payton",
+      "parent1": "Snowman",
+      "parent2": "Y Life",
+      "dispensary": "cookies",
+      "strain_type": "hybrid"
+    },
+    {
+      "strain_name": "Gelanoidz #4",
+      "parent1": "Gelanade",
+      "parent2": "Zkz",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Gelanoidz #9",
+      "parent1": "Gelanade",
+      "parent2": "Zks",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Gelato",
+      "parent1": "Sunset Sherbet",
+      "parent2": "Thin Mint Cookies",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Ghost Vapor OG",
+      "parent1": "Ghost OG",
+      "parent2": "Purple Vapor",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Glitter Bomb",
+      "parent1": "Grape Gas #10",
+      "parent2": "OGKB Blueberry Headband",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Grape Mint Gas",
+      "parent1": "The Menthol",
+      "parent2": "Grape Gasoline",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Hollywood",
+      "parent1": "Lemon Cherry Gelato",
+      "parent2": "Runtz",
+      "dispensary": "cookies",
+      "strain_type": "hybrid"
+    },
+    {
+      "strain_name": "Jokerz Candy",
+      "parent1": "Gummiez",
+      "parent2": "Grape Gas",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Light Blue",
+      "parent1": "T1",
+      "parent2": "Kush E1",
+      "dispensary": "cookies",
+      "strain_type": "sativa"
+    },
+    {
+      "strain_name": "London Pound Cake #75",
+      "parent1": "Sunset Sherbert",
+      "parent2": "Nip OG",
+      "dispensary": "cookies",
+      "strain_type": "indica hybrid"
+    },
+    {
+      "strain_name": "Moonwalkers",
+      "parent1": "Black Cherry Gelato",
+      "parent2": "Medellin",
+      "dispensary": "cookies",
+      "strain_type": "indica hybrid"
+    },
+    {
+      "strain_name": "Nukenz",
+      "parent1": "Shishkaberry",
+      "parent2": "Godbud",
+      "dispensary": "cookies",
+      "strain_type": "hybrid"
+    },
+    {
+      "strain_name": "Original GSC",
+      "parent1": "F1 DURB",
+      "parent2": "Flo Rida OG Kush",
+      "dispensary": "cookies",
+      "strain_type": "hybrid"
+    },
+    {
+      "strain_name": "Pineapple Upside Down Cake",
+      "parent1": "Pineapple Trainwreck",
+      "parent2": "Cookie Monster",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Pink Certz",
+      "parent1": "The Menthol",
+      "parent2": "Grape Gasoline",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Pomegranate Shake",
+      "parent1": "Cereal A la Mode",
+      "parent2": "Sherb",
+      "dispensary": "cookies",
+      "strain_type": "hybrid"
+    },
+    {
+      "strain_name": "Purple Punch",
+      "parent1": "Larry OG",
+      "parent2": "Granddaddy Purple",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Red Velvet",
+      "parent1": "Lemon Cherry Gelato",
+      "parent2": "Pina Acai",
+      "dispensary": "cookies",
+      "strain_type": "indica hybrid"
+    },
+    {
+      "strain_name": "Rocky Road",
+      "parent1": "Root Beer Float",
+      "parent2": "Birthday Cake",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Sherbert Haze",
+      "parent1": "Sherbert B",
+      "parent2": "1 X Neville's Haze",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Super Lemon G",
+      "parent1": "G13",
+      "parent2": "Colombian Gold B",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Tahitian Lime",
+      "parent1": "TangEray",
+      "parent2": "Sirius Chem D",
+      "dispensary": "cookies",
+      "strain_type": "sativa hybrid"
+    },
+    {
+      "strain_name": "The Soap",
+      "parent1": "Animal Mints",
+      "parent2": "Kush Mints",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Triangle Kush",
+      "parent1": "Hindu Kush",
+      "parent2": "Lemon Thai x Chemdawg",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Triple Scoop",
+      "parent1": "Lemon Cherry Gelato",
+      "parent2": "Honey Bun",
+      "dispensary": "cookies",
+      "strain_type": "hybrid"
+    },
+    {
+      "strain_name": "Tropical Teeth #2",
+      "parent1": "Ice Cream Cake",
+      "parent2": "Grape Teeth",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Tropical Teeth #8",
+      "parent1": "Ice Cream Cake",
+      "parent2": "Grape Teeth",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Wino #4",
+      "parent1": "Cherry Punch",
+      "parent2": "Grape Teeth",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Wino #9",
+      "parent1": "Cherry Punch",
+      "parent2": "Grape Teeth",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Yuzu Sour",
+      "parent1": "Orange Sherbert 52",
+      "parent2": "Oz Kush F2 #15 x Gastro Pop",
+      "dispensary": "muv",
+      "strain_type": null
+    },
+    {
+      "strain_name": "Zero Gravity",
+      "parent1": "GMO",
+      "parent2": "Oreoz",
+      "dispensary": "cookies",
+      "strain_type": "indica"
+    }
+  ]
+}

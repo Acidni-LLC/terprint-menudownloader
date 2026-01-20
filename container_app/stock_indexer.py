@@ -105,8 +105,35 @@ class StockIndexer:
         # Load SQL password from environment (override default)
         self.sql_password = os.environ.get('SQL_PASSWORD', self.SQL_PASSWORD)
         
+        # Blob storage configuration for saving index
+        self.INDEX_PREFIX = "stock-index"  # Blob prefix for storing indexes
+        
         # Load location reference data
         self.locations = self._load_locations()
+        
+        # Initialize blob container (lazy-loaded)
+        self.container = None
+    
+    def _get_blob_container(self):
+        """Get blob container for storing stock index."""
+        if self.container is not None:
+            return self.container
+        
+        try:
+            from azure.storage.blob import BlobServiceClient
+            from azure.identity import DefaultAzureCredential
+            
+            # Get blob service client
+            account_url = "https://stterprintsharedgen2.blob.core.windows.net"
+            credential = DefaultAzureCredential()
+            blob_service_client = BlobServiceClient(account_url=account_url, credential=credential)
+            
+            # Get container
+            self.container = blob_service_client.get_container_client("jsonfiles")
+            return self.container
+        except Exception as e:
+            logger.error(f"Failed to initialize blob container: {e}")
+            return None
     
     def _load_locations(self) -> Dict:
         """Load dispensary location coordinates from JSON."""
@@ -695,24 +722,29 @@ class StockIndexer:
         Returns:
             Path to saved index
         """
+        container = self._get_blob_container()
+        if not container:
+            logger.error("Cannot save index - blob container not available")
+            return None
+            
         current_path = f"{self.INDEX_PREFIX}/current.json"
         metadata_path = f"{self.INDEX_PREFIX}/metadata.json"
         
         # Save full index
-        blob_client = self.container.get_blob_client(current_path)
+        blob_client = container.get_blob_client(current_path)
         content = json.dumps(index, indent=2)
         blob_client.upload_blob(content, overwrite=True)
         logger.info(f"Saved full index to {current_path}")
         
         # Save metadata separately
-        metadata_blob = self.container.get_blob_client(metadata_path)
+        metadata_blob = container.get_blob_client(metadata_path)
         metadata_content = json.dumps(index['metadata'], indent=2)
         metadata_blob.upload_blob(metadata_content, overwrite=True)
         logger.info(f"Saved metadata to {metadata_path}")
         
         # Save timestamp
         timestamp_path = f"{self.INDEX_PREFIX}/last_updated.txt"
-        timestamp_blob = self.container.get_blob_client(timestamp_path)
+        timestamp_blob = container.get_blob_client(timestamp_path)
         timestamp_blob.upload_blob(
             datetime.now(timezone.utc).isoformat(),
             overwrite=True
@@ -723,8 +755,13 @@ class StockIndexer:
     def get_index(self) -> Optional[Dict]:
         """Load the current stock index from storage."""
         try:
+            container = self._get_blob_container()
+            if not container:
+                logger.error("Cannot load index - blob container not available")
+                return None
+                
             path = f"{self.INDEX_PREFIX}/current.json"
-            blob_client = self.container.get_blob_client(path)
+            blob_client = container.get_blob_client(path)
             content = blob_client.download_blob().readall()
             return json.loads(content)
         except Exception as e:

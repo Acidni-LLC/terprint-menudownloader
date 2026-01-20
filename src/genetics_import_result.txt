@@ -1,0 +1,2 @@
+mssql: login error: Login failed for user '<token-identified principal>'.
+mssql: login error: Login failed for user '<token-identified principal>'.

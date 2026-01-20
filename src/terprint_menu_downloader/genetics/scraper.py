@@ -41,16 +41,13 @@ class GeneticsScraper:
     
     # Common patterns for extracting lineage from text
     LINEAGE_PATTERNS = [
-        # "Lineage: Parent1 x Parent2"
-        r"(?:lineage|genetics|cross|parentage|parents?)[:\s]+([^.<\n]+)",
-        # "Parent1 x Parent2" at start of text
-        r"^([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)\s*[xX]\s*([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)",
-        # "a cross of Parent1 and Parent2"
-        r"(?:cross of|crossed?|crossing)\s+([^,]+?)\s+(?:and|with||x)\s+([^,.\n]+)",
+        # Pattern 1: "Lineage: Parent1 x Parent2" (explicit lineage field - most reliable)
+        # Captures the two parents separately, stops at opening paren, period, newline, or end
+        r"lineage:\s*([A-Za-z0-9#\s&']+?)\s*[xX×]\s*([A-Za-z0-9#\s&']+?)(?:\s*[\(.\n]|$)",
     ]
     
-    # Pattern to split parent strains
-    CROSS_SPLIT_PATTERN = r"\s*[xX]\s*"
+    # Pattern to split parent strains (include × Unicode character)
+    CROSS_SPLIT_PATTERN = r"\s*[xX×]\s*"
     
     def __init__(self, enable_logging: bool = True, enable_page_scraping: bool = False):
         self.enable_logging = enable_logging
@@ -266,15 +263,28 @@ class GeneticsScraper:
         if not text:
             return None, None
         
+        # Skip complex crosses (3-way, 4-way)
+        if "mixed with" in text.lower():
+            return None, None
+        
         # Try each pattern
         for pattern in self.LINEAGE_PATTERNS:
-            match = re.search(pattern, text, re.IGNORECASE)
+            match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE)
             if match:
-                # Pattern may have captured full lineage or separate parents
-                if len(match.groups()) >= 2:
-                    return match.group(1).strip(), match.group(2).strip()
-                elif len(match.groups()) == 1:
-                    return self._parse_lineage(match.group(1))
+                groups = match.groups()
+                # Pattern captured both parents separately
+                if len(groups) >= 2 and groups[0] and groups[1]:
+                    p1 = groups[0].strip()
+                    p2 = groups[1].strip()
+                    if p1 and p2 and len(p1) >= 2 and len(p2) >= 2:
+                        return p1, p2
+                # Pattern captured full lineage text - need to parse it
+                elif len(groups) >= 1 and groups[0]:
+                    lineage_text = groups[0].strip()
+                    # Remove trailing periods, parenthetical notes
+                    lineage_text = re.sub(r"\s*\([^)]*\)\s*$", "", lineage_text)
+                    lineage_text = re.sub(r"\s*\.$", "", lineage_text)
+                    return self._parse_lineage(lineage_text)
         
         return None, None
     
@@ -481,7 +491,14 @@ class GeneticsScraper:
         """
         genetics = []
         
-        products = data.get("products", {}).get("items", [])
+        # MÜV blobs have structure: data.products.list
+        menu_data = data.get("data", data)  # Handle both direct and nested formats
+        products = menu_data.get("products", {}).get("list", [])
+        if not products:
+            # Fallback formats
+            products = data.get("products", {}).get("list", [])
+        if not products:
+            products = menu_data.get("products", {}).get("items", [])
         if not products:
             products = data.get("items", [])
         

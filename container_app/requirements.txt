@@ -17,6 +17,9 @@ azure-storage-blob>=12.19.0
 requests>=2.31.0
 httpx>=0.26.0
 
+# Database (use pymssql for Azure Functions Linux)
+pymssql>=2.2.0
+
 # Environment variables
 python-dotenv>=1.0.0
 

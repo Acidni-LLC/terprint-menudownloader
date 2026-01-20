@@ -1,0 +1,371 @@
+{
+  "extraction_date": "2026-01-20T04:54:06.878173",
+  "source": "Menu Product Descriptions",
+  "total_count": 45,
+  "by_dispensary": {
+    "muv": 31,
+    "cookies": 14
+  },
+  "genetics": [
+    {
+      "strain_name": "Pineapple Upside Down Cake",
+      "parent1": "Pineapple Trainwreck",
+      "parent2": "Cookie Monster",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "Skip to the good part with trichome-coated flower by Sweet Supply. Yummy strains galore will leave you wanting more with each puff. Live the sweet life in good supply. \n\nLineage: Pineapple Trainwreck "
+    },
+    {
+      "strain_name": "Jokerz Candy",
+      "parent1": "Gummiez",
+      "parent2": "Grape Gas Delivers A Perfectly Balanced High",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "M\u00dcV premium cannabis flower is meticulously grown at our state-of-the-art indoor facilities in Apollo Beach and Palatka. By carefully monitoring and controlling the cultivation environment and avoidin"
+    },
+    {
+      "strain_name": "Minty Blizzard",
+      "parent1": "Amnesia Haze",
+      "parent2": "The Mentho",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "Good flower, no fluff. Savvy is your go-to for flavor, potency, and value. Bud for sesh-makers, stash-builders, and the always-stocked.\n\nLineage: Amnesia Haze x The Mentho"
+    },
+    {
+      "strain_name": "Guava Casquitos",
+      "parent1": "Animal Cookies",
+      "parent2": "Guavaz",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "M\u00dcV premium cannabis flower is meticulously grown at our state-of-the-art indoor facilities in Apollo Beach and Palatka. By carefully monitoring and controlling the cultivation environment and avoidin"
+    },
+    {
+      "strain_name": "Tropical Teeth #2",
+      "parent1": "Ice Cream Cake",
+      "parent2": "Grape Teeth",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "Good flower, no fluff. Savvy is your go-to for flavor, potency, and value. Bud for sesh-makers, stash-builders, and the always-stocked.\n\nLineage: Ice Cream Cake x Grape Teeth (Grape Pie x False Teeth)"
+    },
+    {
+      "strain_name": "Black Amber",
+      "parent1": "Gmo",
+      "parent2": "Oz Kush Bx",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "M\u00dcV premium cannabis flower is meticulously grown at our state-of-the-art indoor facilities in Apollo Beach and Palatka. By carefully monitoring and controlling the cultivation environment and avoidin"
+    },
+    {
+      "strain_name": "Gelato",
+      "parent1": "Sunset Sherbet",
+      "parent2": "Thin Mint Cookies",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "M\u00dcV premium cannabis flower is meticulously grown at our state-of-the-art indoor facilities in Apollo Beach and Palatka. By carefully monitoring and controlling the cultivation environment and avoidin"
+    },
+    {
+      "strain_name": "Triangle Kush",
+      "parent1": "Hindu Kush",
+      "parent2": "Lemon Thai",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "M\u00dcV premium cannabis flower is meticulously grown at our state-of-the-art indoor facilities in Apollo Beach and Palatka. By carefully monitoring and controlling the cultivation environment and avoidin"
+    },
+    {
+      "strain_name": "Pink Certz",
+      "parent1": "The Menthol",
+      "parent2": "Grape Gasoline",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "M\u00dcV premium cannabis flower is meticulously grown at our state-of-the-art indoor facilities in Apollo Beach and Palatka. By carefully monitoring and controlling the cultivation environment and avoidin"
+    },
+    {
+      "strain_name": "The Soap",
+      "parent1": "Animal Mints",
+      "parent2": "Kush Mints That Will Leave You Feeling Squeaky Clean",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "M\u00dcV premium cannabis flower is meticulously grown at our state-of-the-art indoor facilities in Apollo Beach and Palatka. By carefully monitoring and controlling the cultivation environment and avoidin"
+    },
+    {
+      "strain_name": "Tropical Teeth #8",
+      "parent1": "Ice Cream Cake",
+      "parent2": "Grape Teeth",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "An expansive collection of both novel and timeless genetics on regular rotation, harvested and cured for optimal taste, aroma and experience. (the) Essence genetics are carefully selected, bred and ph"
+    },
+    {
+      "strain_name": "E85",
+      "parent1": "Wedding Cake",
+      "parent2": "Project 4516",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "Reserve Flower encompasses an array of premium cannabis genetics. These exotic strains have been rigorously phenohunted in the M\u00dcV Cultivation and present striking features: dense trichome production,"
+    },
+    {
+      "strain_name": "Glitter Bomb",
+      "parent1": "Grape Gas 10",
+      "parent2": "Ogkb Blueberry Headband",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "Spark good vibes and times with Glitter Bomb, an indica cross of Grape Gas 10 and OGKB Blueberry Headband. Named for its gorgeous appearance and explosive high, the strain presents beautiful, dense nu"
+    },
+    {
+      "strain_name": "Mint Diesel",
+      "parent1": "The Menthol",
+      "parent2": "Grape Diesel Provides A Buzzy Yet Calming Boost",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "Good flower, no fluff. Savvy is your go-to for flavor, potency, and value. Bud for sesh-makers, stash-builders, and the always-stocked.\n\nHit the gas with Mint Diesel. This hybrid cross of The Menthol "
+    },
+    {
+      "strain_name": "Applescotti",
+      "parent1": "Apples",
+      "parent2": "Bananas And Biscotti Strikes The Perfect Balance Between Deep Relaxation And A Euphoric",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "M\u00dcV premium cannabis flower is meticulously grown at our state-of-the-art indoor facilities in Apollo Beach and Palatka. By carefully monitoring and controlling the cultivation environment and avoidin"
+    },
+    {
+      "strain_name": "Rocky Road",
+      "parent1": "Root Beer Float",
+      "parent2": "Birthday Cake",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "M\u00dcV premium cannabis flower is meticulously grown at our state-of-the-art indoor facilities in Apollo Beach and Palatka. By carefully monitoring and controlling the cultivation environment and avoidin"
+    },
+    {
+      "strain_name": "Berry Tart",
+      "parent1": "Triangle Kush",
+      "parent2": "Animal Mints\n\nEffects",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "Good flower, no fluff. Savvy is your go-to for flavor, potency, and value. Bud for sesh-makers, stash-builders, and the always-stocked.\n\nFans of baked goods and pastries will enjoy the fruity, vanilla"
+    },
+    {
+      "strain_name": "Grape Junky",
+      "parent1": "Animal Mints",
+      "parent2": "Grape Gas",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "An expansive collection of both novel and timeless genetics on regular rotation, harvested and cured for optimal taste, aroma and experience. (the) Essence genetics are carefully selected, bred and ph"
+    },
+    {
+      "strain_name": "Dosilato",
+      "parent1": "Dos",
+      "parent2": "Gelato",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "M\u00dcV premium cannabis flower is meticulously grown at our state-of-the-art indoor facilities in Apollo Beach and Palatka. By carefully monitoring and controlling the cultivation environment and avoidin"
+    },
+    {
+      "strain_name": "Grape Mint Gas",
+      "parent1": "The Menthol",
+      "parent2": "Grape Gasoline",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "Good flower, no fluff. Savvy is your go-to for flavor, potency, and value. Bud for sesh-makers, stash-builders, and the always-stocked.\n\nLineage:\u00a0The Menthol x Grape Gasoline"
+    },
+    {
+      "strain_name": "Ice Cream Candy",
+      "parent1": "Dolato",
+      "parent2": "Slurricane 23 Is Both Calming And Stimulating",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "Reserve Flower encompasses an array of premium cannabis genetics. These exotic strains have been rigorously phenohunted in the M\u00dcV Cultivation and present striking features: dense trichome production,"
+    },
+    {
+      "strain_name": "Mint Shake",
+      "parent1": "Wedding Cake",
+      "parent2": "Kush Mints",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "M\u00dcV premium cannabis flower is meticulously grown at our state-of-the-art indoor facilities in Apollo Beach and Palatka. By carefully monitoring and controlling the cultivation environment and avoidin"
+    },
+    {
+      "strain_name": "Sherbert Haze",
+      "parent1": "Sherbert Bx1",
+      "parent2": "Neville'S Haze Blends Creamy Sherbet-Like Flavors With A Zesty Haze Kick",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "An expansive collection of both novel and timeless genetics on regular rotation, harvested and cured for optimal taste, aroma and experience. (the) Essence genetics are carefully selected, bred and ph"
+    },
+    {
+      "strain_name": "Gush Mints",
+      "parent1": "Kush Mints With (F1 Durb",
+      "parent2": "Gushers)",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "M\u00dcV premium cannabis flower is meticulously grown at our state-of-the-art indoor facilities in Apollo Beach and Palatka. By carefully monitoring and controlling the cultivation environment and avoidin"
+    },
+    {
+      "strain_name": "Grape Gasoline",
+      "parent1": "Grape Pie",
+      "parent2": "Jet Fuel Gelato",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "An expansive collection of both novel and timeless genetics on regular rotation, harvested and cured for optimal taste, aroma and experience.\u00a0 Essence genetics are carefully selected, bred and pheno-h"
+    },
+    {
+      "strain_name": "Ghost Vapor OG",
+      "parent1": "Ghost Og",
+      "parent2": "Purple Vapor",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "An expansive collection of both novel and timeless genetics on regular rotation, harvested and cured for optimal taste, aroma and experience. (the) Essence genetics are carefully selected, bred and ph"
+    },
+    {
+      "strain_name": "GMO Jungle Cake",
+      "parent1": "Gmo",
+      "parent2": "Jungle Cake",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "M\u00dcV premium cannabis flower is meticulously grown at our state-of-the-art indoor facilities in Apollo Beach and Palatka. By carefully monitoring and controlling the cultivation environment and avoidin"
+    },
+    {
+      "strain_name": "Cromagnon Man",
+      "parent1": "Triple Mints",
+      "parent2": "Facemints",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "M\u00dcV premium cannabis flower is meticulously grown at our state-of-the-art indoor facilities in Apollo Beach and Palatka. By carefully monitoring and controlling the cultivation environment and avoidin"
+    },
+    {
+      "strain_name": "Purple Milk",
+      "parent1": "Horchata",
+      "parent2": "Grape Gasoline",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "An expansive collection of both novel and timeless genetics on regular rotation, harvested and cured for optimal taste, aroma and experience. (the) Essence genetics are carefully selected, bred and ph"
+    },
+    {
+      "strain_name": "Georgia Pie x Gastro Pop",
+      "parent1": "Georgia Pie",
+      "parent2": "Gastro Pop",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "An expansive collection of both novel and timeless genetics on regular rotation, harvested and cured for optimal taste, aroma and experience. (the) Essence genetics are carefully selected, bred and ph"
+    },
+    {
+      "strain_name": "GMO S1",
+      "parent1": "Chemdawg 91",
+      "parent2": "Gsc",
+      "dispensary": "muv",
+      "source": "Menu Description",
+      "description_snippet": "Reserve Flower encompasses an array of premium cannabis genetics. These exotic strains have been rigorously phenohunted in the M\u00dcV Cultivation and present striking features: dense trichome production,"
+    },
+    {
+      "strain_name": "Zero Gravity",
+      "parent1": "Gmo",
+      "parent2": "Oreoz",
+      "dispensary": "cookies",
+      "source": "Menu Description",
+      "description_snippet": "Zero Gravity, Shauncron's award-winning indica strain, is exclusively available in Florida through Cookies and is a remarkable cross between GMO and Oreoz. Known for its earthy, fuel-like scent with s"
+    },
+    {
+      "strain_name": "Blue Raz",
+      "parent1": "E85",
+      "parent2": "Doggy Bagg",
+      "dispensary": "cookies",
+      "source": "Menu Description",
+      "description_snippet": "Blue Raz was made by crossing Yadada x (E85 x Doggy Bagg), bred by Grandiflora Genetics in collaboration with Cookies for our new lineup! The aroma is almost dessert-like, with sugary blueberry and ra"
+    },
+    {
+      "strain_name": "Emergen C",
+      "parent1": "Orange Push Pop",
+      "parent2": "Sunset Sherbet",
+      "dispensary": "cookies",
+      "source": "Menu Description",
+      "description_snippet": "Emergen-C, a unique hybrid by Seed Junky Genetics and Minntz, is a balanced cross between Orange Push Pop and Sunset Sherbet. Like a creamsicle off to the races, this sativa hybrid showcases a heavy g"
+    },
+    {
+      "strain_name": "Red Velvet",
+      "parent1": "The Ever-Popular Lemon Cherry Gelato",
+      "parent2": "The In-House-Made Cross Pina Acai",
+      "dispensary": "cookies",
+      "source": "Menu Description",
+      "description_snippet": "Red Velvet is a delicious cross of the ever-popular Lemon Cherry Gelato and the in-house-made cross Pina Acai, bred by Grandi Flora Genetics. The team at Grandiflora have, and continue to create amazi"
+    },
+    {
+      "strain_name": "Emergen C (B)",
+      "parent1": "Orange Push Pop",
+      "parent2": "Sunset Sherbet",
+      "dispensary": "cookies",
+      "source": "Menu Description",
+      "description_snippet": "Emergen-C, a unique hybrid by Seed Junky Genetics and Minntz, is a balanced cross between Orange Push Pop and Sunset Sherbet. Like a creamsicle off to the races, this sativa hybrid showcases a heavy g"
+    },
+    {
+      "strain_name": "Cookies Select - Apples & Bananas",
+      "parent1": "Platinum Cookies",
+      "parent2": "Granddaddy Purple",
+      "dispensary": "cookies",
+      "source": "Menu Description",
+      "description_snippet": "Apples and Bananas, crafted by the innovative Compound Genetics and popularized by Cookies, is a masterpiece of cross-breeding. A collaboration for the ages, this strain has risen to the top of our ge"
+    },
+    {
+      "strain_name": "Hylife Trix",
+      "parent1": "Hylyfe",
+      "parent2": "Gorilla Breath",
+      "dispensary": "cookies",
+      "source": "Menu Description",
+      "description_snippet": "Hylyfe Trixx (Hylyfe x Gorilla Breath #6) is a flavorful indica hybrid with a rich and dessert-like profile. The aroma has powdered sugar, peanut butter, and fresh dough, with a hint of earthiness. Hy"
+    },
+    {
+      "strain_name": "Moonwalkers",
+      "parent1": "Black Cherry Gelato",
+      "parent2": "Medellin With A Unique Terp Profile And High Potency",
+      "dispensary": "cookies",
+      "source": "Menu Description",
+      "description_snippet": "Step into outer space. Moonwalkers is a fuel-powered cross of Black Cherry Gelato and Medellin with a unique terp profile and high potency. The nose is a complex mix of earth, gas, and buttery cake wi"
+    },
+    {
+      "strain_name": "Gelato X",
+      "parent1": "Gelato",
+      "parent2": "By Greendawg Has",
+      "dispensary": "cookies",
+      "source": "Menu Description",
+      "description_snippet": "Gelato X by Greendawg has a profile reminiscent of candy runtz, characterized by a fruity, sugary, and creamy taste with hints of citrus and gas. Pair that with a blissful, euphoric, and calming effec"
+    },
+    {
+      "strain_name": "Nukenz - Manager's Special",
+      "parent1": "Shishkaberry",
+      "parent2": "Godbud",
+      "dispensary": "cookies",
+      "source": "Menu Description",
+      "description_snippet": "Nukenz is a perfect example of blending past and present genetics to create something both nostalgic and uniquely fresh. \n\n\nThe genetics that makes up the Nukenz are very unique -- by taking the class"
+    },
+    {
+      "strain_name": "Apples & Bananas",
+      "parent1": "Platinum Cookies",
+      "parent2": "Granddaddy Purple",
+      "dispensary": "cookies",
+      "source": "Menu Description",
+      "description_snippet": "Apples and Bananas, crafted by the innovative Compound Genetics and popularized by Cookies, is a masterpiece of cross-breeding. A collaboration for the ages, this strain has risen to the top of our ge"
+    },
+    {
+      "strain_name": "Hollywood",
+      "parent1": "By Crossing Lemon Cherry Gelato",
+      "parent2": "Runtz",
+      "dispensary": "cookies",
+      "source": "Menu Description",
+      "description_snippet": "Hollywood is our rendition of the ever-popular candy strains of today. By crossing Lemon Cherry Gelato x Runtz, we have found a pheno that checks every box when it comes to that quintessential LGC and"
+    },
+    {
+      "strain_name": "Space Lime Continuum - Manager's Special",
+      "parent1": "Tahiti Lime",
+      "parent2": "Oreoz",
+      "dispensary": "cookies",
+      "source": "Menu Description",
+      "description_snippet": "Space Lime Continuum, bred by Shauncron, is a cross between Tahiti Lime and Oreoz. Shauncron took the rare, standout phenotype of the Tahiti Lime from Archive Seeds and crossed it with his Oreoz stud "
+    },
+    {
+      "strain_name": "Space Lime Continuum",
+      "parent1": "Tahiti Lime",
+      "parent2": "Oreoz",
+      "dispensary": "cookies",
+      "source": "Menu Description",
+      "description_snippet": "Space Lime Continuum, bred by Shauncron, is a cross between Tahiti Lime and Oreoz. Shauncron took the rare, standout phenotype of the Tahiti Lime from Archive Seeds and crossed it with his Oreoz stud "
+    }
+  ]
+}

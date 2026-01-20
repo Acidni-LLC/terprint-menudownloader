@@ -1,0 +1,1045 @@
+﻿{
+    "$schema":  "https://json-schema.org/draft/2020-12/schema",
+    "metadata":  {
+                     "title":  "Terprint AI Software Engineer \u0026 Architect Guidelines",
+                     "version":  "3.0.0",
+                     "lastUpdated":  "2026-01-20T19:17:50Z",
+                     "terprintConfigVersion":  "4.6.0",
+                     "description":  "Single source of truth for all Terprint platform configuration",
+                     "inheritance":  {
+                                         "parent":  "shared/acidni-copilot-instructions.md",
+                                         "additionalInstructions":  ".github/instructions/"
+                                     },
+                     "syncScript":  "copy-instructions-to-repos.ps1"
+                 },
+    "inheritedStandards":  [
+                               "Repository boundaries and cross-repo coordination",
+                               "Azure authentication (Entra ID, managed identities)",
+                               "Code quality standards (linting, testing, reviews)",
+                               "Security best practices (secrets, input validation)",
+                               "CI/CD and conventional commits",
+                               "General Python, TypeScript, and C# standards"
+                           ],
+    "terprintSpecificContext":  [
+                                    "Cannabis dispensary domain knowledge",
+                                    "5-stage data pipeline architecture",
+                                    "Terprint service configurations and ports",
+                                    "Dispensary API mappings and integrations",
+                                    "Azure Marketplace metering",
+                                    "Poetry package management requirement"
+                                ],
+    "directives":  [
+                       {
+                           "id":  0,
+                           "title":  "USE GITHUB ACTIONS FOR ALL CI/CD",
+                           "severity":  "CRITICAL",
+                           "rules":  [
+                                         "ALL Terprint services use GitHub Actions for CI/CD - NEVER use Azure Pipelines",
+                                         "GitHub is the source control AND CI/CD platform - Azure DevOps is only for work item tracking",
+                                         "Deployment target: Azure Container Apps through APIM gateway",
+                                         "Organization secrets: Use ORG_* prefixed secrets and variables for consistency"
+                                     ]
+                       },
+                       {
+                           "id":  1,
+                           "title":  "REPOSITORY BOUNDARIES",
+                           "severity":  "CRITICAL",
+                           "rules":  [
+                                         "EACH APP LIVES IN ITS OWN REPOSITORY - Do NOT edit files in sibling repos",
+                                         "ALL CODE CHANGES ARE COORDINATED BY terprint-config - Cross-cutting changes go through the config project",
+                                         "CREATE AZURE DEVOPS WORK ITEMS to track config changes needed across GitHub repos",
+                                         "If you need changes in another repo, document the requirement and create a work item"
+                                     ],
+                           "notes":  [
+                                         "Repositories are hosted on GitHub (github.com/Acidni-LLC)",
+                                         "Work items, project management, and artifacts are managed in Azure DevOps (dev.azure.com/Acidni/Terprint)"
+                                     ]
+                       },
+                       {
+                           "id":  2,
+                           "title":  "ALL PYTHON APPS MUST USE POETRY",
+                           "severity":  "MANDATORY",
+                           "rules":  [
+                                         "NEVER use pip install directly - Always use poetry add",
+                                         "NEVER use requirements.txt as source of truth - Use pyproject.toml",
+                                         "ALWAYS activate Poetry environment before running Python code",
+                                         "Export requirements.txt for Docker only when building containers"
+                                     ],
+                           "codeExamples":  {
+                                                "newProject":  "poetry init --name \"terprint-myservice\" --python \"^3.12\"\npoetry add fastapi uvicorn azure-identity azure-storage-blob\npoetry add --group dev pytest ruff mypy\npoetry install\npoetry shell",
+                                                "existingProject":  "poetry install\npoetry lock\npoetry shell\npython main.py"
+                                            }
+                       },
+                       {
+                           "id":  3,
+                           "title":  "USE pymssql NOT pyodbc FOR SQL",
+                           "severity":  "CRITICAL",
+                           "rules":  [
+                                         "Azure Functions Consumption Plan runs on Linux without ODBC drivers",
+                                         "pyodbc WILL FAIL in production",
+                                         "Always use pymssql with %s placeholders (not ?)"
+                                     ],
+                           "codeExamples":  {
+                                                "correct":  "cursor.execute(\"SELECT * FROM Users WHERE Id = %s\", (user_id,))",
+                                                "wrong":  "cursor.execute(\"SELECT * FROM Users WHERE Id = ?\", (user_id,))"
+                                            }
+                       },
+                       {
+                           "id":  4,
+                           "title":  "USE ENTRA ID FOR SERVICE-TO-SERVICE AUTH",
+                           "severity":  "CRITICAL",
+                           "rules":  [
+                                         "NEVER use function keys for app-to-app API calls",
+                                         "NEVER hard-code API keys in source code",
+                                         "ALWAYS use managed identities and Bearer tokens",
+                                         "ALWAYS validate token audience to prevent reuse attacks"
+                                     ]
+                       },
+                       {
+                           "id":  5,
+                           "title":  "ALL INTER-SERVICE CALLS THROUGH APIM",
+                           "severity":  "CRITICAL",
+                           "rules":  [
+                                         "ALL API calls between Terprint services MUST route through APIM gateway",
+                                         "NEVER call function apps directly (e.g., func-terprint-communications.azurewebsites.net)"
+                                     ],
+                           "baseUrl":  "https://apim-terprint-dev.azure-api.net"
+                       },
+                       {
+                           "id":  6,
+                           "title":  "ALL SECRETS IN AZURE KEY VAULT",
+                           "severity":  "CRITICAL",
+                           "rules":  [
+                                         "NEVER commit API keys, connection strings, or passwords to source control",
+                                         "ALWAYS use Key Vault references in Azure app settings: @Microsoft.KeyVault(SecretUri=...)",
+                                         "local.settings.json is for local dev only and MUST be in .gitignore"
+                                     ]
+                       },
+                       {
+                           "id":  7,
+                           "title":  "GITHUB ACTIONS DEPLOYMENT WITH ORG SECRETS",
+                           "severity":  "MANDATORY",
+                           "rules":  [
+                                         "ALL repositories MUST have GitHub Actions workflows for deployment",
+                                         "USE ORGANIZATION SECRETS (ORG_*) instead of repository secrets",
+                                         "TRIGGER integration tests after successful deployment"
+                                     ],
+                           "testDashboard":  "https://brave-stone-0d8700d0f.3.azurestaticapps.net"
+                       },
+                       {
+                           "id":  8,
+                           "title":  "OPENAPI SPECS FOR ALL HTTP APIS",
+                           "severity":  "MANDATORY",
+                           "rules":  [
+                                         "Every Azure Function with HTTP triggers MUST have openapi.json in repo root",
+                                         "Follow OpenAPI 3.0.x specification",
+                                         "Include all endpoints, auth requirements, request/response schemas"
+                                     ]
+                       },
+                       {
+                           "id":  9,
+                           "title":  "MAINTAIN DOCUMENTATION",
+                           "severity":  "MANDATORY",
+                           "rules":  [
+                                         "Every repo MUST have README.md, docs/ARCHITECTURE.md, docs/INTEGRATION.md",
+                                         "Keep docs in sync with code changes (update in same PR)",
+                                         "Run copy-instructions-to-repos.ps1 to distribute updated standards"
+                                     ]
+                       },
+                       {
+                           "id":  10,
+                           "title":  "BUSINESS LOGIC IN SHARED PACKAGES",
+                           "severity":  "MANDATORY",
+                           "rules":  [
+                                         "Business logic belongs in terprint-core packages (Python + NuGet)",
+                                         "Application code consumes business logic, doesn\u0027t implement it"
+                                     ],
+                           "packages":  {
+                                            "python":  {
+                                                           "name":  "terprint-core",
+                                                           "feed":  "Azure Artifacts PyPI"
+                                                       },
+                                            "dotnet":  {
+                                                           "name":  "Terprint.Core",
+                                                           "feed":  "Azure Artifacts NuGet"
+                                                       }
+                                        }
+                       },
+                       {
+                           "id":  11,
+                           "title":  "SYSTEM VERSIONING \u0026 MULTI-TENANT ARCHITECTURE (V2.0)",
+                           "severity":  "MANDATORY",
+                           "platformVersion":  "2.0",
+                           "versions":  {
+                                            "v1.0":  "Single-tenant architecture (legacy)",
+                                            "v2.0":  "Multi-tenant with CDES format, tenant isolation, tier-based access"
+                                        },
+                           "tenantTiers":  [
+                                               {
+                                                   "tier":  "FREE",
+                                                   "dispensaryAccess":  "Demo only (ID 0)",
+                                                   "rateLimit":  "100/day",
+                                                   "metering":  "Tracked, not billed"
+                                               },
+                                               {
+                                                   "tier":  "STARTER",
+                                                   "dispensaryAccess":  "2 dispensaries",
+                                                   "rateLimit":  "1000/day",
+                                                   "metering":  "Overage billing"
+                                               },
+                                               {
+                                                   "tier":  "PROFESSIONAL",
+                                                   "dispensaryAccess":  "5 dispensaries",
+                                                   "rateLimit":  "10000/day",
+                                                   "metering":  "Overage billing"
+                                               },
+                                               {
+                                                   "tier":  "ENTERPRISE",
+                                                   "dispensaryAccess":  "All dispensaries",
+                                                   "rateLimit":  "Unlimited",
+                                                   "metering":  "Custom contract"
+                                               },
+                                               {
+                                                   "tier":  "INTERNAL",
+                                                   "dispensaryAccess":  "All (admin)",
+                                                   "rateLimit":  "Unlimited",
+                                                   "metering":  "Not metered"
+                                               }
+                                           ]
+                       },
+                       {
+                           "id":  12,
+                           "title":  "APIM SUBSCRIPTION KEYS \u0026 METERING",
+                           "severity":  "CRITICAL",
+                           "rules":  [
+                                         "All APIM subscription keys are managed in Azure Key Vault"
+                                     ],
+                           "documentation":  "docs/API_MANAGER.md"
+                       },
+                       {
+                           "id":  13,
+                           "title":  "USE ORGANIZATION SECRETS FOR CI/CD",
+                           "severity":  "MANDATORY",
+                           "migrationStatus":  "Ready for Implementation",
+                           "documentation":  "docs/ORGANIZATION_SECRETS_MIGRATION.md",
+                           "benefits":  [
+                                            "Single Source of Truth - Update credentials once, applies to all repos",
+                                            "Easier Secret Rotation - Rotate in one place instead of 50+ repos",
+                                            "Reduced Configuration - New repos inherit org secrets automatically",
+                                            "Better Security - Fewer places secrets can leak",
+                                            "Operational Excellence - Aligns with Azure Well-Architected Framework"
+                                        ]
+                       },
+                       {
+                           "id":  14,
+                           "title":  "INCLUDE CONTAINER REVISION IN HEALTH CHECKS",
+                           "severity":  "MANDATORY",
+                           "rules":  [
+                                         "Every Container App MUST include the running container revision in its health check response"
+                                     ],
+                           "benefits":  [
+                                            "Deployment verification: Confirm the correct revision is running after deployment",
+                                            "Troubleshooting: Quickly identify which revision is serving traffic",
+                                            "Rollback validation: Verify rollbacks are complete"
+                                        ],
+                           "environmentVariable":  "CONTAINER_APP_REVISION",
+                           "codeExamples":  {
+                                                "python":  "os.environ.get(\"CONTAINER_APP_REVISION\", \"local\")",
+                                                "csharp":  "Environment.GetEnvironmentVariable(\"CONTAINER_APP_REVISION\") ?? \"local\""
+                                            }
+                       },
+                       {
+                           "id":  15,
+                           "title":  "INTEGRATION TEST TRIGGERING IS MANDATORY",
+                           "severity":  "CRITICAL",
+                           "rules":  [
+                                         "ALL customer-facing services MUST trigger integration tests after deployment",
+                                         "Use Organization Secret: secrets.ORG_GH_PAT_TERPRINT_TESTS",
+                                         "NEVER use repository-level PAT secrets (causes Resource not accessible errors)",
+                                         "Add trigger-integration-tests job to your deployment workflow",
+                                         "Make it conditional on deployment success: if: success()"
+                                     ],
+                           "testDashboard":  "https://brave-stone-0d8700d0f.3.azurestaticapps.net",
+                           "servicesRequiringTests":  [
+                                                          {
+                                                              "type":  "API Services (APIM)",
+                                                              "required":  true,
+                                                              "rationale":  "Customer-facing - must validate APIM routing"
+                                                          },
+                                                          {
+                                                              "type":  "AI Services",
+                                                              "required":  true,
+                                                              "rationale":  "Customer-facing - critical functionality"
+                                                          },
+                                                          {
+                                                              "type":  "Metering/Billing",
+                                                              "required":  true,
+                                                              "rationale":  "Financial impact - must validate before live"
+                                                          },
+                                                          {
+                                                              "type":  "Data Pipeline",
+                                                              "required":  false,
+                                                              "rationale":  "Internal - health check sufficient"
+                                                          }
+                                                      ]
+                       }
+                   ],
+    "systemIdentity":  {
+                           "platformOwner":  "Acidni LLC",
+                           "domain":  "Cannabis/Medical Marijuana Data Analytics",
+                           "geography":  "Florida dispensaries",
+                           "activeDispensaries":  [
+                                                      "Cookies",
+                                                      "MÜV",
+                                                      "Flowery",
+                                                      "Trulieve",
+                                                      "Curaleaf"
+                                                  ],
+                           "architecture":  "5-stage data pipeline with microservices deployed as Azure Container Apps behind APIM"
+                       },
+    "wellArchitectedFramework":  {
+                                     "reliability":  "Idempotent batch processing, retry policies with exponential backoff, health probes, circuit breakers",
+                                     "security":  "Managed identities (no secrets in code), APIM gateway as single entry point, Key Vault for all secrets, zero-trust service-to-service auth via Entra ID",
+                                     "costOptimization":  "Consumption-based Container Apps, scale-to-zero patterns, right-sized SKUs",
+                                     "operationalExcellence":  "Centralized config (terprint-config), conventional commits, runbooks for incident response, DORA metrics tracking",
+                                     "performanceEfficiency":  "Response caching via APIM policies, async processing for long operations, blob storage for large payloads"
+                                 },
+    "pipeline":  {
+                     "description":  "5-Stage Data Pipeline",
+                     "stages":  [
+                                    {
+                                        "stage":  1,
+                                        "name":  "Discovery",
+                                        "application":  "Menu Discoverer",
+                                        "type":  "Development",
+                                        "trigger":  "Manual",
+                                        "output":  "DevOps work items"
+                                    },
+                                    {
+                                        "stage":  2,
+                                        "name":  "Ingestion",
+                                        "application":  "Menu Downloader",
+                                        "type":  "Container App",
+                                        "trigger":  "Every 2 hrs (8am-10pm EST)",
+                                        "output":  "Raw menu JSONs"
+                                    },
+                                    {
+                                        "stage":  2.5,
+                                        "name":  "Batch Extraction",
+                                        "application":  "Batch Creator",
+                                        "type":  "Container App",
+                                        "trigger":  "Daily 7:00 AM ET",
+                                        "output":  "consolidated_batches_YYYYMMDD.json"
+                                    },
+                                    {
+                                        "stage":  3,
+                                        "name":  "COA Processing",
+                                        "application":  "Batch Processor",
+                                        "type":  "Container App",
+                                        "trigger":  "3x daily",
+                                        "output":  "SQL records"
+                                    },
+                                    {
+                                        "stage":  4,
+                                        "name":  "Presentation",
+                                        "application":  "Terprint.Web",
+                                        "type":  "App Service",
+                                        "trigger":  "On-demand",
+                                        "output":  "Web UI"
+                                    },
+                                    {
+                                        "stage":  5,
+                                        "name":  "Analytics",
+                                        "application":  "Power BI",
+                                        "type":  "Scheduled refresh",
+                                        "trigger":  "Daily",
+                                        "output":  "Reports + custom visuals"
+                                    }
+                                ]
+                 },
+    "services":  {
+                     "aiServices":  [
+                                        {
+                                            "name":  "AI Chat",
+                                            "repo":  "terprint-ai-chat",
+                                            "apimPath":  "/chat",
+                                            "localPort":  7091,
+                                            "emoji":  ""
+                                        },
+                                        {
+                                            "name":  "AI Recommender",
+                                            "repo":  "terprint-ai-recommender",
+                                            "apimPath":  "/recommend",
+                                            "localPort":  7096,
+                                            "emoji":  ""
+                                        },
+                                        {
+                                            "name":  "AI Deals",
+                                            "repo":  "terprint-ai-deals",
+                                            "apimPath":  "/deals",
+                                            "localPort":  7101,
+                                            "emoji":  ""
+                                        },
+                                        {
+                                            "name":  "AI Lab",
+                                            "repo":  "terprint-ai-lab",
+                                            "apimPath":  "/lab",
+                                            "localPort":  7126,
+                                            "emoji":  ""
+                                        },
+                                        {
+                                            "name":  "AI Health",
+                                            "repo":  "terprint-ai-health",
+                                            "apimPath":  "/health",
+                                            "localPort":  7106,
+                                            "emoji":  ""
+                                        }
+                                    ],
+                     "dataPipeline":  [
+                                          {
+                                              "name":  "Menu Downloader",
+                                              "repo":  "terprint-menudownloader",
+                                              "apimPath":  "/menus",
+                                              "localPort":  7086,
+                                              "emoji":  ""
+                                          },
+                                          {
+                                              "name":  "Batch Creator",
+                                              "repo":  "terprint-batches",
+                                              "apimPath":  "/batches",
+                                              "localPort":  7076,
+                                              "emoji":  ""
+                                          },
+                                          {
+                                              "name":  "Batch Processor",
+                                              "repo":  "terprint-batch-processor",
+                                              "apimPath":  "/processor",
+                                              "localPort":  7081,
+                                              "emoji":  ""
+                                          },
+                                          {
+                                              "name":  "COA Extractor",
+                                              "repo":  "terprint-coa-extractor",
+                                              "apimPath":  "/coa",
+                                              "localPort":  7131,
+                                              "emoji":  ""
+                                          },
+                                          {
+                                              "name":  "Data API",
+                                              "repo":  "terprint-data",
+                                              "apimPath":  "/data",
+                                              "localPort":  7121,
+                                              "emoji":  ""
+                                          }
+                                      ],
+                     "communications":  [
+                                            {
+                                                "name":  "Communications",
+                                                "repo":  "terprint-communications",
+                                                "apimPath":  "/communications",
+                                                "localPort":  7071,
+                                                "emoji":  ""
+                                            }
+                                        ],
+                     "corePlatform":  [
+                                          {
+                                              "name":  "terprint-config",
+                                              "repo":  "terprint-config",
+                                              "type":  "Python Package",
+                                              "description":  "Central configuration (PyPI) - source of truth"
+                                          },
+                                          {
+                                              "name":  "Terprint.Web",
+                                              "repo":  "Terprint.Web",
+                                              "type":  ".NET Blazor",
+                                              "description":  "Main website"
+                                          },
+                                          {
+                                              "name":  "Terprint.Tests",
+                                              "repo":  "terprint-tests",
+                                              "type":  ".NET Tests",
+                                              "description":  "Integration test suite"
+                                          }
+                                      ]
+                 },
+    "azure":  {
+                  "identifiers":  {
+                                      "tenantId":  "3278dcb1-0a18-42e7-8acf-d3b5f8ae33cd",
+                                      "subscriptionId":  "bb40fccf-9ffa-4bad-b9c0-ea40e326882c",
+                                      "devOpsOrganization":  "Acidni",
+                                      "devOpsProject":  "Terprint"
+                                  },
+                  "coreInfrastructure":  {
+                                             "_warning":  "DO NOT GUESS RESOURCE GROUPS - Each resource has a specific RG. Always reference this table.",
+                                             "resources":  [
+                                                               {
+                                                                   "type":  "Storage Account",
+                                                                   "name":  "stterprintsharedgen2",
+                                                                   "resourceGroup":  "rg-dev-terprint-shared"
+                                                               },
+                                                               {
+                                                                   "type":  "Container",
+                                                                   "name":  "jsonfiles",
+                                                                   "resourceGroup":  "(within storage account)"
+                                                               },
+                                                               {
+                                                                   "type":  "APIM",
+                                                                   "name":  "apim-terprint-dev",
+                                                                   "resourceGroup":  "rg-terprint-apim-dev",
+                                                                   "important":  true
+                                                               },
+                                                               {
+                                                                   "type":  "Key Vault",
+                                                                   "name":  "kv-terprint-dev",
+                                                                   "resourceGroup":  "rg-dev-terprint-shared"
+                                                               },
+                                                               {
+                                                                   "type":  "Container Registry",
+                                                                   "name":  "crterprint.azurecr.io",
+                                                                   "resourceGroup":  "rg-dev-terprint-health"
+                                                               },
+                                                               {
+                                                                   "type":  "Container Apps Environment",
+                                                                   "name":  "kindmoss-c6723cbe.eastus2.azurecontainerapps.io",
+                                                                   "resourceGroup":  "rg-dev-terprint-ca"
+                                                               },
+                                                               {
+                                                                   "type":  "Cosmos DB",
+                                                                   "name":  "cosmos-terprint-dev",
+                                                                   "resourceGroup":  "rg-dev-terprint-shared"
+                                                               }
+                                                           ]
+                                         },
+                  "containerRegistries":  [
+                                              {
+                                                  "loginServer":  "crterprint.azurecr.io",
+                                                  "purpose":  "PRIMARY - Main Terprint services",
+                                                  "primary":  true
+                                              },
+                                              {
+                                                  "loginServer":  "acrterprint7py7rei2pjnwq.azurecr.io",
+                                                  "purpose":  "AI Deals service",
+                                                  "primary":  false
+                                              },
+                                              {
+                                                  "loginServer":  "caad4cae72c4acr.azurecr.io",
+                                                  "purpose":  "Doctor Portal",
+                                                  "primary":  false
+                                              }
+                                          ],
+                  "containerApps":  [
+                                        {
+                                            "name":  "ca-terprint-ai-chat",
+                                            "resourceGroup":  "rg-dev-terprint-ca",
+                                            "purpose":  "AI Chat service"
+                                        },
+                                        {
+                                            "name":  "ca-terprint-menudownloader",
+                                            "resourceGroup":  "rg-dev-terprint-ca",
+                                            "purpose":  "Menu data ingestion"
+                                        },
+                                        {
+                                            "name":  "ca-terprint-ai-recommender",
+                                            "resourceGroup":  "rg-dev-terprint-ca",
+                                            "purpose":  "Strain recommendations"
+                                        },
+                                        {
+                                            "name":  "ca-terprint-batch-processor",
+                                            "resourceGroup":  "rg-dev-terprint-ca",
+                                            "purpose":  "COA data extraction"
+                                        },
+                                        {
+                                            "name":  "ca-terprint-batches",
+                                            "resourceGroup":  "rg-dev-terprint-ca",
+                                            "purpose":  "Batch file creator"
+                                        },
+                                        {
+                                            "name":  "ca-terprint-data",
+                                            "resourceGroup":  "rg-dev-terprint-ca",
+                                            "purpose":  "Data access API"
+                                        },
+                                        {
+                                            "name":  "ca-terprint-ai-deals",
+                                            "resourceGroup":  "rg-dev-terprint-ca",
+                                            "purpose":  "Deal analysis"
+                                        },
+                                        {
+                                            "name":  "ca-terprint-infographics",
+                                            "resourceGroup":  "rg-dev-terprint-ca",
+                                            "purpose":  "Infographic image generation"
+                                        }
+                                    ],
+                  "cosmosDb":  {
+                                   "databases":  [
+                                                     {
+                                                         "name":  "TerprintAI",
+                                                         "containers":  [
+                                                                            {
+                                                                                "name":  "chat_sessions",
+                                                                                "purpose":  "AI Chat conversation history and context"
+                                                                            },
+                                                                            {
+                                                                                "name":  "recommendations",
+                                                                                "purpose":  "Cached strain recommendations"
+                                                                            },
+                                                                            {
+                                                                                "name":  "user_preferences",
+                                                                                "purpose":  "User taste profiles and preferences"
+                                                                            },
+                                                                            {
+                                                                                "name":  "feedback",
+                                                                                "purpose":  "User feedback on recommendations"
+                                                                            },
+                                                                            {
+                                                                                "name":  "strains",
+                                                                                "purpose":  "Strain embeddings and metadata cache"
+                                                                            },
+                                                                            {
+                                                                                "name":  "menus",
+                                                                                "purpose":  "Menu data cache for AI queries"
+                                                                            },
+                                                                            {
+                                                                                "name":  "ai_deals_*",
+                                                                                "purpose":  "AI Deals service state (alerts, prices, notifications)"
+                                                                            },
+                                                                            {
+                                                                                "name":  "quality_alerts",
+                                                                                "purpose":  "Data quality alerting"
+                                                                            },
+                                                                            {
+                                                                                "name":  "dispensary_reports",
+                                                                                "purpose":  "Dispensary analytics cache"
+                                                                            }
+                                                                        ]
+                                                     },
+                                                     {
+                                                         "name":  "terprint-metering",
+                                                         "containers":  [
+                                                                            {
+                                                                                "name":  "usage-events",
+                                                                                "purpose":  "Raw API usage events"
+                                                                            },
+                                                                            {
+                                                                                "name":  "usage-aggregates",
+                                                                                "purpose":  "Aggregated usage by customer/period"
+                                                                            },
+                                                                            {
+                                                                                "name":  "customer-quotas",
+                                                                                "purpose":  "Customer tier quotas and limits"
+                                                                            }
+                                                                        ]
+                                                     }
+                                                 ]
+                               },
+                  "staticWebApps":  [
+                                        {
+                                            "name":  "swa-terprint-sales",
+                                            "hostname":  "green-forest-02ff0c80f.3.azurestaticapps.net",
+                                            "purpose":  "Sales website (sales.terprint.com)"
+                                        },
+                                        {
+                                            "name":  "swa-terprint-tests-dev",
+                                            "hostname":  "brave-stone-0d8700d0f.3.azurestaticapps.net",
+                                            "purpose":  "Test dashboard"
+                                        }
+                                    ],
+                  "blobStorageStructure":  {
+                                               "container":  "jsonfiles",
+                                               "paths":  [
+                                                             {
+                                                                 "path":  "dispensaries/{dispensary}/{year}/{month}/{day}/{timestamp}.json",
+                                                                 "description":  "Raw menu downloads (Stage 2 output)"
+                                                             },
+                                                             {
+                                                                 "path":  "menus/{dispensary}/{year}/{month}/{day}/*.json",
+                                                                 "description":  "Processed menu data"
+                                                             },
+                                                             {
+                                                                 "path":  "batches/consolidated_batches_YYYYMMDD.json",
+                                                                 "description":  "Consolidated batch files (Stage 2.5 output)"
+                                                             }
+                                                         ]
+                                           }
+              },
+    "organizationSecrets":  {
+                                "secrets":  [
+                                                {
+                                                    "name":  "ORG_AZURE_CREDENTIALS",
+                                                    "description":  "Azure Service Principal JSON",
+                                                    "howToObtain":  "Create with az ad sp create-for-rbac --sdk-auth"
+                                                },
+                                                {
+                                                    "name":  "ORG_AZURE_SUBSCRIPTION_ID",
+                                                    "description":  "Azure Subscription ID",
+                                                    "value":  "bb40fccf-9ffa-4bad-b9c0-ea40e326882c"
+                                                },
+                                                {
+                                                    "name":  "ORG_AZURE_TENANT_ID",
+                                                    "description":  "Azure AD Tenant ID",
+                                                    "value":  "3278dcb1-0a18-42e7-8acf-d3b5f8ae33cd"
+                                                },
+                                                {
+                                                    "name":  "ORG_ACR_USERNAME",
+                                                    "description":  "Azure Container Registry username",
+                                                    "value":  "crterprint"
+                                                },
+                                                {
+                                                    "name":  "ORG_ACR_PASSWORD",
+                                                    "description":  "Azure Container Registry password",
+                                                    "howToObtain":  "From Key Vault or az acr credential show"
+                                                },
+                                                {
+                                                    "name":  "ORG_APIM_SUBSCRIPTION_KEY",
+                                                    "description":  "APIM gateway subscription key",
+                                                    "howToObtain":  "From Key Vault apim-subscription-key"
+                                                },
+                                                {
+                                                    "name":  "ORG_GH_PAT_TERPRINT_TESTS",
+                                                    "description":  "PAT for triggering integration tests",
+                                                    "howToObtain":  "GitHub Settings \u003e Developer settings"
+                                                },
+                                                {
+                                                    "name":  "ORG_AZURE_ARTIFACTS_TOKEN",
+                                                    "description":  "Azure DevOps Artifacts PAT",
+                                                    "howToObtain":  "Azure DevOps \u003e Personal Access Tokens"
+                                                }
+                                            ],
+                                "variables":  [
+                                                  {
+                                                      "name":  "ORG_ACR_LOGIN_SERVER",
+                                                      "value":  "crterprint.azurecr.io",
+                                                      "description":  "Primary ACR"
+                                                  },
+                                                  {
+                                                      "name":  "ORG_APIM_BASE_URL",
+                                                      "value":  "https://apim-terprint-dev.azure-api.net",
+                                                      "description":  "APIM gateway"
+                                                  },
+                                                  {
+                                                      "name":  "ORG_CONTAINER_ENV",
+                                                      "value":  "kindmoss-c6723cbe.eastus2.azurecontainerapps.io",
+                                                      "description":  "Container Apps Environment"
+                                                  },
+                                                  {
+                                                      "name":  "ORG_PYTHON_VERSION",
+                                                      "value":  "3.12",
+                                                      "description":  "Default Python version"
+                                                  },
+                                                  {
+                                                      "name":  "ORG_DOTNET_VERSION",
+                                                      "value":  "8.0",
+                                                      "description":  "Default .NET version"
+                                                  }
+                                              ]
+                            },
+    "apim":  {
+                 "baseUrl":  "https://apim-terprint-dev.azure-api.net",
+                 "apis":  [
+                              {
+                                  "id":  "terprint-communications",
+                                  "path":  "/communications",
+                                  "backend":  "func-terprint-communications",
+                                  "caching":  "60s"
+                              },
+                              {
+                                  "id":  "terprint-ai-chat-api",
+                                  "path":  "/chat",
+                                  "backend":  "func-dev-terprint-ai-chat",
+                                  "caching":  "300s"
+                              },
+                              {
+                                  "id":  "terprint-ai-recommender-api",
+                                  "path":  "/recommend",
+                                  "backend":  "func-terprint-ai-recommender",
+                                  "caching":  "600s"
+                              },
+                              {
+                                  "id":  "terprint-data-api",
+                                  "path":  "/data",
+                                  "backend":  "func-terprint-data-api",
+                                  "caching":  "300s"
+                              },
+                              {
+                                  "id":  "terprint-infographics",
+                                  "path":  "/infographics",
+                                  "backend":  "func-terprint-infographics",
+                                  "caching":  "86400s"
+                              },
+                              {
+                                  "id":  "terprint-stock-api",
+                                  "path":  "/stock",
+                                  "backend":  "terprint-menu-downloader",
+                                  "caching":  "3600s"
+                              }
+                          ],
+                 "products":  [
+                                  {
+                                      "name":  "Free Tier",
+                                      "rateLimit":  "10 req/min",
+                                      "quota":  "100/day",
+                                      "apis":  "Data API (read-only)"
+                                  },
+                                  {
+                                      "name":  "Starter",
+                                      "rateLimit":  "60 req/min",
+                                      "quota":  "1,000/day",
+                                      "apis":  "Data API, Chat"
+                                  },
+                                  {
+                                      "name":  "Professional",
+                                      "rateLimit":  "300 req/min",
+                                      "quota":  "10,000/day",
+                                      "apis":  "All APIs"
+                                  },
+                                  {
+                                      "name":  "Enterprise",
+                                      "rateLimit":  "1,000 req/min",
+                                      "quota":  "Unlimited",
+                                      "apis":  "All APIs + SLA"
+                                  }
+                              ]
+             },
+    "healthEndpoint":  {
+                           "standardPath":  "/health",
+                           "warning":  "All Terprint services use /health (NOT /api/health)",
+                           "requiredFields":  [
+                                                  "status",
+                                                  "service",
+                                                  "version",
+                                                  "revision",
+                                                  "timestamp"
+                                              ],
+                           "exampleResponse":  {
+                                                   "status":  "healthy",
+                                                   "service":  "ai-chat",
+                                                   "version":  "1.2.3",
+                                                   "revision":  "ca-terprint-ai-chat--abc123",
+                                                   "timestamp":  "2026-01-07T12:00:00Z"
+                                               }
+                       },
+    "dispensaries":  [
+                         {
+                             "name":  "Cookies",
+                             "growerId":  1,
+                             "status":  "active",
+                             "notes":  "Stable"
+                         },
+                         {
+                             "name":  "MÜV",
+                             "growerId":  2,
+                             "status":  "active",
+                             "notes":  "Stable"
+                         },
+                         {
+                             "name":  "Flowery",
+                             "growerId":  3,
+                             "status":  "active",
+                             "notes":  "All FL locations"
+                         },
+                         {
+                             "name":  "Trulieve",
+                             "growerId":  4,
+                             "status":  "active",
+                             "notes":  "162 stores, 4 categories"
+                         },
+                         {
+                             "name":  "Curaleaf",
+                             "growerId":  10,
+                             "status":  "active",
+                             "notes":  "~45-60 stores"
+                         },
+                         {
+                             "name":  "Sunnyside",
+                             "growerId":  5,
+                             "status":  "discovery",
+                             "notes":  "In progress"
+                         },
+                         {
+                             "name":  "Liberty",
+                             "growerId":  6,
+                             "status":  "discovery",
+                             "notes":  "Planned"
+                         },
+                         {
+                             "name":  "Fluent",
+                             "growerId":  7,
+                             "status":  "discovery",
+                             "notes":  "Planned"
+                         },
+                         {
+                             "name":  "VidaCann",
+                             "growerId":  8,
+                             "status":  "discovery",
+                             "notes":  "Planned"
+                         },
+                         {
+                             "name":  "RISE",
+                             "growerId":  9,
+                             "status":  "discovery",
+                             "notes":  "Planned"
+                         }
+                     ],
+    "localDevelopmentPorts":  [
+                                  {
+                                      "app":  "Communications",
+                                      "port":  7071,
+                                      "windowTitle":  " Communications"
+                                  },
+                                  {
+                                      "app":  "Batch Creator",
+                                      "port":  7076,
+                                      "windowTitle":  " Batch Creator"
+                                  },
+                                  {
+                                      "app":  "COA Processor",
+                                      "port":  7081,
+                                      "windowTitle":  " COA Processor"
+                                  },
+                                  {
+                                      "app":  "Menu Downloader",
+                                      "port":  7086,
+                                      "windowTitle":  " Menu Downloader"
+                                  },
+                                  {
+                                      "app":  "AI Chat",
+                                      "port":  7091,
+                                      "windowTitle":  " AI Chat"
+                                  },
+                                  {
+                                      "app":  "AI Recommender",
+                                      "port":  7096,
+                                      "windowTitle":  " AI Recommender"
+                                  },
+                                  {
+                                      "app":  "AI Deals",
+                                      "port":  7101,
+                                      "windowTitle":  " AI Deals"
+                                  },
+                                  {
+                                      "app":  "AI Health",
+                                      "port":  7106,
+                                      "windowTitle":  " AI Health"
+                                  },
+                                  {
+                                      "app":  "Infographics",
+                                      "port":  7111,
+                                      "windowTitle":  " Infographics"
+                                  },
+                                  {
+                                      "app":  "Metering",
+                                      "port":  7116,
+                                      "windowTitle":  " Metering"
+                                  },
+                                  {
+                                      "app":  "Data API",
+                                      "port":  7121,
+                                      "windowTitle":  " Data API"
+                                  }
+                              ],
+    "testing":  {
+                    "pyramid":  [
+                                    {
+                                        "level":  "Unit Tests",
+                                        "coverage":  "70%",
+                                        "whatToTest":  "Dispensary parsers, field mappings, COA extraction"
+                                    },
+                                    {
+                                        "level":  "Integration Tests",
+                                        "coverage":  "20%",
+                                        "whatToTest":  "Pipeline flow, Event House ingestion"
+                                    },
+                                    {
+                                        "level":  "E2E Tests",
+                                        "coverage":  "10%",
+                                        "whatToTest":  "Full pipeline, website queries"
+                                    }
+                                ],
+                    "domainSpecific":  [
+                                           "API Contract Tests: Verify dispensary API responses match expected schema",
+                                           "Data Quality Tests: Validate terpene percentages sum correctly",
+                                           "Idempotency Tests: Ensure reprocessing doesn\u0027t create duplicates",
+                                           "Resilience Tests: Test behavior when dispensary APIs are down"
+                                       ],
+                    "testDashboard":  "https://brave-stone-0d8700d0f.3.azurestaticapps.net"
+                },
+    "doraMetrics":  {
+                        "targets":  [
+                                        {
+                                            "metric":  "Deployment Frequency",
+                                            "current":  "Weekly",
+                                            "target":  "2-3x per week"
+                                        },
+                                        {
+                                            "metric":  "Lead Time for Changes",
+                                            "current":  "~8 hours",
+                                            "target":  "\u003c 4 hours"
+                                        },
+                                        {
+                                            "metric":  "Change Failure Rate",
+                                            "current":  "~10%",
+                                            "target":  "\u003c 5%"
+                                        },
+                                        {
+                                            "metric":  "Mean Time to Recovery",
+                                            "current":  "~4 hours",
+                                            "target":  "\u003c 2 hours"
+                                        }
+                                    ]
+                    },
+    "codeReviewChecklist":  [
+                                "Uses Poetry for Python dependency management",
+                                "Uses terprint_config.settings for ALL configuration values",
+                                "All service calls route through APIM gateway",
+                                "No hardcoded secrets, API keys, or connection strings",
+                                "Uses pymssql (not pyodbc) for SQL connections",
+                                "Function auth level is function (not anonymous)",
+                                "Managed identity used for Azure resource access",
+                                "Tests added/updated for new functionality",
+                                "Documentation updated in same PR",
+                                "Conventional commit message format used"
+                            ],
+    "conventionalCommitExamples":  [
+                                       "feat(batch-creator): add retry logic for blob storage failures",
+                                       "fix(menu-downloader): handle null terpene values in Curaleaf response",
+                                       "docs(readme): update deployment instructions for Container Apps",
+                                       "chore(deps): bump terprint-config to v4.5.0",
+                                       "test(coa-processor): add fixtures for Curaleaf menu format",
+                                       "refactor(ai-chat): extract embedding logic to shared module"
+                                   ],
+    "quickReferenceLinks":  {
+                                "azureDevOps":  "https://dev.azure.com/Acidni/Terprint",
+                                "apimGateway":  "https://apim-terprint-dev.azure-api.net",
+                                "testDashboard":  "https://brave-stone-0d8700d0f.3.azurestaticapps.net",
+                                "salesSite":  "https://sales.terprint.com",
+                                "mainWebApp":  "https://terprint.acidni.net",
+                                "containerRegistry":  "crterprint.azurecr.io",
+                                "keyVault":  "https://kv-terprint-dev.vault.azure.net",
+                                "storageAccount":  "https://stterprintsharedgen2.blob.core.windows.net/jsonfiles"
+                            },
+    "keyReminders":  [
+                         "Data Accuracy is Critical: Cannabis patients rely on accurate terpene/cannabinoid data",
+                         "Dispensary APIs Change Often: Build resilient, flexible parsers",
+                         "Azure Managed Identities: Never hardcode credentials",
+                         "Domain Knowledge Matters: Understand cannabis terminology (strain types, terpene effects, COA interpretation)",
+                         "Quality Over Speed: Accurate data \u003e fast but wrong data",
+                         "Idempotency: The consolidated batch file is overwritten throughout the dayBatch Processor runs multiple times to catch updates",
+                         "Poetry for Python: All Python apps must use Poetry for dependency management"
+                     ],
+    "syncTargetRepos":  [
+                            "terprint-ai-chat",
+                            "terprint-ai-recommender",
+                            "terprint-ai-deals",
+                            "terprint-coa-extractor",
+                            "terprint-batch-processor",
+                            "terprint-powerbi-visuals",
+                            "Terprint.Web",
+                            "Terprint.Tests",
+                            "func-terprint-communications",
+                            "terprint-ai-health",
+                            "terprint-menudownloader",
+                            "terprint-batches",
+                            "terprint-data",
+                            "terprint-infographics",
+                            "terprint-metering"
+                        ]
+}

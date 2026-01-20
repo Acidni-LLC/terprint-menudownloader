@@ -1,0 +1,908 @@
+{
+  "updated_at": "2026-01-20T01:55:58.227233+00:00",
+  "total_strains": 175,
+  "partitions": [
+    "0-9",
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "f",
+    "g",
+    "h",
+    "i",
+    "j",
+    "k",
+    "l",
+    "m",
+    "n",
+    "o",
+    "other",
+    "p",
+    "r",
+    "s",
+    "t",
+    "u",
+    "w",
+    "y",
+    "z"
+  ],
+  "strains": {
+    "9lb-hammer": {
+      "name": "9LB Hammer",
+      "partition": "other",
+      "has_lineage": true
+    },
+    "acapulco-gold": {
+      "name": "Acapulco Gold",
+      "partition": "a",
+      "has_lineage": true
+    },
+    "afghan-triangle": {
+      "name": "Afghan Triangle",
+      "partition": "a",
+      "has_lineage": true
+    },
+    "agent-x": {
+      "name": "Agent X",
+      "partition": "a",
+      "has_lineage": true
+    },
+    "aliens-on-moonshine": {
+      "name": "Aliens On Moonshine",
+      "partition": "a",
+      "has_lineage": true
+    },
+    "angel-cake": {
+      "name": "Angel Cake",
+      "partition": "a",
+      "has_lineage": true
+    },
+    "animal-mints": {
+      "name": "Animal Mints",
+      "partition": "a",
+      "has_lineage": true
+    },
+    "apples-and-bananas": {
+      "name": "Apples and Bananas",
+      "partition": "a",
+      "has_lineage": true
+    },
+    "apples-bananas": {
+      "name": "Apples & Bananas",
+      "partition": "a",
+      "has_lineage": true
+    },
+    "baby-turtle": {
+      "name": "Baby Turtle",
+      "partition": "b",
+      "has_lineage": true
+    },
+    "banana-brulee": {
+      "name": "Banana Brulee",
+      "partition": "b",
+      "has_lineage": true
+    },
+    "banana-juice": {
+      "name": "Banana Juice",
+      "partition": "b",
+      "has_lineage": true
+    },
+    "banana-kush": {
+      "name": "Banana Kush",
+      "partition": "b",
+      "has_lineage": true
+    },
+    "banana-pie": {
+      "name": "Banana Pie",
+      "partition": "b",
+      "has_lineage": true
+    },
+    "banana-power": {
+      "name": "Banana Power",
+      "partition": "b",
+      "has_lineage": true
+    },
+    "berry-blast": {
+      "name": "Berry Blast",
+      "partition": "b",
+      "has_lineage": true
+    },
+    "blue-beach-haze": {
+      "name": "Blue Beach Haze",
+      "partition": "b",
+      "has_lineage": true
+    },
+    "blue-crush": {
+      "name": "Blue Crush",
+      "partition": "b",
+      "has_lineage": true
+    },
+    "blue-spring-cookies": {
+      "name": "Blue Spring Cookies",
+      "partition": "b",
+      "has_lineage": true
+    },
+    "blue-steel": {
+      "name": "Blue Steel",
+      "partition": "b",
+      "has_lineage": true
+    },
+    "blue-sunshine": {
+      "name": "Blue Sunshine",
+      "partition": "b",
+      "has_lineage": true
+    },
+    "blueberry-runtz": {
+      "name": "Blueberry Runtz",
+      "partition": "b",
+      "has_lineage": true
+    },
+    "bomb-pop": {
+      "name": "Bomb Pop",
+      "partition": "b",
+      "has_lineage": true
+    },
+    "blue-raz": {
+      "name": "Blue Raz",
+      "partition": "b",
+      "has_lineage": true
+    },
+    "c99": {
+      "name": "C99",
+      "partition": "c",
+      "has_lineage": true
+    },
+    "cake-face": {
+      "name": "Cake Face",
+      "partition": "c",
+      "has_lineage": true
+    },
+    "candy-rain": {
+      "name": "Candy Rain",
+      "partition": "c",
+      "has_lineage": true
+    },
+    "cheesequake": {
+      "name": "Cheesequake",
+      "partition": "c",
+      "has_lineage": true
+    },
+    "chem-juice": {
+      "name": "Chem Juice",
+      "partition": "c",
+      "has_lineage": true
+    },
+    "chemdog-4": {
+      "name": "Chemdog #4",
+      "partition": "c",
+      "has_lineage": true
+    },
+    "cherry-cap": {
+      "name": "Cherry Cap",
+      "partition": "c",
+      "has_lineage": true
+    },
+    "cherry-cup": {
+      "name": "Cherry Cup",
+      "partition": "c",
+      "has_lineage": true
+    },
+    "chiesel": {
+      "name": "Chiesel",
+      "partition": "c",
+      "has_lineage": true
+    },
+    "chrome-berry": {
+      "name": "Chrome Berry",
+      "partition": "c",
+      "has_lineage": true
+    },
+    "citrus-bliss": {
+      "name": "Citrus Bliss",
+      "partition": "c",
+      "has_lineage": true
+    },
+    "clementine": {
+      "name": "Clementine",
+      "partition": "c",
+      "has_lineage": true
+    },
+    "cold-creek-kush": {
+      "name": "Cold Creek Kush",
+      "partition": "c",
+      "has_lineage": true
+    },
+    "cold-snap": {
+      "name": "Cold Snap",
+      "partition": "c",
+      "has_lineage": true
+    },
+    "cookie-crip": {
+      "name": "Cookie Crip",
+      "partition": "c",
+      "has_lineage": true
+    },
+    "creamsickler": {
+      "name": "Creamsickler",
+      "partition": "c",
+      "has_lineage": true
+    },
+    "crimson-queen": {
+      "name": "Crimson Queen",
+      "partition": "c",
+      "has_lineage": true
+    },
+    "crunch-berries": {
+      "name": "Crunch Berries",
+      "partition": "c",
+      "has_lineage": true
+    },
+    "deliziozo": {
+      "name": "DeliZiozo",
+      "partition": "d",
+      "has_lineage": true
+    },
+    "diesel-budda": {
+      "name": "Diesel Budda",
+      "partition": "d",
+      "has_lineage": true
+    },
+    "diesel-dough": {
+      "name": "Diesel Dough",
+      "partition": "d",
+      "has_lineage": true
+    },
+    "do-si-dos": {
+      "name": "Do Si Dos",
+      "partition": "d",
+      "has_lineage": true
+    },
+    "dogwalker-og": {
+      "name": "Dogwalker OG",
+      "partition": "d",
+      "has_lineage": true
+    },
+    "double-og-chem": {
+      "name": "Double OG Chem",
+      "partition": "d",
+      "has_lineage": true
+    },
+    "dream-queen": {
+      "name": "Dream Queen",
+      "partition": "d",
+      "has_lineage": true
+    },
+    "durban-grapefruit": {
+      "name": "Durban Grapefruit",
+      "partition": "d",
+      "has_lineage": true
+    },
+    "durban-mints": {
+      "name": "Durban Mints",
+      "partition": "d",
+      "has_lineage": true
+    },
+    "dawg-breath": {
+      "name": "Dawg Breath",
+      "partition": "d",
+      "has_lineage": true
+    },
+    "earthquake": {
+      "name": "Earthquake",
+      "partition": "e",
+      "has_lineage": true
+    },
+    "everglazed": {
+      "name": "Everglazed",
+      "partition": "e",
+      "has_lineage": true
+    },
+    "first-coast-kush": {
+      "name": "First Coast Kush",
+      "partition": "f",
+      "has_lineage": true
+    },
+    "first-frost": {
+      "name": "First Frost",
+      "partition": "f",
+      "has_lineage": true
+    },
+    "freedom-flowers": {
+      "name": "Freedom Flowers",
+      "partition": "f",
+      "has_lineage": true
+    },
+    "fruit-snacks": {
+      "name": "Fruit Snacks",
+      "partition": "f",
+      "has_lineage": true
+    },
+    "garlic-cocktail": {
+      "name": "Garlic Cocktail",
+      "partition": "g",
+      "has_lineage": true
+    },
+    "garlic-cookies": {
+      "name": "Garlic Cookies",
+      "partition": "g",
+      "has_lineage": true
+    },
+    "garlic-dawg": {
+      "name": "Garlic Dawg",
+      "partition": "g",
+      "has_lineage": true
+    },
+    "garlic-gas": {
+      "name": "Garlic Gas",
+      "partition": "g",
+      "has_lineage": true
+    },
+    "garlic-oz": {
+      "name": "Garlic OZ",
+      "partition": "g",
+      "has_lineage": true
+    },
+    "gas-apple": {
+      "name": "Gas Apple",
+      "partition": "g",
+      "has_lineage": true
+    },
+    "gasoline-dream": {
+      "name": "Gasoline Dream",
+      "partition": "g",
+      "has_lineage": true
+    },
+    "gasphalt": {
+      "name": "Gasphalt",
+      "partition": "g",
+      "has_lineage": true
+    },
+    "gastro-pop": {
+      "name": "Gastro Pop",
+      "partition": "g",
+      "has_lineage": true
+    },
+    "gelato": {
+      "name": "Gelato",
+      "partition": "g",
+      "has_lineage": true
+    },
+    "gelato-sundae": {
+      "name": "Gelato Sundae",
+      "partition": "g",
+      "has_lineage": true
+    },
+    "girl-scout-cookies": {
+      "name": "Girl Scout Cookies",
+      "partition": "g",
+      "has_lineage": true
+    },
+    "goblet-of-fire": {
+      "name": "Goblet of Fire",
+      "partition": "g",
+      "has_lineage": true
+    },
+    "golden-pineapple": {
+      "name": "Golden Pineapple",
+      "partition": "g",
+      "has_lineage": true
+    },
+    "granddaddy-purple": {
+      "name": "Granddaddy Purple",
+      "partition": "g",
+      "has_lineage": true
+    },
+    "grape-biscotti-sundae": {
+      "name": "Grape Biscotti Sundae",
+      "partition": "g",
+      "has_lineage": true
+    },
+    "grape-gasoline": {
+      "name": "Grape Gasoline",
+      "partition": "g",
+      "has_lineage": true
+    },
+    "grape-kush": {
+      "name": "Grape Kush",
+      "partition": "g",
+      "has_lineage": true
+    },
+    "green-dream": {
+      "name": "Green Dream",
+      "partition": "g",
+      "has_lineage": true
+    },
+    "green-wildfire": {
+      "name": "Green Wildfire",
+      "partition": "g",
+      "has_lineage": true
+    },
+    "guava-d": {
+      "name": "Guava D",
+      "partition": "g",
+      "has_lineage": true
+    },
+    "gush-cake": {
+      "name": "Gush Cake",
+      "partition": "g",
+      "has_lineage": true
+    },
+    "gv-d": {
+      "name": "Gv D",
+      "partition": "g",
+      "has_lineage": true
+    },
+    "gary-payton": {
+      "name": "Gary Payton",
+      "partition": "g",
+      "has_lineage": true
+    },
+    "hippie-crasher": {
+      "name": "Hippie Crasher",
+      "partition": "h",
+      "has_lineage": true
+    },
+    "hitman": {
+      "name": "Hitman",
+      "partition": "h",
+      "has_lineage": true
+    },
+    "homestead-haze": {
+      "name": "Homestead Haze",
+      "partition": "h",
+      "has_lineage": true
+    },
+    "i-10": {
+      "name": "I-10",
+      "partition": "i",
+      "has_lineage": true
+    },
+    "icandy": {
+      "name": "iCandy",
+      "partition": "i",
+      "has_lineage": true
+    },
+    "ice-cream-cake": {
+      "name": "Ice Cream Cake",
+      "partition": "i",
+      "has_lineage": true
+    },
+    "iron-lion": {
+      "name": "Iron Lion",
+      "partition": "i",
+      "has_lineage": true
+    },
+    "jack-herer": {
+      "name": "Jack Herer",
+      "partition": "j",
+      "has_lineage": true
+    },
+    "jet-juice": {
+      "name": "Jet Juice",
+      "partition": "j",
+      "has_lineage": true
+    },
+    "juicy-jane": {
+      "name": "Juicy Jane",
+      "partition": "j",
+      "has_lineage": true
+    },
+    "jungle-cake": {
+      "name": "Jungle Cake",
+      "partition": "j",
+      "has_lineage": true
+    },
+    "khalifa-mints": {
+      "name": "Khalifa Mints",
+      "partition": "k",
+      "has_lineage": true
+    },
+    "kind-bud": {
+      "name": "Kind Bud",
+      "partition": "k",
+      "has_lineage": true
+    },
+    "koko-puffs": {
+      "name": "Koko Puffs",
+      "partition": "k",
+      "has_lineage": true
+    },
+    "kush-mints": {
+      "name": "Kush Mints",
+      "partition": "k",
+      "has_lineage": true
+    },
+    "la-grapes": {
+      "name": "LA Grapes",
+      "partition": "l",
+      "has_lineage": true
+    },
+    "la-kush-cake": {
+      "name": "LA Kush Cake",
+      "partition": "l",
+      "has_lineage": true
+    },
+    "lavender-jones": {
+      "name": "Lavender Jones",
+      "partition": "l",
+      "has_lineage": true
+    },
+    "lemon-cherry-x-cap-junky": {
+      "name": "Lemon Cherry x Cap Junky",
+      "partition": "l",
+      "has_lineage": true
+    },
+    "london-pound-cake-75": {
+      "name": "London Pound Cake #75",
+      "partition": "l",
+      "has_lineage": true
+    },
+    "light-blue": {
+      "name": "Light Blue",
+      "partition": "l",
+      "has_lineage": true
+    },
+    "mac-1": {
+      "name": "MAC 1",
+      "partition": "m",
+      "has_lineage": true
+    },
+    "malibu-biscuit": {
+      "name": "Malibu Biscuit",
+      "partition": "m",
+      "has_lineage": true
+    },
+    "malibuscotti": {
+      "name": "Malibuscotti",
+      "partition": "m",
+      "has_lineage": true
+    },
+    "marshmallow-og": {
+      "name": "Marshmallow OG",
+      "partition": "m",
+      "has_lineage": true
+    },
+    "maui-gemz": {
+      "name": "Maui Gemz",
+      "partition": "m",
+      "has_lineage": true
+    },
+    "maui-wowie": {
+      "name": "Maui Wowie",
+      "partition": "m",
+      "has_lineage": true
+    },
+    "melon-barz": {
+      "name": "Melon Barz",
+      "partition": "m",
+      "has_lineage": true
+    },
+    "miami-queso": {
+      "name": "Miami Queso",
+      "partition": "m",
+      "has_lineage": true
+    },
+    "miami-vice": {
+      "name": "Miami Vice",
+      "partition": "m",
+      "has_lineage": true
+    },
+    "mimosa": {
+      "name": "Mimosa",
+      "partition": "m",
+      "has_lineage": true
+    },
+    "mint-julep": {
+      "name": "Mint Julep",
+      "partition": "m",
+      "has_lineage": true
+    },
+    "mob-boss": {
+      "name": "Mob Boss",
+      "partition": "m",
+      "has_lineage": true
+    },
+    "moonwalkers": {
+      "name": "Moonwalkers",
+      "partition": "m",
+      "has_lineage": true
+    },
+    "maracuya": {
+      "name": "Maracuya",
+      "partition": "m",
+      "has_lineage": true
+    },
+    "nectar-del-sol": {
+      "name": "Nectar Del Sol",
+      "partition": "n",
+      "has_lineage": true
+    },
+    "nitro-dream": {
+      "name": "Nitro Dream",
+      "partition": "n",
+      "has_lineage": true
+    },
+    "northern-lights": {
+      "name": "Northern Lights",
+      "partition": "n",
+      "has_lineage": true
+    },
+    "okeechobee-orange": {
+      "name": "Okeechobee Orange",
+      "partition": "o",
+      "has_lineage": true
+    },
+    "panhandle-purps": {
+      "name": "Panhandle Purps",
+      "partition": "p",
+      "has_lineage": true
+    },
+    "pastelito": {
+      "name": "Pastelito",
+      "partition": "p",
+      "has_lineage": true
+    },
+    "pineapple-express": {
+      "name": "Pineapple Express",
+      "partition": "p",
+      "has_lineage": true
+    },
+    "pineapple-upside-down-cake": {
+      "name": "Pineapple Upside Down Cake",
+      "partition": "p",
+      "has_lineage": true
+    },
+    "point-breeze": {
+      "name": "Point Breeze",
+      "partition": "p",
+      "has_lineage": true
+    },
+    "pretty-in-pink": {
+      "name": "Pretty in Pink",
+      "partition": "p",
+      "has_lineage": true
+    },
+    "pacman": {
+      "name": "Pacman",
+      "partition": "p",
+      "has_lineage": true
+    },
+    "rae-bae": {
+      "name": "Rae Bae",
+      "partition": "r",
+      "has_lineage": true
+    },
+    "raspberry-punch": {
+      "name": "Raspberry Punch",
+      "partition": "r",
+      "has_lineage": true
+    },
+    "red-apple-fritterz": {
+      "name": "Red Apple Fritterz",
+      "partition": "r",
+      "has_lineage": true
+    },
+    "red-bird": {
+      "name": "Red Bird",
+      "partition": "r",
+      "has_lineage": true
+    },
+    "red-biscotti": {
+      "name": "Red Biscotti",
+      "partition": "r",
+      "has_lineage": true
+    },
+    "redeye-kush": {
+      "name": "RedEye Kush",
+      "partition": "r",
+      "has_lineage": true
+    },
+    "reefer-shark": {
+      "name": "Reefer Shark",
+      "partition": "r",
+      "has_lineage": true
+    },
+    "road-warrior": {
+      "name": "Road Warrior",
+      "partition": "r",
+      "has_lineage": true
+    },
+    "royal-cheese": {
+      "name": "Royal Cheese",
+      "partition": "r",
+      "has_lineage": true
+    },
+    "rocket-power": {
+      "name": "Rocket Power",
+      "partition": "r",
+      "has_lineage": true
+    },
+    "shipwreck": {
+      "name": "Shipwreck",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "sin-mint-sorbet": {
+      "name": "Sin Mint Sorbet",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "sky-warden": {
+      "name": "Sky Warden",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "skywalker-og": {
+      "name": "Skywalker OG",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "sly-look": {
+      "name": "Sly Look",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "solomon-grundy": {
+      "name": "Solomon Grundy",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "soul-safari": {
+      "name": "Soul Safari",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "sour-amazon": {
+      "name": "Sour Amazon",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "sour-grapez": {
+      "name": "Sour Grapez",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "sour-og-chem": {
+      "name": "Sour OG Chem",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "south-florida-kush": {
+      "name": "South Florida Kush",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "southern-pound-cake": {
+      "name": "Southern Pound Cake",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "space-age-cake": {
+      "name": "Space Age Cake",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "space-coast-cake": {
+      "name": "Space Coast Cake",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "st-marks-skunk": {
+      "name": "St. Marks Skunk",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "strawberry-tangie": {
+      "name": "Strawberry Tangie",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "sun-cake": {
+      "name": "Sun Cake",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "sundae-driver": {
+      "name": "Sundae Driver",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "sunset-sherbet-x-kush-mints": {
+      "name": "Sunset Sherbet x Kush Mints",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "sunset-squeeze": {
+      "name": "Sunset Squeeze",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "sunshine-diesel": {
+      "name": "Sunshine Diesel",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "sunshine-starfruit": {
+      "name": "Sunshine Starfruit",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "super-lemon-haze": {
+      "name": "Super Lemon Haze",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "super-sour-diesel": {
+      "name": "Super Sour Diesel",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "scorpius": {
+      "name": "Scorpius",
+      "partition": "s",
+      "has_lineage": true
+    },
+    "triangle-kush": {
+      "name": "Triangle Kush",
+      "partition": "t",
+      "has_lineage": true
+    },
+    "tropical-cream-cake": {
+      "name": "Tropical Cream Cake",
+      "partition": "t",
+      "has_lineage": true
+    },
+    "triple-scoop": {
+      "name": "Triple Scoop",
+      "partition": "t",
+      "has_lineage": true
+    },
+    "ultra-sour": {
+      "name": "Ultra Sour",
+      "partition": "u",
+      "has_lineage": true
+    },
+    "unicorn-kush": {
+      "name": "Unicorn Kush",
+      "partition": "u",
+      "has_lineage": true
+    },
+    "upper-cut": {
+      "name": "Upper Cut",
+      "partition": "u",
+      "has_lineage": true
+    },
+    "white-fire": {
+      "name": "White Fire",
+      "partition": "w",
+      "has_lineage": true
+    },
+    "white-sunshine": {
+      "name": "White Sunshine",
+      "partition": "w",
+      "has_lineage": true
+    },
+    "wood-shiva": {
+      "name": "Wood Shiva",
+      "partition": "w",
+      "has_lineage": true
+    },
+    "yin-yang-seeds": {
+      "name": "Abacus",
+      "partition": "y",
+      "has_lineage": false
+    },
+    "yetis-pheno": {
+      "name": "Abomination",
+      "partition": "y",
+      "has_lineage": false
+    },
+    "zero-gravity": {
+      "name": "Zero Gravity",
+      "partition": "z",
+      "has_lineage": true
+    }
+  }
+}

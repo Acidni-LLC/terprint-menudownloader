@@ -1,20 +1,20 @@
 # Terprint AI Software Engineer & Architect Guidelines
 
-**Version:** 2.1.10
-**Last Updated:** January 19, 2026 19:41:31
+**Version:** 2.1.18
+**Last Updated:** January 20, 2026 19:18:00
 **terprint-config Package Version:** 4.6.0
 
 ---
 
-> **📚 INHERITANCE**: This file contains comprehensive **Terprint-specific** instructions.
+> **?? INHERITANCE**: This file contains comprehensive **Terprint-specific** instructions.
 > It extends the **[Acidni Master Instructions](https://github.com/Acidni-LLC/terprint-config/blob/main/shared/acidni-copilot-instructions.md)** (`../terprint-config/shared/acidni-copilot-instructions.md`).
 > See also: **[.github/instructions/](https://github.com/Acidni-LLC/terprint-config/tree/main/.github/instructions)** (`../terprint-config/.github/instructions/`) for technology-specific guidance.
 > 
-> **🔄 SYNC SCRIPT**: Run `copy-instructions-to-repos.ps1` to distribute this file to all Terprint repos.
+> **?? SYNC SCRIPT**: Run `copy-instructions-to-repos.ps1` to distribute this file to all Terprint repos.
 
 ---
 
-## 🔗 Inherited From Acidni Master
+## ?? Inherited From Acidni Master
 
 The following standards are inherited from `shared/acidni-copilot-instructions.md`:
 - Repository boundaries and cross-repo coordination
@@ -34,7 +34,7 @@ The following standards are inherited from `shared/acidni-copilot-instructions.m
 
 ---
 
-## 🚨 CRITICAL DIRECTIVES — ABSOLUTE RULES 🚨
+## ?? CRITICAL DIRECTIVES — ABSOLUTE RULES ??
 
 > **These rules are MANDATORY. Violations will break the system.**
 
@@ -328,7 +328,7 @@ jobs:
 
 ### DIRECTIVE 13: USE ORGANIZATION SECRETS FOR CI/CD
 
-> **Migration Status**: 🚀 Ready for Implementation  
+> **Migration Status**: ?? Ready for Implementation  
 > **Reference Documentation**: [docs/ORGANIZATION_SECRETS_MIGRATION.md](https://github.com/Acidni-LLC/terprint-config/blob/main/docs/ORGANIZATION_SECRETS_MIGRATION.md) (`../terprint-config/docs/ORGANIZATION_SECRETS_MIGRATION.md`)  
 > **Migration Tracking**: See migration table in terprint-config repo for repo-by-repo status
 
@@ -474,21 +474,162 @@ response = requests.post(
 | Professional | 300 req/min | 10,000/day | All APIs |
 | Enterprise | 1,000 req/min | Unlimited | All APIs + SLA |
 
+### DIRECTIVE 14: INCLUDE CONTAINER REVISION IN HEALTH CHECKS
+
+> **MANDATORY**: Every Container App MUST include the running container revision in its health check response.
+
+This enables:
+- **Deployment verification**: Confirm the correct revision is running after deployment
+- **Troubleshooting**: Quickly identify which revision is serving traffic
+- **Rollback validation**: Verify rollbacks are complete
+
+**Required Environment Variable:**
+Azure Container Apps automatically sets `CONTAINER_APP_REVISION` environment variable.
+
+**Python Implementation:**
+```python
+import os
+
+@app.route(route="health", auth_level=func.AuthLevel.ANONYMOUS)
+def health(req: func.HttpRequest) -> func.HttpResponse:
+    return func.HttpResponse(
+        json.dumps({
+            "status": "healthy",
+            "service": "my-service",
+            "version": "1.0.0",
+            "revision": os.environ.get("CONTAINER_APP_REVISION", "local"),
+            "timestamp": datetime.utcnow().isoformat()
+        }),
+        mimetype="application/json"
+    )
+```
+
+**FastAPI Implementation:**
+```python
+import os
+from datetime import datetime
+
+@app.get("/health")
+def health():
+    return {
+        "status": "healthy",
+        "service": "my-service",
+        "version": "1.0.0",
+        "revision": os.environ.get("CONTAINER_APP_REVISION", "local"),
+        "timestamp": datetime.utcnow().isoformat()
+    }
+```
+
+**C# / .NET Implementation:**
+```csharp
+[Function("Health")]
+public IActionResult Health([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "health")] HttpRequest req)
+{
+    return new OkObjectResult(new
+    {
+        status = "healthy",
+        service = "my-service",
+        version = "1.0.0",
+        revision = Environment.GetEnvironmentVariable("CONTAINER_APP_REVISION") ?? "local",
+        timestamp = DateTime.UtcNow.ToString("o")
+    });
+}
+```
+
+### DIRECTIVE 15: INTEGRATION TEST TRIGGERING IS MANDATORY
+
+> **CRITICAL**: ALL customer-facing services MUST trigger integration tests after deployment using the organization PAT secret.
+
+**Why This Matters:**
+- Validates deployment success through APIM gateway
+- Catches configuration issues before customers are affected
+- Provides automated rollback signals for failed deployments
+- Required for maintaining deployment quality SLAs
+
+**MANDATORY Requirements:**
+
+1. **Use Organization Secret**: `${{ secrets.ORG_GH_PAT_TERPRINT_TESTS }}`
+   -  **NEVER use repository-level PAT secrets** (causes "Resource not accessible" errors)
+   -  **ALWAYS use ORG_GH_PAT_TERPRINT_TESTS** (organization-level secret with proper permissions)
+
+2. **Add trigger-integration-tests job** to your deployment workflow
+3. **Make it conditional on deployment success**: `if: success()`
+4. **Pass deployment metadata** in client-payload for tracking
+
+**Required Workflow Pattern:**
+
+```yaml
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # ... your deployment steps ...
+
+  trigger-integration-tests:
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: success()  # Only trigger if deployment succeeded
+    steps:
+      - name: Trigger Terprint Integration Tests
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.ORG_GH_PAT_TERPRINT_TESTS }}  #  MUST use org secret
+          repository: Acidni-LLC/terprint-tests
+          event-type: post-deploy-tests
+          client-payload: |
+            {
+              "service": "${{ github.event.repository.name }}",
+              "source_repo": "${{ github.repository }}",
+              "deploy_run": "${{ github.run_id }}",
+              "commit_sha": "${{ github.sha }}",
+              "environment": "dev"
+            }
+```
+
+**Services Requiring Integration Tests:**
+
+| Service Type | Trigger Tests | Rationale |
+|--------------|---------------|-----------|
+| API Services (APIM) |  **REQUIRED** | Customer-facing - must validate APIM routing |
+| AI Services |  **REQUIRED** | Customer-facing - critical functionality |
+| Metering/Billing |  **REQUIRED** | Financial impact - must validate before live |
+| Data Pipeline |  Optional | Internal - health check sufficient |
+
+**Troubleshooting PAT Errors:**
+
+If you see: `Resource not accessible by personal access token`
+
+**Root Cause**: Using repository-level secret instead of organization secret
+
+**Fix:**
+```yaml
+#  WRONG - causes PAT permission error
+token: ${{ secrets.GH_PAT_TERPRINT_TESTS }}
+
+#  CORRECT - uses org secret with proper permissions
+token: ${{ secrets.ORG_GH_PAT_TERPRINT_TESTS }}
+```
+
+**Verification:**
+- Test dashboard: https://brave-stone-0d8700d0f.3.azurestaticapps.net
+- Check integration test runs in terprint-tests repository
+- Verify your service appears in post-deployment test results
+
 ---
 
-## 🏢 System Identity & Boundaries
+## ?? System Identity & Boundaries
 
 | Property | Value |
 |----------|-------|
 | Platform Owner | Acidni LLC |
 | Domain | Cannabis/Medical Marijuana Data Analytics |
 | Geography | Florida dispensaries |
-| Active Dispensaries | Cookies, MÜV, Flowery, Trulieve, Curaleaf |
+| Active Dispensaries | Cookies, M�V, Flowery, Trulieve, Curaleaf |
 | Architecture | 5-stage data pipeline with microservices deployed as Azure Container Apps behind APIM |
 
 ---
 
-## 🔧 Azure Well-Architected Framework Application
+## ?? Azure Well-Architected Framework Application
 
 Apply these pillars to ALL architectural decisions:
 
@@ -502,7 +643,7 @@ Apply these pillars to ALL architectural decisions:
 
 ---
 
-## 📊 5-Stage Pipeline Architecture
+## ?? 5-Stage Pipeline Architecture
 
 ```
 ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
@@ -528,33 +669,33 @@ Apply these pillars to ALL architectural decisions:
 
 ---
 
-## 🗂️ Service Catalog (All Terprint Components)
+## ??️ Service Catalog (All Terprint Components)
 
 ### AI Services
 
 | Service | Repo | APIM Path | Local Port | Emoji |
 |---------|------|-----------|------------|-------|
-| AI Chat | terprint-ai-chat | `/chat` | 7091 | 💬 |
-| AI Recommender | terprint-ai-recommender | `/recommend` | 7096 | 🎯 |
-| AI Deals | terprint-ai-deals | `/deals` | 7101 | 💰 |
-| AI Lab | terprint-ai-lab | `/lab` | 7126 | 🔬 |
-| AI Health | terprint-ai-health | `/health` | 7106 | 🏥 |
+| AI Chat | terprint-ai-chat | `/chat` | 7091 | ?? |
+| AI Recommender | terprint-ai-recommender | `/recommend` | 7096 | ?? |
+| AI Deals | terprint-ai-deals | `/deals` | 7101 | ?? |
+| AI Lab | terprint-ai-lab | `/lab` | 7126 | ?? |
+| AI Health | terprint-ai-health | `/health` | 7106 | ?? |
 
 ### Data Processing Pipeline
 
 | Service | Repo | APIM Path | Local Port | Emoji |
 |---------|------|-----------|------------|-------|
-| Menu Downloader | terprint-menudownloader | `/menus` | 7086 | 📥 |
-| Batch Creator | terprint-batches | `/batches` | 7076 | 📦 |
-| Batch Processor | terprint-batch-processor | `/processor` | 7081 | 🔧 |
-| COA Extractor | terprint-coa-extractor | `/coa` | 7131 | 📄 |
-| Data API | terprint-data | `/data` | 7121 | 📡 |
+| Menu Downloader | terprint-menudownloader | `/menus` | 7086 | ?? |
+| Batch Creator | terprint-batches | `/batches` | 7076 | ?? |
+| Batch Processor | terprint-batch-processor | `/processor` | 7081 | ?? |
+| COA Extractor | terprint-coa-extractor | `/coa` | 7131 | ?? |
+| Data API | terprint-data | `/data` | 7121 | ?? |
 
 ### Communications & Notifications
 
 | Service | Repo | APIM Path | Local Port | Emoji |
 |---------|------|-----------|------------|-------|
-| Communications | terprint-communications | `/communications` | 7071 | 🔔 |
+| Communications | terprint-communications | `/communications` | 7071 | ?? |
 
 ### Core Platform
 
@@ -566,18 +707,52 @@ Apply these pillars to ALL architectural decisions:
 
 ---
 
-## 🔗 Azure Resources Reference
+## ?? Azure Resources Reference
 
 ### Core Infrastructure
+
+> ⚠️ **DO NOT GUESS RESOURCE GROUPS** - Each resource has a specific RG. Always reference this table.
 
 | Resource Type | Name | Resource Group |
 |---------------|------|----------------|
 | Storage Account | `stterprintsharedgen2` | rg-dev-terprint-shared |
 | Container | `jsonfiles` | (within storage account) |
-| APIM | `apim-terprint-dev` | rg-terprint-apim-dev |
+| APIM | `apim-terprint-dev` | **rg-terprint-apim-dev** |
 | Key Vault | `kv-terprint-dev` | rg-dev-terprint-shared |
 | Container Registry | `crterprint.azurecr.io` | rg-dev-terprint-health |
 | Container Apps Environment | `kindmoss-c6723cbe.eastus2.azurecontainerapps.io` | rg-dev-terprint-ca |
+| Cosmos DB | `cosmos-terprint-dev` | rg-dev-terprint-shared |
+
+### Cosmos DB Databases & Containers
+
+Cosmos DB is used for AI service state management, user preferences, and metering data where document-oriented storage with low-latency reads is beneficial.
+
+| Database | Container | Purpose |
+|----------|-----------|---------|
+| **TerprintAI** | `chat_sessions` | AI Chat conversation history and context |
+| **TerprintAI** | `recommendations` | Cached strain recommendations |
+| **TerprintAI** | `user_preferences` | User taste profiles and preferences |
+| **TerprintAI** | `feedback` | User feedback on recommendations |
+| **TerprintAI** | `strains` | Strain embeddings and metadata cache |
+| **TerprintAI** | `menus` | Menu data cache for AI queries |
+| **TerprintAI** | `ai_deals_*` | AI Deals service state (alerts, prices, notifications) |
+| **TerprintAI** | `quality_alerts` | Data quality alerting |
+| **TerprintAI** | `dispensary_reports` | Dispensary analytics cache |
+| **terprint-metering** | `usage-events` | Raw API usage events |
+| **terprint-metering** | `usage-aggregates` | Aggregated usage by customer/period |
+| **terprint-metering** | `customer-quotas` | Customer tier quotas and limits |
+
+**Access Pattern:**
+```python
+from azure.cosmos import CosmosClient
+from azure.identity import DefaultAzureCredential
+
+# Use managed identity (NEVER connection strings)
+credential = DefaultAzureCredential()
+client = CosmosClient("https://cosmos-terprint-dev.documents.azure.com:443/", credential)
+db = client.get_database_client("TerprintAI")
+container = db.get_container_client("chat_sessions")
+```
 
 ### Azure Identifiers
 
@@ -612,18 +787,30 @@ jsonfiles/
     └── consolidated_batches_YYYYMMDD.json
 ```
 
-### Function Apps (Complete List)
+### Container Apps (All Terprint Services)
 
-| Function App | Resource Group | Purpose |
+> **Note:** All Terprint services run as Azure Container Apps. Legacy Function Apps have been migrated.
+
+| Container App | Resource Group | Purpose |
 |--------------|----------------|---------|
-| `func-dev-terprint-ai-chat` | `rg-dev-terprint-ai-chat` | AI Chat service |
-| `terprint-menu-downloader` | `rg-dev-terprint-menudownloader` | Menu data ingestion |
-| `func-terprint-ai-recommender` | `rg-dev-terprint-ai-recommender` | Strain recommendations |
-| `func-terprint-batchprocessor` | `rg-dev-terprint-batchprocessor` | COA data extraction |
-| `func-terprint-ai-deals` | `rg-dev-terprint-ai-deals` | Deal analysis |
-| `func-terprint-infographics` | `rg-dev-terprint-infographics` | Image generation |
-| `func-terprint-data-api` | `rg-dev-terprint-data-api` | Data access API |
-| `func-terprint-marketplace` | `rg-dev-terprint-marketplace` | Marketplace webhooks |
+| `ca-terprint-ai-chat` | `rg-dev-terprint-ca` | AI Chat service |
+| `ca-terprint-menudownloader` | `rg-dev-terprint-ca` | Menu data ingestion |
+| `ca-terprint-ai-recommender` | `rg-dev-terprint-ca` | Strain recommendations |
+| `ca-terprint-batch-processor` | `rg-dev-terprint-ca` | COA data extraction |
+| `ca-terprint-batches` | `rg-dev-terprint-ca` | Batch file creator |
+| `ca-terprint-data` | `rg-dev-terprint-ca` | Data access API |
+| `ca-terprint-ai-deals` | `rg-dev-terprint-ca` | Deal analysis |
+| `ca-terprint-infographics` | `rg-dev-terprint-ca` | Infographic image generation |
+
+### Legacy Function Apps (To Be Migrated)
+
+> **Migration Target:** Move all remaining Function Apps to Container Apps
+
+| Function App | Status | Notes |
+|--------------|--------|-------|
+| `func-terprint-marketplace` | ⚠️ Pending | Migrate to Container App |
+| `func-terprint-metering` | ⚠️ Pending | Migrate to Container App |
+| `func-terprint-coadataextractor` | ⚠️ Pending | Migrate to Container App |
 
 ### Static Web Apps
 
@@ -634,7 +821,7 @@ jsonfiles/
 
 ---
 
-## 🌐 APIM API Catalog
+## ?? APIM API Catalog
 
 **Base URL**: `https://apim-terprint-dev.azure-api.net`
 
@@ -687,7 +874,7 @@ class TerprintAPIClient:
 
 ---
 
-## 🐳 Container App Standards
+## ?? Container App Standards
 
 ### Container App Naming Convention
 
@@ -730,17 +917,19 @@ ENV PYTHONUNBUFFERED=1 PORT=80
 EXPOSE 80
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:80/api/health || exit 1
+    CMD curl -f http://localhost:80/health || exit 1
 
 CMD ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "80"]
 ```
 
 ### Required Health Endpoint
 
+> **STANDARD PATH**: All Terprint services use `/health` (NOT `/api/health`)
+
 Every Container App MUST expose:
 
 ```
-GET /api/health
+GET /health
 ```
 
 Response (200 OK):
@@ -749,15 +938,18 @@ Response (200 OK):
   "status": "healthy",
   "service": "ai-chat",
   "version": "1.2.3",
+  "revision": "ca-terprint-ai-chat--abc123",
   "timestamp": "2026-01-07T12:00:00Z"
 }
 ```
 
+> **IMPORTANT**: The `revision` field is **MANDATORY** - see **DIRECTIVE 14**. Use `os.environ.get("CONTAINER_APP_REVISION", "local")` in Python or `Environment.GetEnvironmentVariable("CONTAINER_APP_REVISION")` in C#.
+
 ---
 
-## 🚀 CI/CD Standards (GitHub Actions with Organization Secrets)
+## ?? CI/CD Standards (GitHub Actions with Organization Secrets)
 
-> **📚 Comprehensive CI/CD Guide**: For complete CI/CD standards including deployment workflows, rollback strategies, security scanning, and integration testing, see **[terprint-cicd.instructions.md](https://github.com/Acidni-LLC/terprint-config/blob/main/.github/instructions/terprint-cicd.instructions.md)** (`../terprint-config/.github/instructions/terprint-cicd.instructions.md`)
+> **?? Comprehensive CI/CD Guide**: For complete CI/CD standards including deployment workflows, rollback strategies, security scanning, and integration testing, see **[terprint-cicd.instructions.md](https://github.com/Acidni-LLC/terprint-config/blob/main/.github/instructions/terprint-cicd.instructions.md)** (`../terprint-config/.github/instructions/terprint-cicd.instructions.md`)
 
 **ALL Terprint repositories MUST use GitHub Actions workflows with organization secrets for deployment.**
 
@@ -845,7 +1037,7 @@ with:
 
 ---
 
-## 🔐 Authentication Patterns
+## ?? Authentication Patterns
 
 ### Entra ID App-to-App Authentication
 
@@ -879,16 +1071,18 @@ if not result.valid:
 
 ---
 
-## 🛠️ Operational Commands
+## ??️ Operational Commands
 
 ### Service Health Verification
+
+> **STANDARD PATH**: Health endpoints are at `/health` (NOT `/api/health`)
 
 ```powershell
 # Check all services through APIM
 $key = (az keyvault secret show --vault-name kv-terprint-dev --name apim-subscription-key --query value -o tsv)
 $services = @("chat", "data", "recommend", "communications", "stock")
 foreach ($svc in $services) {
-    $url = "https://apim-terprint-dev.azure-api.net/$svc/api/health"
+    $url = "https://apim-terprint-dev.azure-api.net/$svc/health"
     try {
         $result = Invoke-RestMethod -Uri $url -Headers @{"Ocp-Apim-Subscription-Key"=$key}
         Write-Host "✅ $svc: $($result.status)" -ForegroundColor Green
@@ -962,7 +1156,7 @@ docker push crterprint.azurecr.io/terprint-batches:latest
 
 ```powershell
 # Start a service locally
-$Host.UI.RawUI.WindowTitle = "📦 Batch Creator (7076)"
+$Host.UI.RawUI.WindowTitle = "?? Batch Creator (7076)"
 cd terprint-batches
 poetry install
 poetry run uvicorn src.main:app --port 7076 --reload
@@ -977,7 +1171,7 @@ poetry run mypy src/
 
 ---
 
-## 📋 Troubleshooting Runbooks
+## ?? Troubleshooting Runbooks
 
 ### Runbook: Pipeline Data Gap
 
@@ -1031,50 +1225,50 @@ poetry run mypy src/
 
 ---
 
-## 🏷️ Local Development Ports
+## ??️ Local Development Ports
 
 | App | Default Port | Window Title |
 |-----|--------------|--------------|
-| Communications | 7071 | 🔔 Communications |
-| Batch Creator | 7076 | 📦 Batch Creator |
-| COA Processor | 7081 | 🔧 COA Processor |
-| Menu Downloader | 7086 | 📥 Menu Downloader |
-| AI Chat | 7091 | 💬 AI Chat |
-| AI Recommender | 7096 | 🎯 AI Recommender |
-| AI Deals | 7101 | 💰 AI Deals |
-| AI Health | 7106 | 🏥 AI Health |
-| Infographics | 7111 | 🎨 Infographics |
-| Metering | 7116 | 📊 Metering |
-| Data API | 7121 | 📡 Data API |
+| Communications | 7071 | ?? Communications |
+| Batch Creator | 7076 | ?? Batch Creator |
+| COA Processor | 7081 | ?? COA Processor |
+| Menu Downloader | 7086 | ?? Menu Downloader |
+| AI Chat | 7091 | ?? AI Chat |
+| AI Recommender | 7096 | ?? AI Recommender |
+| AI Deals | 7101 | ?? AI Deals |
+| AI Health | 7106 | ?? AI Health |
+| Infographics | 7111 | ?? Infographics |
+| Metering | 7116 | ?? Metering |
+| Data API | 7121 | ?? Data API |
 
 **Starting an App Locally:**
 ```powershell
-$Host.UI.RawUI.WindowTitle = "🔔 Communications (7071)"
+$Host.UI.RawUI.WindowTitle = "?? Communications (7071)"
 func host start --port 7071
 ```
 
 ---
 
-## 🌿 Dispensary Configuration
+## ?? Dispensary Configuration
 
 | Dispensary | Grower ID | Status | Notes |
 |------------|-----------|--------|-------|
 | Cookies | 1 | ✅ Active | Stable |
-| MÜV | 2 | ✅ Active | Stable |
+| M�V | 2 | ✅ Active | Stable |
 | Flowery | 3 | ✅ Active | All FL locations |
 | Trulieve | 4 | ✅ Active | 162 stores, 4 categories |
 | Curaleaf | 10 | ✅ Active | ~45-60 stores |
-| Sunnyside | 5 | 🔴 Discovery | In progress |
-| Liberty | 6 | 🔴 Discovery | Planned |
-| Fluent | 7 | 🔴 Discovery | Planned |
-| VidaCann | 8 | 🔴 Discovery | Planned |
-| RISE | 9 | 🔴 Discovery | Planned |
+| Sunnyside | 5 | ?? Discovery | In progress |
+| Liberty | 6 | ?? Discovery | Planned |
+| Fluent | 7 | ?? Discovery | Planned |
+| VidaCann | 8 | ?? Discovery | Planned |
+| RISE | 9 | ?? Discovery | Planned |
 
 ---
 
-## 🧪 Testing Framework
+## ?? Testing Framework
 
-> **📚 Detailed CI/CD & Testing Instructions**: For comprehensive testing, deployment workflows, and integration test patterns, see **[terprint-cicd.instructions.md](https://github.com/Acidni-LLC/terprint-config/blob/main/.github/instructions/terprint-cicd.instructions.md)** (`../terprint-config/.github/instructions/terprint-cicd.instructions.md`)
+> **?? Detailed CI/CD & Testing Instructions**: For comprehensive testing, deployment workflows, and integration test patterns, see **[terprint-cicd.instructions.md](https://github.com/Acidni-LLC/terprint-config/blob/main/.github/instructions/terprint-cicd.instructions.md)** (`../terprint-config/.github/instructions/terprint-cicd.instructions.md`)
 
 ### Testing Pyramid
 
@@ -1089,8 +1283,9 @@ func host start --port 7071
 - **Data Quality Tests**: Validate terpene percentages sum correctly
 - **Idempotency Tests**: Ensure reprocessing doesn't create duplicates
 - **Resilience Tests**: Test behavior when dispensary APIs are down
-
 ### Integration Test Trigger (REQUIRED)
+
+> ** See DIRECTIVE 15 for complete requirements and troubleshooting**
 
 > **CRITICAL**: ALL deployments MUST trigger integration tests after successful deployment
 
@@ -1107,36 +1302,26 @@ trigger-integration-tests:
     - name: Trigger Terprint Integration Tests
       uses: peter-evans/repository-dispatch@v3
       with:
-        token: ${{ secrets.ORG_GH_PAT_TERPRINT_TESTS }}
+        token: ${{ secrets.ORG_GH_PAT_TERPRINT_TESTS }}  #  Organization secret (NOT repo secret)
         repository: Acidni-LLC/terprint-tests
         event-type: post-deploy-tests
         client-payload: |
           {
-            "service": "${{ env.APP_NAME }}",
+            "service": "${{ github.event.repository.name }}",
             "source_repo": "${{ github.repository }}",
             "deploy_run": "${{ github.run_id }}",
-            "environment": "${{ env.ENVIRONMENT }}"
+            "commit_sha": "${{ github.sha }}",
+            "environment": "dev"
           }
 ```
 
-**Services That MUST Trigger Tests:**
-
-| Service | Trigger Tests | Reason |
-|---------|---------------|--------|
-| terprint-data-api | ✅ **Yes** | Core API - validates data endpoints |
-| terprint-ai-chat | ✅ **Yes** | Customer-facing - APIM tests |
-| terprint-ai-recommender | ✅ **Yes** | Customer-facing - APIM tests |
-| terprint-ai-deals | ✅ **Yes** | Customer-facing - APIM tests |
-| terprint-infographics | ✅ **Yes** | Customer-facing - APIM tests |
-| terprint-ai-lab | ✅ **Yes** | Integration tests |
-| terprint-metering | ✅ **Yes** | Billing validation critical |
-| terprint-marketplace-webhook | ✅ **Yes** | Subscription tests |
-| terprint-menudownloader | ⚠️ Optional | Data pipeline (health only) |
-| terprint-batch-processor | ⚠️ Optional | Data pipeline (health only) |
+>  **Common Error**: `Resource not accessible by personal access token`  
+> **Cause**: Using repository secret instead of `ORG_GH_PAT_TERPRINT_TESTS` organization secret  
+> **Fix**: Ensure you're using `secrets.ORG_GH_PAT_TERPRINT_TESTS` (org-level) not a repo-level PAT
 
 ---
 
-## 📊 DORA Metrics Targets
+## ?? DORA Metrics Targets
 
 | Metric | Current | Target |
 |--------|---------|--------|
@@ -1164,7 +1349,7 @@ Before approving any PR, verify:
 
 ---
 
-## 📝 Conventional Commit Format
+## ?? Conventional Commit Format
 
 ```
 feat(batch-creator): add retry logic for blob storage failures
@@ -1177,7 +1362,7 @@ refactor(ai-chat): extract embedding logic to shared module
 
 ---
 
-## 🔗 Quick Reference Links
+## ?? Quick Reference Links
 
 | Resource | URL |
 |----------|-----|
@@ -1192,7 +1377,7 @@ refactor(ai-chat): extract embedding logic to shared module
 
 ---
 
-## 🎯 Key Reminders
+## ?? Key Reminders
 
 - **Data Accuracy is Critical**: Cannabis patients rely on accurate terpene/cannabinoid data
 - **Dispensary APIs Change Often**: Build resilient, flexible parsers
@@ -1204,7 +1389,7 @@ refactor(ai-chat): extract embedding logic to shared module
 
 ---
 
-## 🔄 Sync Instructions to All Repos
+## ?? Sync Instructions to All Repos
 
 To distribute this file to all Terprint repositories, run:
 
@@ -1225,6 +1410,15 @@ This copies `.github/copilot-instructions.md` to:
 - func-terprint-communications
 - terprint-ai-health
 - And more...
+
+
+
+
+
+
+
+
+
 
 
 
