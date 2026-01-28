@@ -442,13 +442,13 @@ async def lifespan(app: FastAPI):
         # This gives 6-hour intervals and avoids overwhelming dispensary APIs
         scheduler.add_job(
             scheduled_download_job,
-            CronTrigger(hour='14,20,2', minute=0, timezone='UTC'),
+            CronTrigger(hour='13,15,17,19,21,23,1,3', minute=0, timezone='UTC'),
             id='scheduled_download',
-            name='Menu Download Job (3x daily)',
+            name='Menu Download Job (every 2hrs 8am-10pm EST)',
             replace_existing=True
         )
         scheduler.start()
-        logger.info("✅ SCHEDULER MODE: Menu downloads will run 3x daily: 9:00 AM, 3:00 PM, 9:00 PM EST")
+        logger.info("✅ SCHEDULER MODE: Menu downloads will run every 2 hours from 8am-10pm EST")
         logger.info("📋 No downloads at startup - waiting for scheduled times")
         
     else:  # api-only mode (default)
@@ -669,4 +669,5 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
 
