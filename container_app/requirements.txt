@@ -26,3 +26,6 @@ python-dotenv>=1.0.0
 # OpenTelemetry for Azure Monitor
 opentelemetry-instrumentation-fastapi>=0.43b0
 azure-monitor-opentelemetry>=1.2.0
+
+# Email notifications via Azure Communication Services
+azure-communication-email>=1.0.0
