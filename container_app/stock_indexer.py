@@ -1,4 +1,4 @@
-﻿"""
+"""
 Stock Index Builder
 
 Builds searchable stock index from SQL database (Batch table).
@@ -367,10 +367,16 @@ class StockIndexer:
             Complete stock index dictionary
         """
         logger.info(f"Building stock index for {date_str}...")
-        
+
+        # Initialize blob container
+        container = self._get_blob_container()
+        if not container:
+            logger.error("Cannot build index - blob container not available")
+            return self._empty_index()
+
         # Find all batch files for this date
         prefix = f"batches/consolidated_{date_str}"
-        batch_blobs = list(self.container.list_blobs(name_starts_with=prefix))
+        batch_blobs = list(container.list_blobs(name_starts_with=prefix))
         
         if not batch_blobs:
             logger.warning(f"No batch files found for {date_str}")
@@ -390,12 +396,18 @@ class StockIndexer:
     def build_index_from_latest(self) -> Dict:
         """Build stock index from the most recent consolidated batch file, plus menu files for missing dispensaries."""
         logger.info("Finding latest batch file...")
-        
+
+        # CRITICAL: Initialize blob container first
+        container = self._get_blob_container()
+        if not container:
+            logger.error("Cannot build index - blob container not available")
+            return self._empty_index()
+
         # Known dispensaries we expect to have data for
         expected_dispensaries = {"trulieve", "muv", "flowery", "curaleaf", "cookies", "sunnyside", "sunburn"}
-        
+
         # List all consolidated batch files
-        batch_blobs = list(self.container.list_blobs(name_starts_with="batches/consolidated_"))
+        batch_blobs = list(container.list_blobs(name_starts_with="batches/consolidated_"))
         
         if not batch_blobs:
             logger.warning("No batch files found, trying to build from menu files...")
@@ -432,12 +444,18 @@ class StockIndexer:
         """Get items from the most recent menu file for a dispensary, looking back up to max_days_back days."""
         from datetime import timedelta
         
+        # Ensure container is initialized
+        container = self._get_blob_container()
+        if not container:
+            logger.error("Cannot get menu items - blob container not available")
+            return []
+
         for days_back in range(max_days_back):
             check_date = datetime.now(timezone.utc) - timedelta(days=days_back)
             date_str = check_date.strftime("%Y/%m/%d")
             prefix = f"dispensaries/{dispensary}/{date_str}/"
             
-            menu_blobs = list(self.container.list_blobs(name_starts_with=prefix))
+            menu_blobs = list(container.list_blobs(name_starts_with=prefix))
             
             if menu_blobs:
                 # Get the latest file
@@ -453,7 +471,13 @@ class StockIndexer:
     def build_index_from_menus(self) -> Dict:
         """Build stock index directly from raw menu files (fallback if no batch files)."""
         logger.info("Building stock index from menu files...")
-        
+
+        # Initialize container first
+        container = self._get_blob_container()
+        if not container:
+            logger.error("Cannot build index from menus - blob container not available")
+            return self._empty_index()
+
         # Get today's date
         today = datetime.now(timezone.utc).strftime("%Y/%m/%d")
         
@@ -466,14 +490,14 @@ class StockIndexer:
         for dispensary in dispensaries:
             # Look for today's menu files
             prefix = f"dispensaries/{dispensary}/{today}/"
-            menu_blobs = list(self.container.list_blobs(name_starts_with=prefix))
+            menu_blobs = list(container.list_blobs(name_starts_with=prefix))
             
             if not menu_blobs:
                 # Try yesterday
                 from datetime import timedelta
                 yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y/%m/%d")
                 prefix = f"dispensaries/{dispensary}/{yesterday}/"
-                menu_blobs = list(self.container.list_blobs(name_starts_with=prefix))
+                menu_blobs = list(container.list_blobs(name_starts_with=prefix))
             
             if menu_blobs:
                 # Get the latest file for this dispensary
@@ -494,7 +518,11 @@ class StockIndexer:
     def _process_menu_file(self, blob_name: str, dispensary: str) -> List[StockItem]:
         """Process a raw menu file and extract stock items."""
         try:
-            blob_client = self.container.get_blob_client(blob_name)
+            container = self._get_blob_container()
+            if not container:
+                logger.error("Cannot process menu file - blob container not available")
+                return []
+            blob_client = container.get_blob_client(blob_name)
             content = blob_client.download_blob().readall()
             data = json.loads(content)
             
@@ -593,7 +621,11 @@ class StockIndexer:
     
     def _process_batch_file(self, blob_name: str) -> List[StockItem]:
         """Process a single batch file and extract stock items."""
-        blob_client = self.container.get_blob_client(blob_name)
+        container = self._get_blob_container()
+        if not container:
+            logger.error("Cannot process batch file - blob container not available")
+            return []
+        blob_client = container.get_blob_client(blob_name)
         content = blob_client.download_blob().readall()
         data = json.loads(content)
         
@@ -790,3 +822,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
