@@ -59,7 +59,7 @@ class StockItem:
     # Metadata
     last_seen: str = None
     source: str = "database"  # "database" or "blob_storage"
-    source: str = "database"  # Always "database" now
+    source_file: Optional[str] = None  # Blob path if from storage
 
 
 @dataclass
