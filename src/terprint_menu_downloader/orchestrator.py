@@ -1,4 +1,4 @@
-"""
+﻿"""
 Dispensary Data Orchestrator
 Automatically downloads data from multiple dispensaries and uploads to Azure Event House
 
@@ -170,7 +170,7 @@ else:
 # Import download modules
 if _RUNNING_AS_PACKAGE:
     try:
-        from .downloaders import MuvDownloader, TrulieveDownloader, SunburnDownloader, CookiesDownloader, FloweryDownloader, CuraleafDownloader
+        from .downloaders import MuvDownloader, TrulieveDownloader, SunburnDownloader, CookiesDownloader, FloweryDownloader, CuraleafDownloader, GreenDragonDownloader
         MODULAR_DOWNLOADERS_AVAILABLE = True
         logger.info("Modular downloaders imported successfully")
     except ImportError as e:
@@ -179,14 +179,14 @@ if _RUNNING_AS_PACKAGE:
 else:
     try:
         sys.path.insert(0, os.path.join(parent_dir, "Terprint.Python.COADataExtractor"))
-        from downloads import MuvDownloader, TrulieveDownloader, SunburnDownloader, CookiesDownloader, FloweryDownloader, CuraleafDownloader
+        from downloads import MuvDownloader, TrulieveDownloader, SunburnDownloader, CookiesDownloader, FloweryDownloader, CuraleafDownloader, GreenDragonDownloader
         MODULAR_DOWNLOADERS_AVAILABLE = True
         logger.info("Modular downloaders imported successfully")
     except ImportError as e:
         # Fallback to old location if new location not available
         try:
             sys.path.insert(0, os.path.join(terprint_python_dir, "menumover", "downloads"))
-            from downloads import MuvDownloader, TrulieveDownloader, SunburnDownloader, CookiesDownloader, FloweryDownloader, CuraleafDownloader
+            from downloads import MuvDownloader, TrulieveDownloader, SunburnDownloader, CookiesDownloader, FloweryDownloader, CuraleafDownloader, GreenDragonDownloader
             MODULAR_DOWNLOADERS_AVAILABLE = True
             logger.info("Modular downloaders imported from fallback location")
         except ImportError as e2:
@@ -542,8 +542,30 @@ class DispensaryOrchestrator:
             except Exception as e:
                 logger.warning(f"Curaleaf: Could not initialize downloader: {e}")
             
-            logger.info(f"Successfully initialized {len(downloaders)} modular downloaders")
-            
+            # Green Dragon Florida Downloader (HTML scraping via Squarespace)
+            logger.info("Initializing Green Dragon downloader...")
+            try:
+                green_dragon_downloader = GreenDragonDownloader(
+                    output_dir=self.output_dir,
+                    azure_manager=self.azure_manager,
+                    store_batch=getattr(self, 'green_dragon_batch', None),
+                    stores_per_batch=getattr(self, 'green_dragon_stores_per_batch', 5),
+                    parallel_stores=getattr(self, 'green_dragon_parallel_stores', 2)
+                )
+                downloaders['green_dragon'] = {
+                    'name': 'Green Dragon',
+                    'enabled': True,
+                    'downloader': green_dragon_downloader
+                }
+                batch_info = f" (batch {getattr(self, 'green_dragon_batch', None)})" if getattr(self, 'green_dragon_batch', None) is not None else " (all stores)"
+                logger.info(f"Green Dragon: Configured to download {green_dragon_downloader.store_count} stores{batch_info}")
+                logger.info(f"Green Dragon: {green_dragon_downloader.total_batches} total batches, {green_dragon_downloader.parallel_stores} parallel downloads")
+                try:
+                    setattr(green_dragon_downloader, 'write_local', not self.in_memory)
+                except Exception:
+                    pass
+            except Exception as e:
+                logger.warning(f"Green Dragon: Could not initialize downloader: {e}")
 
         except Exception as e:
             logger.error(f"Failed to initialize modular downloaders: {e}")
@@ -1927,7 +1949,7 @@ def print_config_and_confirm(orchestrator, args, in_memory_flag, upload_to_azure
                 
                 # Show categories if applicable (Trulieve)
                 if dispensary_id == 'trulieve' and hasattr(downloader, 'category_ids') and downloader.category_ids:
-                    sys.stdout.write(f" × {len(downloader.category_ids)} categories = {store_count * len(downloader.category_ids)} total requests\n")
+                    sys.stdout.write(f" Ã— {len(downloader.category_ids)} categories = {store_count * len(downloader.category_ids)} total requests\n")
                     sys.stdout.write(f"    Categories: {', '.join(downloader.category_ids)}\n")
                 else:
                     sys.stdout.write("\n")
@@ -2103,7 +2125,7 @@ def main():
         print("\n[MODULE AVAILABILITY]")
         print(f"  Modular Downloaders: {'[YES] Available' if MODULAR_DOWNLOADERS_AVAILABLE else '[NO] Not Available'}")
         print(f"  Job Tracking:        {'[YES] Available' if JOB_TRACKING_AVAILABLE else '[NO] Not Available'}")
-        print(f"  Azure Data Lake:     {'✓ Available' if orchestrator.azure_manager else '✗ Not Available'}")
+        print(f"  Azure Data Lake:     {'âœ“ Available' if orchestrator.azure_manager else 'âœ— Not Available'}")
         
         print("\n" + "=" * 70 + "\n")
         return
@@ -2250,4 +2272,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
 

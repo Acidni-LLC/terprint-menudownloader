@@ -8,6 +8,7 @@ from .sunburn_downloader import SunburnDownloader
 from .cookies_downloader import CookiesDownloader
 from .flowery_downloader import FloweryDownloader
 from .curaleaf_downloader import CuraleafDownloader
+from .green_dragon_downloader import GreenDragonDownloader
 
 __all__ = [
     'MuvDownloader',
@@ -16,4 +17,5 @@ __all__ = [
     'CookiesDownloader',
     'FloweryDownloader',
     'CuraleafDownloader',
+    'GreenDragonDownloader',
 ]
