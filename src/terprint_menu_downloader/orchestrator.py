@@ -1,4 +1,4 @@
-﻿"""
+"""
 Dispensary Data Orchestrator
 Automatically downloads data from multiple dispensaries and uploads to Azure Event House
 
@@ -581,7 +581,8 @@ class DispensaryOrchestrator:
             'sunburn': 'Sunburn Cannabis',
             'cookies': 'Cookies Florida',
             'flowery': 'The Flowery',
-            'curaleaf': 'Curaleaf'
+            'curaleaf': 'Curaleaf',
+            'green_dragon': 'Green Dragon'
         }
         return dispensary_names.get(dispensary_id, dispensary_id.title())
     
@@ -832,6 +833,35 @@ class DispensaryOrchestrator:
                             'total_terpenes': product.get('total_terpenes_percent'),
                             'top_terpenes': product.get('top_terpenes', ''),
                             'lab_test_url': product.get('lab_test_url', '')
+                        })
+            elif dispensary == 'green_dragon':
+                # Green Dragon data structure: products is a list in data.products
+                products = data.get('products', []) if isinstance(data, dict) else []
+                store_name = data.get('store_name', '') if isinstance(data, dict) else ''
+                store_slug = data.get('store_slug', '') if isinstance(data, dict) else ''
+                for product in products:
+                    if not isinstance(product, dict):
+                        continue
+                    product_name = product.get('name', '')
+                    if product_name:
+                        self.batch_counter += 1
+                        azure_path = f"https://{AZURE_STORAGE_ACCOUNT_NAME}.dfs.core.windows.net/{AZURE_CONTAINER_NAME}/green_dragon/{os.path.basename(filename)}"
+                        self.batch_tracker.append({
+                            'index': self.batch_counter,
+                            'batch_name': f"{store_slug}_{product_name}".replace(' ', '_').lower(),
+                            'product_name': product_name,
+                            'product_type': product.get('category', 'flower'),
+                            'dispensary': 'green_dragon',
+                            'dispensary_name': self._get_dispensary_display_name('green_dragon'),
+                            'filename': os.path.basename(filename),
+                            'azure_path': azure_path,
+                            'sku': '',
+                            'brand': 'Green Dragon',
+                            'strain': product_name,
+                            'thc_percent': None,
+                            'total_terpenes': None,
+                            'top_terpenes': '',
+                            'lab_test_url': product.get('source_url', '')
                         })
         except Exception as e:
             logger.warning(f"[BATCH] Error extracting batches from {dispensary}/{filename}: {e}")
@@ -1816,7 +1846,9 @@ class DispensaryOrchestrator:
                     'cookies': len([b for b in all_batches if b.get('dispensary') == 'cookies']),
                     'flowery': len([b for b in all_batches if b.get('dispensary') == 'flowery']),
                     'sunburn': len([b for b in all_batches if b.get('dispensary') == 'sunburn']),
-                    'trulieve': len([b for b in all_batches if b.get('dispensary') == 'trulieve'])
+                    'trulieve': len([b for b in all_batches if b.get('dispensary') == 'trulieve']),
+                    'curaleaf': len([b for b in all_batches if b.get('dispensary') == 'curaleaf']),
+                    'green_dragon': len([b for b in all_batches if b.get('dispensary') == 'green_dragon'])
                 },
                 'batches': all_batches
             }
@@ -1949,7 +1981,7 @@ def print_config_and_confirm(orchestrator, args, in_memory_flag, upload_to_azure
                 
                 # Show categories if applicable (Trulieve)
                 if dispensary_id == 'trulieve' and hasattr(downloader, 'category_ids') and downloader.category_ids:
-                    sys.stdout.write(f" Ã— {len(downloader.category_ids)} categories = {store_count * len(downloader.category_ids)} total requests\n")
+                    sys.stdout.write(f" × {len(downloader.category_ids)} categories = {store_count * len(downloader.category_ids)} total requests\n")
                     sys.stdout.write(f"    Categories: {', '.join(downloader.category_ids)}\n")
                 else:
                     sys.stdout.write("\n")
@@ -2006,7 +2038,7 @@ def main():
     parser.add_argument('--no-parallel', action='store_true', help='(Deprecated) Dispensaries are always processed sequentially')
     parser.add_argument('--no-azure', action='store_true', help='Skip Azure upload')
     parser.add_argument('--upload-only', action='store_true', help='Upload existing files only, skip downloading')
-    parser.add_argument('--dispensary', '-d', choices=['muv', 'trulieve', 'sunburn', 'cookies', 'flowery', 'curaleaf'], 
+    parser.add_argument('--dispensary', '-d', choices=['muv', 'trulieve', 'sunburn', 'cookies', 'flowery', 'curaleaf', 'green_dragon'], 
                        help='Run only specific dispensary')
     parser.add_argument('--list-dispensaries', action='store_true', help='List available dispensaries')
     parser.add_argument('--show-config', action='store_true', help='Display current configuration settings and exit')
@@ -2125,7 +2157,7 @@ def main():
         print("\n[MODULE AVAILABILITY]")
         print(f"  Modular Downloaders: {'[YES] Available' if MODULAR_DOWNLOADERS_AVAILABLE else '[NO] Not Available'}")
         print(f"  Job Tracking:        {'[YES] Available' if JOB_TRACKING_AVAILABLE else '[NO] Not Available'}")
-        print(f"  Azure Data Lake:     {'âœ“ Available' if orchestrator.azure_manager else 'âœ— Not Available'}")
+        print(f"  Azure Data Lake:     {'✓ Available' if orchestrator.azure_manager else '✗ Not Available'}")
         
         print("\n" + "=" * 70 + "\n")
         return

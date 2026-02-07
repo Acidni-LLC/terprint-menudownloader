@@ -1,4 +1,4 @@
-"""
+﻿"""
 Green Dragon Cannabis Company - Menu Downloader
 Wrapper around Green Dragon config and scraper packages
 
@@ -111,8 +111,6 @@ class GreenDragonDownloader:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             try:
-                import asyncio
-                
                 # Synchronous wrapper
                 async def _scrape():
                     async with self.scraper_class() as scraper:
@@ -154,32 +152,55 @@ class GreenDragonDownloader:
 
         try:
             data = self.download_location(store_slug, store_name)
-            if not data:
+
+            if data and data.get('product_count', 0) > 0:
+                # Create filename with timestamp
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                filename = f"green_dragon_products_store_{store_slug}_{timestamp}.json"
+
+                # Add raw response size for tracking
+                data['raw_response_size'] = len(json.dumps(data))
+
+                # Save to Azure Data Lake if available
+                if self.azure_manager:
+                    try:
+                        date_folder = datetime.now().strftime("%Y/%m/%d")
+                        azure_path = f"dispensaries/green_dragon/{date_folder}/{filename}"
+
+                        success = self.azure_manager.save_json_to_data_lake(
+                            json_data=data,
+                            file_path=azure_path,
+                            overwrite=True
+                        )
+
+                        if success:
+                            logger.info(f"Uploaded {store_name}: {data['product_count']} products")
+                            return (f"azure://{azure_path}", data)
+                        else:
+                            logger.error(f"Failed {store_name}: Azure upload failed")
+                            return None
+                    except Exception as e:
+                        logger.error(f"Failed {store_name}: Azure error: {e}")
+                        return None
+                else:
+                    # No Azure manager - save locally if output_dir specified
+                    if self.output_dir:
+                        os.makedirs(self.output_dir, exist_ok=True)
+                        filepath = os.path.join(self.output_dir, filename)
+                        with open(filepath, 'w', encoding='utf-8') as f:
+                            json.dump(data, f, indent=2)
+                        logger.info(f"Saved {store_name}: {data['product_count']} products (local)")
+                        return (filepath, data)
+                    else:
+                        # In-memory only
+                        logger.info(f"Downloaded {store_name}: {data['product_count']} products (in-memory)")
+                        return (f"memory://{store_slug}", data)
+            else:
+                logger.warning(f"No products found for {store_name}")
                 return None
 
-            # Save to Azure blob storage if manager provided
-            if self.azure_manager and self.output_dir:
-                blob_name = f"dispensaries/green-dragon/{store_slug}_menu.json"
-                try:
-                    self.azure_manager.upload_json_to_blob(
-                        json.dumps(data, indent=2),
-                        blob_name
-                    )
-                    logger.info(f"✓ Uploaded {blob_name}")
-                except Exception as e:
-                    logger.error(f"Failed to upload {blob_name}: {e}")
-
-            # Save locally if output_dir specified
-            if self.output_dir:
-                os.makedirs(self.output_dir, exist_ok=True)
-                local_path = os.path.join(self.output_dir, f"{store_slug}_menu.json")
-                with open(local_path, 'w') as f:
-                    json.dump(data, f, indent=2)
-                logger.info(f"✓ Saved locally to {local_path}")
-
-            return (store_slug, data)
         except Exception as e:
-            logger.error(f"Error downloading/saving {store_slug}: {e}")
+            logger.error(f"Error downloading {store_name}: {e}")
             return None
 
     def download_single_store(self, store_slug: str) -> Optional[Tuple[str, Dict]]:
@@ -228,7 +249,7 @@ class GreenDragonDownloader:
                 if result:
                     results.append(result)
 
-        logger.info(f"✓ Downloaded {len(results)}/{len(self.stores)} stores")
+        logger.info(f"âœ“ Downloaded {len(results)}/{len(self.stores)} stores")
         return results
 
     def download_all_batches(self, parallel_stores: int = None) -> Dict[int, List[Tuple[str, Dict]]]:
