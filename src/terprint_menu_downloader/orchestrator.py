@@ -1539,6 +1539,9 @@ class DispensaryOrchestrator:
         # Save results to Azure Data Lake
         self._save_results()
         
+        # Rebuild stock index after all dispensaries complete downloads
+        self._rebuild_stock_index()
+        
         # Optionally refresh genetics index after pipeline
         try:
             if getattr(self, 'enable_genetics', False) and self._genetics_storage:
@@ -1607,6 +1610,59 @@ class DispensaryOrchestrator:
                 logger.info(f"[OK] {dispensary_id} uploads uploaded to Azure: {azure_path}")
             except Exception as e:
                 logger.error(f"[FAIL] Failed to upload uploads for {dispensary_id}: {e}")
+    
+    def _rebuild_stock_index(self):
+        """
+        Rebuild the stock index after menu downloads complete.
+        Triggers the stock API to rebuild its in-memory index with latest menu data.
+        """
+        try:
+            import requests
+            
+            # Get APIM subscription key from environment
+            apim_key = os.environ.get('APIM_SUBSCRIPTION_KEY') or os.environ.get('API_KEY')
+            if not apim_key:
+                logger.warning("[STOCK] APIM_SUBSCRIPTION_KEY not set - skipping stock index rebuild")
+                return
+            
+            # Build the rebuild endpoint URL
+            apim_gateway = os.environ.get('APIM_GATEWAY_URL', 'https://apim-terprint-dev.azure-api.net')
+            rebuild_url = f"{apim_gateway}/menus/api/stock/build-index"
+            
+            logger.info(f"[STOCK] Triggering stock index rebuild at: {rebuild_url}")
+            
+            # Make the request to rebuild the stock index
+            headers = {
+                'Ocp-Apim-Subscription-Key': apim_key,
+                'Content-Type': 'application/json'
+            }
+            
+            response = requests.post(rebuild_url, headers=headers, timeout=30, json={})
+            
+            if response.status_code in [200, 202]:
+                logger.info(f"[STOCK] Index rebuild triggered successfully (HTTP {response.status_code})")
+                try:
+                    result = response.json()
+                    logger.info(f"[STOCK] Rebuild response: {result.get('message', result.get('status', 'OK'))}")
+                    if result.get('status') == 'building':
+                        logger.info(f"[STOCK] Index build in progress - {result.get('items_processed', 0)} items processed")
+                except:
+                    pass  # Response might not be JSON
+                
+                log_telemetry(logger, "stock_index_rebuild_triggered", 
+                            properties={"status": "success"}, 
+                            measurements={"response_code": response.status_code})
+            else:
+                logger.warning(f"[STOCK] Index rebuild failed with status {response.status_code}: {response.text}")
+                log_telemetry(logger, "stock_index_rebuild_failed", 
+                            properties={"status": f"http_{response.status_code}", "error": response.text[:200]})
+        
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"[STOCK] Failed to trigger stock index rebuild: {e}")
+            log_exception(logger, e, context="Stock index rebuild")
+        except Exception as e:
+            logger.warning(f"[STOCK] Unexpected error during stock index rebuild: {e}")
+            log_exception(logger, e, context="Stock index rebuild")
 
     def _create_and_upload_trulieve_batch(self, download_results: Dict[str, List[Tuple[str, Dict]]]):
         """Build combined Trulieve JSON (all stores), products-only JSON and a deduped batch-codes JSON.
