@@ -409,7 +409,7 @@ class DispensaryOrchestrator:
             # Load Trulieve stores from local menus/storeid_location_list.csv (172 stores)
             # and category IDs from menus/menu_config.json
             trulieve_store_ids = None
-            trulieve_category_ids = ["MjA4", "MjM3", "MjA5", "Ng=="]  # Flower, Pre-Rolls, Vaporizers, Edibles
+            trulieve_category_ids = ["MjA4", "MjM3", "MjA5", "Ng=="]  # Whole Flower (208), Vape Carts (237), Vaporizers (209), Concentrates (6)
             
             # Path to the menus folder (sibling to orchestrator.py)
             menus_dir = os.path.join(os.path.dirname(__file__), "menus")

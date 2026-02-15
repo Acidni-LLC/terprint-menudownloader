@@ -18,10 +18,10 @@
   "trulieve_settings": {
     "category_ids": ["MjA4", "MjM3", "MjA5", "Ng=="],
     "category_names": {
-      "MjA4": "Flower",
-      "MjM3": "Pre-Rolls", 
+      "MjA4": "Whole Flower",
+      "MjM3": "Vape Carts", 
       "MjA5": "Vaporizers",
-      "Ng==": "Edibles"
+      "Ng==": "Concentrates"
     },
     "dev_stores": ["palm_coast", "oakland_park", "port_orange"],
     "store_ids_csv": "storeid_location_list.csv"

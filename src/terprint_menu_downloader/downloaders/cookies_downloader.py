@@ -18,8 +18,25 @@ class CookiesDownloader:
         self.output_dir = output_dir
         self.azure_manager = azure_manager
         
-        # API endpoint template
-        self.api_template = "https://cookiesflorida.co/wp-json/dovetail-api/v1/products?page=1&perpage=50&orderby=menu_setting&order=asc&retailer={slug}&menutype=medical&categories%5B%5D=premium-flower"
+        # Cookies Florida product category slugs (Dovetail API)
+        # Discovered from API probing 2025-06-19
+        self.category_slugs = [
+            "premium-flower",   # Flower
+            "concentrates",     # Concentrates (wax, shatter, rosin, etc.)
+            "pre-rolls",        # Pre-Rolls
+            "vapes",            # Vape cartridges
+            "edibles",          # Edibles (may have 0 products at times)
+            "topicals",         # Topicals (may have 0 products at times)
+        ]
+        
+        # API endpoint template - categories added dynamically
+        self._api_base = "https://cookiesflorida.co/wp-json/dovetail-api/v1/products?page=1&perpage=50&orderby=menu_setting&order=asc&retailer={slug}&menutype=medical"
+        
+        # Build the full template with all category params
+        category_params = "&".join(
+            f"categories%5B%5D={cat}" for cat in self.category_slugs
+        )
+        self.api_template = f"{self._api_base}&{category_params}"
         
         # All Cookies Florida location slugs
         self.location_slugs = [

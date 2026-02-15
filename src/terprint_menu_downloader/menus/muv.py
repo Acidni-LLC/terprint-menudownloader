@@ -5,7 +5,7 @@ Handles API calls to the MÜV dispensary system
 import requests
 import json
 import os
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 # Load configuration
 def load_config(config_path: str = None) -> Dict:
@@ -40,20 +40,51 @@ def load_config(config_path: str = None) -> Dict:
 # Load config at module level
 CONFIG = load_config()
 
+# MÜV SweedPOS category IDs (discovered from API filter options 2025-06-19)
+# These IDs are returned by the GetProductList endpoint in the filters.category.options array
+MUV_CATEGORY_IDS = {
+    "Concentrates": 3483,
+    "Vapes": 3484,
+    "Flower": 3485,
+    "Pre-Rolls": 3486,
+    "Accessories": 3487,
+    "Edibles": 3488,
+    "Apparel": 3489,
+    "Topicals": 3490,
+    "Oral Products": 3491,
+}
 
-def get_muv_products(store_id: str, config: Dict = None) -> Optional[Dict]:
+# Default categories to download (all cannabis product categories, excluding Apparel/Accessories)
+MUV_DEFAULT_CATEGORIES = [
+    MUV_CATEGORY_IDS["Flower"],         # 3485
+    MUV_CATEGORY_IDS["Concentrates"],   # 3483
+    MUV_CATEGORY_IDS["Vapes"],          # 3484
+    MUV_CATEGORY_IDS["Pre-Rolls"],      # 3486
+    MUV_CATEGORY_IDS["Edibles"],        # 3488
+    MUV_CATEGORY_IDS["Topicals"],       # 3490
+    MUV_CATEGORY_IDS["Oral Products"],  # 3491
+]
+
+
+def get_muv_products(store_id: str, config: Dict = None, category_ids: List[int] = None) -> Optional[Dict]:
     """
     Send a request to the MÜV API with specific store ID
 
     Args:
         store_id (str): Store ID to include in headers
         config (dict, optional): Configuration dict, uses global CONFIG if not provided
+        category_ids (list[int], optional): SweedPOS category IDs to fetch.
+            Defaults to MUV_DEFAULT_CATEGORIES (Flower, Concentrates, Vapes,
+            Pre-Rolls, Edibles, Topicals, Oral Products).
     
     Returns:
         dict: JSON response from the API or None if failed
     """
     if config is None:
         config = CONFIG
+
+    if category_ids is None:
+        category_ids = MUV_DEFAULT_CATEGORIES
         
     url = "https://web-ui-production.sweedpos.com/_api/proxy/Products/GetProductList"
 
@@ -67,7 +98,7 @@ def get_muv_products(store_id: str, config: Dict = None) -> Optional[Dict]:
     download_settings = config.get("download_settings", {})
 
     payload = {
-        "filters": {"category": [425003]},
+        "filters": {"category": category_ids},
         "page": 1,
         "pageSize": api_settings.get("page_size", 100),
         "sortingMethodId": api_settings.get("sorting_method_id", 7),
