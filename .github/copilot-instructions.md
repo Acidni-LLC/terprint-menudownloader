@@ -1,7 +1,7 @@
 # Terprint AI Software Engineer & Architect Guidelines
 
-**Version:** 2.1.18
-**Last Updated:** January 20, 2026 19:18:00
+**Version:** 2.1.21
+**Last Updated:** January 21, 2026 13:07:00
 **terprint-config Package Version:** 4.6.0
 
 ---
@@ -624,7 +624,7 @@ token: ${{ secrets.ORG_GH_PAT_TERPRINT_TESTS }}
 | Platform Owner | Acidni LLC |
 | Domain | Cannabis/Medical Marijuana Data Analytics |
 | Geography | Florida dispensaries |
-| Active Dispensaries | Cookies, M�V, Flowery, Trulieve, Curaleaf |
+| Active Dispensaries | Cookies, MV, Flowery, Trulieve, Curaleaf |
 | Architecture | 5-stage data pipeline with microservices deployed as Azure Container Apps behind APIM |
 
 ---
@@ -808,7 +808,7 @@ jsonfiles/
 
 | Function App | Status | Notes |
 |--------------|--------|-------|
-| `func-terprint-marketplace` | ⚠️ Pending | Migrate to Container App |
+| `func-acidni-publisher-portal` | ⚠️ Pending | Migrate to Container App |
 | `func-terprint-metering` | ⚠️ Pending | Migrate to Container App |
 | `func-terprint-coadataextractor` | ⚠️ Pending | Migrate to Container App |
 
@@ -1254,7 +1254,7 @@ func host start --port 7071
 | Dispensary | Grower ID | Status | Notes |
 |------------|-----------|--------|-------|
 | Cookies | 1 | ✅ Active | Stable |
-| M�V | 2 | ✅ Active | Stable |
+| MV | 2 | ✅ Active | Stable |
 | Flowery | 3 | ✅ Active | All FL locations |
 | Trulieve | 4 | ✅ Active | 162 stores, 4 categories |
 | Curaleaf | 10 | ✅ Active | ~45-60 stores |
@@ -1410,6 +1410,9 @@ This copies `.github/copilot-instructions.md` to:
 - func-terprint-communications
 - terprint-ai-health
 - And more...
+
+
+
 
 
 

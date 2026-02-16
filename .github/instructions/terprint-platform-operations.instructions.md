@@ -156,7 +156,7 @@ settings.functions.get("ai_chat").port  # 7086
 
 | Service | Repo | APIM Path | Local Port | Emoji |
 |---------|------|-----------|------------|-------|
-| Marketplace | terprint-marketplace | `/marketplace` | 7136 | 🏪 |
+| Marketplace | acidni-publisher-portal | `/marketplace` | 7136 | 🏪 |
 | Metering | terprint-metering | `/metering` | 7116 | 📊 |
 
 #### Portals & User Interfaces

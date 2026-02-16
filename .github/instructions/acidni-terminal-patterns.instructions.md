@@ -161,7 +161,7 @@ Every Terprint service has pre-assigned ports to avoid conflicts when running mu
 | AI Recommender | `func-terprint-ai-recommender` | **7091** | 7091-7095 | 🎯 AI Recommender |
 | AI Deals | `func-terprint-ai-deals` | **7096** | 7096-7100 | 💰 AI Deals |
 | AI Health | `func-terprint-ai-health` | **7101** | 7101-7105 | 🏥 AI Health |
-| Marketplace Webhook | `terprint-marketplace-webhook` | **7106** | 7106-7110 | 🏪 Marketplace |
+| Marketplace Webhook | `acidni-publisher-portal-webhook` | **7106** | 7106-7110 | 🏪 Marketplace |
 | Infographics | `func-terprint-infographics` | **7111** | 7111-7115 | 🎨 Infographics |
 | Metering | `func-terprint-metering` | **7116** | 7116-7120 | 📊 Metering |
 | Data API | `func-terprint-data-api` | **7121** | 7121-7125 | 📡 Data API |

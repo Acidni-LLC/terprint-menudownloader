@@ -28,7 +28,7 @@
 | terprint-batch-processor | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
 | terprint-coa-extractor | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
 | terprint-infographics | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
-| terprint-marketplace | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
+| acidni-publisher-portal | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
 | terprint-metering | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
 | terprint-stock-api | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
 | Terprint.Web | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |

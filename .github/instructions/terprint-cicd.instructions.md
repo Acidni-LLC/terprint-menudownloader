@@ -534,7 +534,7 @@ jobs:
 | terprint-infographics | ✅ **Yes** | Customer-facing - APIM tests |
 | terprint-ai-lab | ✅ **Yes** | Integration tests |
 | terprint-metering | ✅ **Yes** | Billing validation critical |
-| terprint-marketplace-webhook | ✅ **Yes** | Subscription tests |
+| acidni-publisher-portal-webhook | ✅ **Yes** | Subscription tests |
 | terprint-menudownloader | ⚠️ Optional | Data pipeline (health only) |
 | terprint-batch-processor | ⚠️ Optional | Data pipeline (health only) |
 
