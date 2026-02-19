@@ -54,15 +54,12 @@ MUV_CATEGORY_IDS = {
     "Oral Products": 3491,
 }
 
-# Default categories to download (all cannabis product categories, excluding Apparel/Accessories)
+# Default categories to download - Flower, Concentrates, and Vapes only
+# These are the categories with meaningful terpene/cannabinoid lab data
 MUV_DEFAULT_CATEGORIES = [
     MUV_CATEGORY_IDS["Flower"],         # 3485
     MUV_CATEGORY_IDS["Concentrates"],   # 3483
     MUV_CATEGORY_IDS["Vapes"],          # 3484
-    MUV_CATEGORY_IDS["Pre-Rolls"],      # 3486
-    MUV_CATEGORY_IDS["Edibles"],        # 3488
-    MUV_CATEGORY_IDS["Topicals"],       # 3490
-    MUV_CATEGORY_IDS["Oral Products"],  # 3491
 ]
 
 
@@ -118,4 +115,53 @@ def get_muv_products(store_id: str, config: Dict = None, category_ids: List[int]
         return response.json()
     except Exception as e:
         print(f"MÜV API request failed for store {store_id}: {e}")
+        return None
+
+
+def get_muv_extended_lab_data(store_id: str, variant_id: str, config: Dict = None) -> Optional[Dict]:
+    """
+    Get extended lab data (detailed terpene + cannabinoid percentages) for a specific variant.
+
+    Uses the Sweed POS GetExtendedLabdata endpoint which returns individual terpene
+    and cannabinoid percentages plus the COA URL with batch date.
+
+    Args:
+        store_id: MÜV store ID for the Storeid header
+        variant_id: Product variant ID
+        config: Optional config dict
+
+    Returns:
+        dict: Extended lab data with terpenes, thc, cbd, and fullLabDataUrl, or None
+    """
+    if config is None:
+        config = CONFIG
+
+    url = "https://web-ui-production.sweedpos.com/_api/proxy/Products/GetExtendedLabdata"
+
+    headers = {
+        "Content-Type": "application/json",
+        "Storeid": str(store_id),
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+    }
+
+    payload = {"variantId": str(variant_id)}
+
+    download_settings = config.get("download_settings", {})
+
+    try:
+        response = requests.post(
+            url,
+            headers=headers,
+            json=payload,
+            timeout=download_settings.get("timeout", 30)
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        # Return data if it contains any lab information
+        if data and isinstance(data, dict):
+            return data
+        return None
+    except Exception:
+        # Lab data is optional - don't log errors for every product
         return None

@@ -5,6 +5,8 @@ Handles data collection from MÜV dispensary API
 import json
 import os
 import sys
+import time
+import threading
 from datetime import datetime
 from typing import List, Dict, Tuple, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -34,6 +36,9 @@ class MuvDownloader:
         else:
             self.store_ids = store_ids
         self.dispensary_name = 'MÜV'
+        # Thread-safe cache for extended lab data by variant_id
+        self._lab_data_cache: Dict[str, Optional[Dict]] = {}
+        self._lab_data_lock = threading.Lock()
         
     def download(self) -> List[Tuple[str, Dict]]:
         """Download MÜV dispensary data"""
@@ -42,13 +47,13 @@ class MuvDownloader:
         try:
             # Import MÜV module - use package import when running as package
             if _RUNNING_AS_PACKAGE:
-                from ..menus.muv import get_muv_products
+                from ..menus.muv import get_muv_products, get_muv_extended_lab_data
             else:
                 # Fallback for standalone testing
                 try:
-                    from terprint_menu_downloader.menus.muv import get_muv_products
+                    from terprint_menu_downloader.menus.muv import get_muv_products, get_muv_extended_lab_data
                 except ImportError:
-                    from menus.muv import get_muv_products
+                    from menus.muv import get_muv_products, get_muv_extended_lab_data
             
             results = []
             
@@ -61,6 +66,38 @@ class MuvDownloader:
                     products = get_muv_products(store_id)
                     
                     if products:
+                        # Enrich variants with extended lab data (terpenes + cannabinoids)
+                        products_list = []
+                        if isinstance(products.get('list'), list):
+                            products_list = products['list']
+                        elif isinstance(products.get('data'), list):
+                            products_list = products['data']
+
+                        enriched_count = 0
+                        for prod in products_list:
+                            variants = prod.get('variants', [])
+                            if not isinstance(variants, list):
+                                continue
+                            for variant in variants:
+                                vid = str(variant.get('id', ''))
+                                if not vid:
+                                    continue
+
+                                # Check thread-safe cache first
+                                if vid in self._lab_data_cache:
+                                    lab_data = self._lab_data_cache[vid]
+                                else:
+                                    lab_data = get_muv_extended_lab_data(store_id, vid)
+                                    self._lab_data_cache[vid] = lab_data
+                                    time.sleep(0.05)  # Small delay to avoid API rate limiting
+
+                                if lab_data:
+                                    variant['extendedLabData'] = lab_data
+                                    enriched_count += 1
+
+                        if enriched_count > 0:
+                            print(f"   Enriched {enriched_count} variants with lab data for store {store_id}")
+
                         # Create filename with timestamp
                         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                         filename = f"muv_products_store_{store_id}_{timestamp}.json"
