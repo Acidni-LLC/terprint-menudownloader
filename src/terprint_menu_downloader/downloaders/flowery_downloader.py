@@ -199,17 +199,14 @@ class FloweryDownloader:
                 
                 time.sleep(0.2)  # Rate limiting between pages
             
-            # Filter for flower products only
-            flower_products = [p for p in all_products if 'flower' in json.dumps(p).lower()]
-            
             result = {
                 "location_id": location_id,
                 "location": location_name,
                 "download_timestamp": datetime.now().isoformat(),
                 "api_url": f"{self.products_api}?location_id={location_id}",
                 "total_products": len(all_products),
-                "flower_product_count": len(flower_products),
-                "products": flower_products  # Save only flower products
+                "product_count": len(all_products),
+                "products": all_products  # Save all products (flower, concentrates, vapes, etc.)
             }
             
             return result
@@ -243,7 +240,6 @@ class FloweryDownloader:
         successful = 0
         failed = 0
         total_products = 0
-        total_flower = 0
         
         for location in self.locations:
             location_id = location.get('id')
@@ -271,11 +267,10 @@ class FloweryDownloader:
                         
                         if success:
                             filepath = f"azure://{azure_path}"
-                            print(f"SUCCESS: {result['flower_product_count']} flower products saved to Azure")
+                            print(f"SUCCESS: {result['product_count']} products saved to Azure")
                             results.append((filepath, result))
                             successful += 1
                             total_products += result['total_products']
-                            total_flower += result['flower_product_count']
                         else:
                             print(f"ERROR: Failed to save to Azure")
                             failed += 1
@@ -296,7 +291,7 @@ class FloweryDownloader:
         print(f"THE FLOWERY - Download Complete")
         print(f"{'='*60}")
         print(f"   SUCCESS: {successful}/{len(self.locations)} locations")
-        print(f"   Total flower products: {total_flower}")
+        print(f"   Total products: {total_products}")
         print(f"   Total files saved to Azure: {len(results)}")
         print(f"{'='*60}\n")
         
@@ -318,8 +313,7 @@ class FloweryDownloader:
                     'successful': 0,
                     'failed': 0,
                     'total_locations': 0,
-                    'total_products': 0,
-                    'total_flower': 0
+                    'total_products': 0
                 }
             }
         
@@ -333,8 +327,7 @@ class FloweryDownloader:
                     'successful': 0,
                     'failed': 0,
                     'total_locations': 0,
-                    'total_products': 0,
-                    'total_flower': 0
+                    'total_products': 0
                 }
             }
         
@@ -344,7 +337,6 @@ class FloweryDownloader:
         successful = 0
         failed = 0
         total_products = 0
-        total_flower = 0
         
         for location in self.locations:
             location_id = location.get('id')
@@ -362,11 +354,10 @@ class FloweryDownloader:
                 with open(filepath, 'w', encoding='utf-8') as f:
                     json.dump(result, f, indent=2, ensure_ascii=False)
                 
-                print(f"✓ {result['flower_product_count']} flower products")
+                print(f"✓ {result['product_count']} products")
                 results.append(result)
                 successful += 1
                 total_products += result['total_products']
-                total_flower += result['flower_product_count']
             else:
                 print(f"✗ Failed")
                 failed += 1
@@ -385,8 +376,7 @@ class FloweryDownloader:
                 'successful': successful,
                 'failed': failed,
                 'total_locations': len(self.locations),
-                'total_products': total_products,
-                'total_flower': total_flower
+                'total_products': total_products
             }
         }
         
@@ -397,7 +387,7 @@ class FloweryDownloader:
         print(f"THE FLOWERY - Download Complete")
         print(f"{'='*60}")
         print(f"Successful: {successful}/{len(self.locations)} locations")
-        print(f"Total flower products: {total_flower}")
+        print(f"Total products: {total_products}")
         print(f"Combined results: {combined_file}")
         print(f"{'='*60}\n")
         
