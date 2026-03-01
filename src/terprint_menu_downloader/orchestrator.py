@@ -777,11 +777,13 @@ class DispensaryOrchestrator:
                     
                     # Strain: custom_attributes_product[code='strain'].value, fallback split name on ' - ' (per terprint-config)
                     strain_name = ''
+                    strain_type = ''  # Indica/Sativa/Hybrid
                     custom_attrs = product.get('custom_attributes_product', []) or []
                     for attr in custom_attrs:
                         if isinstance(attr, dict) and attr.get('code') == 'strain':
                             strain_name = attr.get('value', '')
-                            break
+                        elif isinstance(attr, dict) and attr.get('code') == 'strain_type':
+                            strain_type = (attr.get('value', '') or '').strip()
                     if not strain_name and product_name:
                         # Fallback: split name on ' - ' and take first part
                         strain_name = product_name.split(' - ')[0].strip()
@@ -804,7 +806,8 @@ class DispensaryOrchestrator:
                                 'azure_path': azure_path,
                                 'sku': sku,
                                 'batch_code': batch_code,
-                                'strain': strain_name
+                                'strain': strain_name,
+                                'strain_type': strain_type
                             })
                     
                     # Extract from configurable_options
@@ -828,7 +831,8 @@ class DispensaryOrchestrator:
                                         'azure_path': azure_path,
                                         'sku': sku,
                                         'batch_code': label,
-                                        'strain': strain_name
+                                        'strain': strain_name,
+                                        'strain_type': strain_type
                                     })
             
             elif dispensary == 'curaleaf':
