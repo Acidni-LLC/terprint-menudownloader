@@ -3,8 +3,8 @@ Green Dragon Cannabis Company - Configuration
 Platform: Sweed POS (HTML scraping + window.__sw JSON extraction)
 Website:  https://shop.greendragon.com
 
-17 verified Florida locations as of 2026-03-01
-(13 more exist on greendragonfl.com but redirect to CO on Sweed POS)
+18 verified Florida locations as of 2026-03-01
+(12 more exist on greendragonfl.com but redirect to CO on Sweed POS)
 Discovery: green_dragon_prototype_v2.py --validate-slugs
 grower_id: 3
 """
@@ -76,11 +76,11 @@ class StoreConfig:
 
 
 # ---------------------------------------------------------------------------
-# Florida Locations — 17 verified on Sweed POS (2026-03-01)
+# Florida Locations — 18 verified on Sweed POS (2026-03-01)
 # slug = Sweed POS slug, gd_slug = greendragonfl.com slug
 # Validated by: green_dragon_prototype_v2.py --validate-slugs
 #
-# 13 additional stores exist on greendragonfl.com but redirect to
+# 12 additional stores exist on greendragonfl.com but redirect to
 # ft-collins-rec (Colorado) on Sweed POS — not yet online for ordering.
 # ---------------------------------------------------------------------------
 FL_STORES: List[StoreConfig] = [
@@ -98,6 +98,7 @@ FL_STORES: List[StoreConfig] = [
     StoreConfig(slug="inverness",           name="Green Dragon - Inverness",          city="Inverness",          gd_slug="inverness"),
     StoreConfig(slug="lake-worth",          name="Green Dragon - Lake Worth",         city="Lake Worth",         gd_slug="lake-worth"),
     StoreConfig(slug="ocala",               name="Green Dragon - Ocala",              city="Ocala",              gd_slug="ocala"),
+    StoreConfig(slug="palatka",             name="Green Dragon - Palatka",            city="Palatka",            gd_slug="palatka"),
     StoreConfig(slug="orlando",             name="Green Dragon - Orlando",            city="Orlando",            gd_slug="orlando"),
     StoreConfig(slug="tampa",               name="Green Dragon - Tampa",              city="Tampa",              gd_slug="tampa"),
     StoreConfig(slug="west-palm",           name="Green Dragon - West Palm Beach",    city="West Palm Beach",    gd_slug="west-palm-beach"),
