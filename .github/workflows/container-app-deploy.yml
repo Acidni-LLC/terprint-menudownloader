@@ -171,7 +171,17 @@ jobs:
     needs: deploy-container-app
     if: success() && github.ref == 'refs/heads/master'
     steps:
+      - name: Check terprint-tests repo exists
+        id: check-repo
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.ORG_GH_PAT_TERPRINT_TESTS }}
+        run: |
+          gh repo view Acidni-LLC/terprint-tests --json name > /dev/null 2>&1
+          echo "repo_exists=true" >> $GITHUB_OUTPUT
+
       - name: 🧪 Trigger Terprint Integration Tests
+        if: steps.check-repo.outputs.repo_exists == 'true'
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.ORG_GH_PAT_TERPRINT_TESTS }}
