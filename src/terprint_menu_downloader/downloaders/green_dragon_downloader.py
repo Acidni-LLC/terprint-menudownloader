@@ -1,63 +1,79 @@
-﻿"""
-Green Dragon Cannabis Company - Menu Downloader
-Wrapper around Green Dragon config and scraper packages
-
-Platform: Squarespace (HTML Scraping)
-Coverage: 13 FL dispensary stores
 """
-import asyncio
+Green Dragon menu downloader.
+
+Downloads product menus from Green Dragon dispensaries using the Sweed POS
+platform at shop.greendragon.com. Supports batch processing, Azure Data Lake
+upload, and parallel store downloads.
+
+Version: 2.0 - Sweed POS integration (replaces Squarespace scraper)
+"""
+
 import json
 import logging
+import math
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
-# Detect if running as package
-_RUNNING_AS_PACKAGE = "terprint_menu_downloader" in __name__
+# Constants
+DEFAULT_STORES_PER_BATCH = 6
+DEFAULT_PARALLEL_STORES = 3
 
-# Default configuration
-DEFAULT_STORES_PER_BATCH = 5  # 5 stores per batch
-DEFAULT_PARALLEL_STORES = 2   # 2 concurrent downloads
+# Detect if running as part of the installed package
+try:
+    from ..dispensaries.green_dragon import FL_CATEGORIES
+    _RUNNING_AS_PACKAGE = True
+except ImportError:
+    _RUNNING_AS_PACKAGE = False
 
 
 class GreenDragonDownloader:
-    """Download menu data from Green Dragon Florida dispensaries"""
+    """
+    Download Green Dragon menus from Sweed POS (shop.greendragon.com).
+
+    Supports:
+    - Single store or batch download
+    - Azure Data Lake or local file output
+    - COA (Certificate of Analysis) PDF download from LabDrive
+    - Parallel store downloads via ThreadPoolExecutor
+    """
 
     def __init__(
         self,
         output_dir: str = None,
         azure_manager=None,
-        max_products_per_store: int = None,
-        store_batch: int = None,
+        max_products_per_store: Optional[int] = None,
+        store_batch: Optional[int] = None,
         stores_per_batch: int = DEFAULT_STORES_PER_BATCH,
-        parallel_stores: int = DEFAULT_PARALLEL_STORES
+        parallel_stores: int = DEFAULT_PARALLEL_STORES,
+        include_coa: bool = False,
     ):
-        self.output_dir = output_dir
-        self.azure_manager = azure_manager
+        self.output_dir             = output_dir
+        self.azure_manager          = azure_manager
         self.max_products_per_store = max_products_per_store
-        self.dispensary_name = 'Green Dragon'
+        self.dispensary_name        = "Green Dragon"
+        self.include_coa            = include_coa
 
-        # Batching configuration
-        self.store_batch = store_batch
-        self.stores_per_batch = stores_per_batch
-        self.parallel_stores = parallel_stores
+        self.store_batch            = store_batch
+        self.stores_per_batch       = stores_per_batch
+        self.parallel_stores        = parallel_stores
 
-        # Import config package from dispensaries folder
+        # Import config & scraper (handles both package and standalone usage)
         if _RUNNING_AS_PACKAGE:
             from ..dispensaries.green_dragon import GREEN_DRAGON_CONFIG, FL_STORES
-            from ..dispensaries.green_dragon.scraper import GreenDragonScraper
+            from ..dispensaries.green_dragon.scraper import GreenDragonStoreScraper
         else:
             from terprint_menu_downloader.dispensaries.green_dragon import GREEN_DRAGON_CONFIG, FL_STORES
-            from terprint_menu_downloader.dispensaries.green_dragon.scraper import GreenDragonScraper
+            from terprint_menu_downloader.dispensaries.green_dragon.scraper import GreenDragonStoreScraper
 
-        self.config = GREEN_DRAGON_CONFIG
-        self.all_stores = FL_STORES
-        self.scraper_class = GreenDragonScraper
+        self.config         = GREEN_DRAGON_CONFIG
+        self.all_stores     = FL_STORES
+        self.scraper_class  = GreenDragonStoreScraper
 
-        # Calculate which stores to download based on batch
+        # Determine which stores to download for this batch
         self.stores = self._get_batch_stores()
 
     def _get_batch_stores(self) -> List:
@@ -73,26 +89,26 @@ class GreenDragonDownloader:
         return batch_stores
 
     @property
-    def total_batches(self) -> int:
-        """Return the total number of batches needed."""
-        return (len(self.all_stores) + self.stores_per_batch - 1) // self.stores_per_batch
-
-    @property
     def store_count(self) -> int:
         """Return the number of stores configured for this batch."""
         return len(self.stores)
+
+    @property
+    def total_batches(self) -> int:
+        """Return the total number of batches needed."""
+        return (len(self.all_stores) + self.stores_per_batch - 1) // self.stores_per_batch
 
     @property
     def total_store_count(self) -> int:
         """Return the total number of stores across all batches."""
         return len(self.all_stores)
 
-    def download_location(self, store_slug: str, store_name: str = None) -> Optional[Dict]:
+    def download_location(self, store_slug: str, store_name: str = None) -> Optional[Dict[str, Any]]:
         """
         Download menu data for a specific store.
 
         Args:
-            store_slug: Store slug (e.g., "boynton-beach")
+            store_slug: Store slug (e.g., "boynton-beach-east")
             store_name: Optional display name for the store
 
         Returns:
@@ -107,38 +123,36 @@ class GreenDragonDownloader:
 
             display_name = store_name or store_info.name
 
-            # Use synchronous wrapper for the async scraper
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                # Synchronous wrapper
-                async def _scrape():
-                    async with self.scraper_class() as scraper:
-                        return await scraper.scrape_location(store_info)
-                
-                result = loop.run_until_complete(_scrape())
-                products = result.get("products", [])
-
-            finally:
-                loop.close()
+            # Use the sync Sweed POS scraper
+            scraper = self.scraper_class()
+            result = scraper.scrape_store(
+                store=store_info,
+                categories=FL_CATEGORIES,
+                include_coa=self.include_coa,
+                coa_output_dir=self.output_dir,
+                max_products=self.max_products_per_store,
+            )
+            products = result.get("products", [])
 
             return {
                 "dispensary": "green_dragon",
+                "dispensary_name": self.dispensary_name,
                 "store_slug": store_slug,
                 "store_name": display_name,
                 "store_id": store_slug,
-                "state": "FL",
+                "state": store_info.state,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "download_time": datetime.now(timezone.utc).isoformat(),
                 "product_count": len(products),
                 "products": products,
                 "metadata": {
-                    "platform": "Squarespace",
-                    "platform_type": "html_scrape",
-                    "coa_portal": "https://coaportal.com/greendragon",
-                    "downloader_version": "1.0",
+                    "platform": "Sweed POS",
+                    "platform_type": "json_extraction",
+                    "coa_source": "LabDrive (mete.labdrive.net)",
+                    "downloader_version": "2.0",
                     "batch": self.store_batch,
                     "stores_per_batch": self.stores_per_batch,
+                    "include_coa": self.include_coa,
                 }
             }
         except Exception as e:
@@ -204,7 +218,7 @@ class GreenDragonDownloader:
             return None
 
     def download_single_store(self, store_slug: str) -> Optional[Tuple[str, Dict]]:
-        """Download a single store by slug"""
+        """Download a single store by slug."""
         store = next((s for s in self.all_stores if s.slug == store_slug), None)
         if not store:
             logger.error(f"Store {store_slug} not found")
@@ -219,7 +233,7 @@ class GreenDragonDownloader:
             parallel: If True, download stores in parallel; if False, sequential
 
         Returns:
-            List of (store_slug, data) tuples
+            List of (filepath, data) tuples
         """
         results = []
 
@@ -249,7 +263,7 @@ class GreenDragonDownloader:
                 if result:
                     results.append(result)
 
-        logger.info(f"âœ“ Downloaded {len(results)}/{len(self.stores)} stores")
+        logger.info(f"Downloaded {len(results)}/{len(self.stores)} stores")
         return results
 
     def download_all_batches(self, parallel_stores: int = None) -> Dict[int, List[Tuple[str, Dict]]]:
@@ -260,7 +274,7 @@ class GreenDragonDownloader:
             parallel_stores: Override parallel_stores setting
 
         Returns:
-            Dict mapping batch_index -> list of (store_slug, data) tuples
+            Dict mapping batch_index -> list of (filepath, data) tuples
         """
         parallel_stores = parallel_stores or self.parallel_stores
         all_results = {}
@@ -274,6 +288,7 @@ class GreenDragonDownloader:
                 store_batch=batch_idx,
                 stores_per_batch=self.stores_per_batch,
                 parallel_stores=parallel_stores,
+                include_coa=self.include_coa,
             )
             batch_results = downloader.download(parallel=True)
             all_results[batch_idx] = batch_results
