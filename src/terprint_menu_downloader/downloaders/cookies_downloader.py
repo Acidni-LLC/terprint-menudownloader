@@ -25,8 +25,8 @@ class CookiesDownloader:
             "concentrates",     # Concentrates (wax, shatter, rosin, etc.)
             "pre-rolls",        # Pre-Rolls
             "vapes",            # Vape cartridges
-            "edibles",          # Edibles (may have 0 products at times)
             "topicals",         # Topicals (may have 0 products at times)
+            # "edibles" excluded — not processed by Terprint
         ]
         
         # API endpoint template - categories added dynamically

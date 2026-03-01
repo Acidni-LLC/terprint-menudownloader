@@ -116,7 +116,7 @@ def get_trulieve_store_category_configs(store_ids_or_dev_mode=None, category_ids
     2. get_trulieve_store_category_configs(store_ids, category_ids) - uses provided lists directly
     """
     trulieve_config = CONFIG.get("trulieve_settings", {})
-    default_category_ids = trulieve_config.get("category_ids", ["MjA4", "MjM3", "MjA5", "Ng=="])
+    default_category_ids = trulieve_config.get("category_ids", ["MjA4", "MjM3", "MjA5"])  # Edibles (Ng==) excluded
     dev_stores = trulieve_config.get("dev_stores", ["palm_coast", "oakland_park", "port_orange"])
     
     # Determine if called with dev_mode (bool) or store_ids (list)

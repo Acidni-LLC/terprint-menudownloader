@@ -48,7 +48,7 @@ MUV_CATEGORY_IDS = {
     "Flower": 3485,
     "Pre-Rolls": 3486,
     "Accessories": 3487,
-    "Edibles": 3488,
+    # "Edibles": 3488,  — excluded, not processed by Terprint
     "Apparel": 3489,
     "Topicals": 3490,
     "Oral Products": 3491,

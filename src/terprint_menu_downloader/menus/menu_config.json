@@ -16,12 +16,11 @@
     "indent": 2
   },
   "trulieve_settings": {
-    "category_ids": ["MjA4", "MjM3", "MjA5", "Ng=="],
+    "category_ids": ["MjA4", "MjM3", "MjA5"],
     "category_names": {
       "MjA4": "Whole Flower",
-      "MjM3": "Vape Carts", 
-      "MjA5": "Vaporizers",
-      "Ng==": "Concentrates"
+      "MjM3": "Vape Carts",
+      "MjA5": "Vaporizers"
     },
     "dev_stores": ["palm_coast", "oakland_park", "port_orange"],
     "store_ids_csv": "storeid_location_list.csv"

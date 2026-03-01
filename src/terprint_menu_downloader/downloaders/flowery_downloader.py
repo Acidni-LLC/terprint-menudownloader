@@ -199,14 +199,23 @@ class FloweryDownloader:
                 
                 time.sleep(0.2)  # Rate limiting between pages
             
+            # Filter out edibles — Terprint only processes flower, concentrates, and vapes
+            filtered_products = [
+                p for p in all_products
+                if not any("edible" in str(cat).lower() for cat in (p.get("categories") or [p.get("category", "")]))
+            ]
+            edibles_filtered = len(all_products) - len(filtered_products)
+            if edibles_filtered:
+                print(f"  (filtered out {edibles_filtered} edibles product(s))")
+
             result = {
                 "location_id": location_id,
                 "location": location_name,
                 "download_timestamp": datetime.now().isoformat(),
                 "api_url": f"{self.products_api}?location_id={location_id}",
-                "total_products": len(all_products),
-                "product_count": len(all_products),
-                "products": all_products  # Save all products (flower, concentrates, vapes, etc.)
+                "total_products": len(filtered_products),
+                "product_count": len(filtered_products),
+                "products": filtered_products
             }
             
             return result

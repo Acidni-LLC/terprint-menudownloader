@@ -170,7 +170,7 @@ else:
 # Import download modules
 if _RUNNING_AS_PACKAGE:
     try:
-        from .downloaders import MuvDownloader, TrulieveDownloader, SunburnDownloader, CookiesDownloader, FloweryDownloader, CuraleafDownloader, GreenDragonDownloader
+        from .downloaders import MuvDownloader, TrulieveDownloader, SunburnDownloader, CookiesDownloader, FloweryDownloader, CuraleafDownloader, GreenDragonDownloader, SanctuaryDownloader
         MODULAR_DOWNLOADERS_AVAILABLE = True
         logger.info("Modular downloaders imported successfully")
     except ImportError as e:
@@ -179,14 +179,14 @@ if _RUNNING_AS_PACKAGE:
 else:
     try:
         sys.path.insert(0, os.path.join(parent_dir, "Terprint.Python.COADataExtractor"))
-        from downloads import MuvDownloader, TrulieveDownloader, SunburnDownloader, CookiesDownloader, FloweryDownloader, CuraleafDownloader, GreenDragonDownloader
+        from downloads import MuvDownloader, TrulieveDownloader, SunburnDownloader, CookiesDownloader, FloweryDownloader, CuraleafDownloader, GreenDragonDownloader, SanctuaryDownloader
         MODULAR_DOWNLOADERS_AVAILABLE = True
         logger.info("Modular downloaders imported successfully")
     except ImportError as e:
         # Fallback to old location if new location not available
         try:
             sys.path.insert(0, os.path.join(terprint_python_dir, "menumover", "downloads"))
-            from downloads import MuvDownloader, TrulieveDownloader, SunburnDownloader, CookiesDownloader, FloweryDownloader, CuraleafDownloader, GreenDragonDownloader
+            from downloads import MuvDownloader, TrulieveDownloader, SunburnDownloader, CookiesDownloader, FloweryDownloader, CuraleafDownloader, GreenDragonDownloader, SanctuaryDownloader
             MODULAR_DOWNLOADERS_AVAILABLE = True
             logger.info("Modular downloaders imported from fallback location")
         except ImportError as e2:
@@ -409,7 +409,7 @@ class DispensaryOrchestrator:
             # Load Trulieve stores from local menus/storeid_location_list.csv (172 stores)
             # and category IDs from menus/menu_config.json
             trulieve_store_ids = None
-            trulieve_category_ids = ["MjA4", "MjM3", "MjA5", "Ng=="]  # Whole Flower (208), Vape Carts (237), Vaporizers (209), Concentrates (6)
+            trulieve_category_ids = ["MjA4", "MjM3", "MjA5"]  # Whole Flower (208), Vape Carts (237), Vaporizers (209) — Edibles excluded
             
             # Path to the menus folder (sibling to orchestrator.py)
             menus_dir = os.path.join(os.path.dirname(__file__), "menus")
@@ -567,6 +567,31 @@ class DispensaryOrchestrator:
             except Exception as e:
                 logger.warning(f"Green Dragon: Could not initialize downloader: {e}")
 
+            # Sanctuary Medicinals Florida Downloader (HTML scraping via Sweed POS)
+            logger.info("Initializing Sanctuary Medicinals downloader...")
+            try:
+                sanctuary_downloader = SanctuaryDownloader(
+                    output_dir=self.output_dir,
+                    azure_manager=self.azure_manager,
+                    store_batch=getattr(self, 'sanctuary_batch', None),
+                    stores_per_batch=getattr(self, 'sanctuary_stores_per_batch', 5),
+                    parallel_stores=getattr(self, 'sanctuary_parallel_stores', 2)
+                )
+                downloaders['sanctuary'] = {
+                    'name': 'Sanctuary Medicinals',
+                    'enabled': True,
+                    'downloader': sanctuary_downloader
+                }
+                batch_info = f" (batch {getattr(self, 'sanctuary_batch', None)})" if getattr(self, 'sanctuary_batch', None) is not None else " (all stores)"
+                logger.info(f"Sanctuary: Configured to download {sanctuary_downloader.store_count} stores{batch_info}")
+                logger.info(f"Sanctuary: {sanctuary_downloader.total_batches} total batches, {sanctuary_downloader.parallel_stores} parallel downloads")
+                try:
+                    setattr(sanctuary_downloader, 'write_local', not self.in_memory)
+                except Exception:
+                    pass
+            except Exception as e:
+                logger.warning(f"Sanctuary: Could not initialize downloader: {e}")
+
         except Exception as e:
             logger.error(f"Failed to initialize modular downloaders: {e}")
             return {}
@@ -582,7 +607,8 @@ class DispensaryOrchestrator:
             'cookies': 'Cookies Florida',
             'flowery': 'The Flowery',
             'curaleaf': 'Curaleaf',
-            'green_dragon': 'Green Dragon'
+            'green_dragon': 'Green Dragon',
+            'sanctuary': 'Sanctuary Medicinals'
         }
         return dispensary_names.get(dispensary_id, dispensary_id.title())
     
@@ -2094,7 +2120,7 @@ def main():
     parser.add_argument('--no-parallel', action='store_true', help='(Deprecated) Dispensaries are always processed sequentially')
     parser.add_argument('--no-azure', action='store_true', help='Skip Azure upload')
     parser.add_argument('--upload-only', action='store_true', help='Upload existing files only, skip downloading')
-    parser.add_argument('--dispensary', '-d', choices=['muv', 'trulieve', 'sunburn', 'cookies', 'flowery', 'curaleaf', 'green_dragon'], 
+    parser.add_argument('--dispensary', '-d', choices=['muv', 'trulieve', 'sunburn', 'cookies', 'flowery', 'curaleaf', 'green_dragon', 'sanctuary'], 
                        help='Run only specific dispensary')
     parser.add_argument('--list-dispensaries', action='store_true', help='List available dispensaries')
     parser.add_argument('--show-config', action='store_true', help='Display current configuration settings and exit')
