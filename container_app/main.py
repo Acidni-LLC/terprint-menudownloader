@@ -299,36 +299,40 @@ def trigger_batch_processor(dry_run: bool = False, dispensary: str = None, date:
 
 def build_stock_index_from_menus() -> dict:
     """
-    Build stock index from the latest menu downloads.
+    Build stock index v2 from all dispensary menu files + SQL enrichment + genetics.
     Called automatically after each menu download run.
     """
     if not STOCK_INDEXER_AVAILABLE:
         logger.warning("Stock indexer not available - skipping index build")
         return {"success": False, "error": "Stock indexer not available"}
-    
+
     try:
-        logger.info("Building stock index from latest menu data...")
+        logger.info("Building stock index v2 from menu data + SQL + genetics...")
         indexer = StockIndexer()
-        
-        # Try to build from latest batch file first
-        # If no batch files exist, this will return an empty index
-        index = indexer.build_index_from_latest()
-        
-        if index and index.get('metadata', {}).get('total_items', 0) > 0:
+
+        # v2: build_index() scans ALL dispensary menus, enriches with SQL + genetics
+        index = indexer.build_index()
+
+        if index and index.get("metadata", {}).get("total_items", 0) > 0:
             path = indexer.save_index(index)
-            metadata = index['metadata']
-            logger.info(f"Stock index built: {metadata['total_items']} items, {metadata['unique_strains']} strains")
+            metadata = index["metadata"]
+            logger.info(
+                f"Stock index v2 built: {metadata['total_items']} items, "
+                f"{metadata['unique_strains']} strains, "
+                f"{len(metadata.get('dispensaries', {}))} dispensaries"
+            )
             return {
                 "success": True,
-                "total_items": metadata['total_items'],
-                "unique_strains": metadata['unique_strains'],
-                "dispensaries": metadata['dispensaries'],
-                "index_path": path
+                "total_items": metadata["total_items"],
+                "unique_strains": metadata["unique_strains"],
+                "dispensaries": metadata.get("dispensaries", {}),
+                "enrichment": metadata.get("enrichment", {}),
+                "index_path": path,
             }
         else:
-            logger.warning("No items found for stock index - batch files may not exist yet")
-            return {"success": False, "error": "No batch data available yet"}
-            
+            logger.warning("No items found for stock index - menu files may not exist yet")
+            return {"success": False, "error": "No menu data available yet"}
+
     except Exception as e:
         logger.error(f"Failed to build stock index: {e}", exc_info=True)
         return {"success": False, "error": str(e)}

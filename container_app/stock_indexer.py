@@ -1,827 +1,1091 @@
 """
-Stock Index Builder
+Stock Index Builder v2
 
-Builds searchable stock index from SQL database (Batch table).
-Reads enriched product data after COA Processor runs.
+Builds comprehensive, multi-dispensary stock index from menu downloads.
+Enriches with SQL batch data (COA), genetics data, and store locations.
 
-Data Source: Azure SQL Database (terprint.Batch table)
-- Enriched with terpene profiles, cannabinoid percentages
-- Includes pricing, weights, store locations
-- Updated 3x daily after batch processing runs
+Architecture (v2):
+    Menu Files (all dispensaries) → Base stock items
+    + SQL Batch Data → THC/CBD/terpene enrichment
+    + Genetics Data → Strain type, lineage
+    + Location Data → Store coordinates, addresses
+
+Outputs:
+    stock-index/current.json         Full flat index
+    stock-index/by-dispensary/*.json  Per-dispensary files
+    stock-index/by-store/*.json      Per-store files
+    stock-index/summary.json         Lightweight dashboard data
+    stock-index/metadata.json        Build metadata
 
 Copyright (c) 2026 Acidni LLC
 """
 
 import json
+import hashlib
 import logging
 import os
 import re
 from collections import defaultdict
-from dataclasses import dataclass, asdict
-from datetime import datetime, timezone
-from typing import Dict, List, Optional, Set
-import pymssql
+from dataclasses import dataclass, field, asdict
+from datetime import datetime, timezone, timedelta
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
+# =============================================================================
+# Data Models
+# =============================================================================
+
 @dataclass
-class StockItem:
-    """A product in stock with full enriched data from database."""
-    batch_id: str
-    strain: str
-    strain_normalized: str
-    dispensary: str
-    category: str
-    product_name: str
-    
-    # Cannabis data (from COA Processor)
-    thc_percent: Optional[float] = None
-    cbd_percent: Optional[float] = None
-    cbg_percent: Optional[float] = None
-    thca_percent: Optional[float] = None
-    cbda_percent: Optional[float] = None
-    terpenes: Optional[Dict[str, float]] = None
-    terpenes_total: Optional[float] = None
-    
-    # Pricing/availability (from menu data)
-    price: Optional[float] = None
-    weight_grams: Optional[float] = None
+class StoreInfo:
+    """Store location data."""
+    store_id: str = ""
+    store_name: str = ""
+    city: str = ""
+    state: str = "FL"
+    latitude: float | None = None
+    longitude: float | None = None
+    address: str = ""
+
+
+@dataclass
+class Cannabinoids:
+    """Cannabinoid percentages from COA data."""
+    thc_percent: float | None = None
+    cbd_percent: float | None = None
+    cbg_percent: float | None = None
+    thca_percent: float | None = None
+    cbda_percent: float | None = None
+
+
+@dataclass
+class TerpeneProfile:
+    """Terpene analysis data."""
+    total_percent: float | None = None
+    top_3: list[str] = field(default_factory=list)
+    profile: dict[str, float] = field(default_factory=dict)
+
+
+@dataclass
+class GeneticsInfo:
+    """Strain genetics cross-reference."""
+    strain_type: str | None = None
+    parent_1: str | None = None
+    parent_2: str | None = None
+    has_full_genetics: bool = False
+
+
+@dataclass
+class PricingInfo:
+    """Product pricing data."""
+    price: float | None = None
+    weight_grams: float | None = None
+    price_per_gram: float | None = None
+    on_sale: bool = False
+
+
+@dataclass
+class AvailabilityInfo:
+    """Stock availability and freshness."""
     in_stock: bool = True
-    
-    # Location data (for proximity search)
-    store_location: Optional[str] = None  # e.g., "miami", "tampa"
-    store_name: Optional[str] = None      # e.g., "Cookies Miami"
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    address: Optional[str] = None
-    
-    # Metadata
-    last_seen: str = None
-    source: str = "database"  # "database" or "blob_storage"
-    source_file: Optional[str] = None  # Blob path if from storage
+    last_seen: str = ""
+    freshness_hours: float | None = None
+    confidence: str = "medium"
 
 
 @dataclass
-class IndexMetadata:
-    """Metadata about the stock index."""
-    build_date: str
-    total_items: int
-    dispensaries: List[str]
-    unique_strains: int
-    batch_files_processed: int
-    source_date_range: Dict[str, str]
+class StockItemV2:
+    """A product in stock — v2 schema with full enrichment."""
+    id: str = ""
+    strain: str = ""
+    strain_slug: str = ""
+    product_name: str = ""
+    dispensary: str = ""
+    dispensary_name: str = ""
+    category: str = ""
+    batch_id: str = ""
+
+    store: StoreInfo = field(default_factory=StoreInfo)
+    cannabinoids: Cannabinoids = field(default_factory=Cannabinoids)
+    terpenes: TerpeneProfile = field(default_factory=TerpeneProfile)
+    genetics: GeneticsInfo = field(default_factory=GeneticsInfo)
+    pricing: PricingInfo = field(default_factory=PricingInfo)
+    availability: AvailabilityInfo = field(default_factory=AvailabilityInfo)
+
+    links: dict[str, str] = field(default_factory=dict)
+    source: str = "menu"
+    source_file: str = ""
 
 
-class StockIndexer:
+# Dispensary display name mapping
+DISPENSARY_NAMES: dict[str, str] = {
+    "trulieve": "Trulieve",
+    "cookies": "Cookies",
+    "muv": "MÜV",
+    "flowery": "Flowery",
+    "curaleaf": "Curaleaf",
+    "sunnyside": "Sunnyside",
+    "sunburn": "Sunburn",
+}
+
+# All dispensaries we track
+EXPECTED_DISPENSARIES = list(DISPENSARY_NAMES.keys())
+
+
+class StockIndexerV2:
     """
-    Builds searchable stock index from SQL database.
-    
-    Data Source: Azure SQL Database (terprint.Batch table)
-    - Enriched with COA data (terpenes, cannabinoids)
-    - Includes pricing, weights, locations
-    - Only returns in-stock items
-    
-    Usage:
-        indexer = StockIndexer()
-        
-        # Build from current database state
-        index = indexer.build_index_from_database()
-        
-        # Get stock for specific dispensary
-        cookies_stock = indexer.get_dispensary_stock('cookies')
-        
-        # Search by strain name
-        results = indexer.search_by_strain('blue dream', lat=28.5, lng=-81.3)
+    Builds v2 stock index from blob menu files, enriched with SQL + genetics.
+
+    Strategy:
+        1. Scan ALL dispensary menu files from blob storage (today, then yesterday)
+        2. Merge enrichment from SQL batch data (optional — if DB reachable)
+        3. Cross-reference genetics index for strain type/lineage
+        4. Apply store location data from dispensary_locations.json
+        5. Output: current.json + partitioned files + summary.json
     """
-    
-    # SQL Connection (use pymssql for Azure Functions Linux)
+
     SQL_SERVER = "acidni-sql.database.windows.net"
     SQL_DATABASE = "terprint"
     SQL_USER = "adm"
-    SQL_PASSWORD = "sql1234%"  # Default - override with environment variable
-    
+    SQL_PASSWORD = "sql1234%"
+
     def __init__(self):
-        # Load SQL password from environment (override default)
-        self.sql_password = os.environ.get('SQL_PASSWORD', self.SQL_PASSWORD)
-        
-        # Blob storage configuration for saving index
-        self.INDEX_PREFIX = "stock-index"  # Blob prefix for storing indexes
-        
-        # Load location reference data
+        self.sql_password = os.environ.get("SQL_PASSWORD", self.SQL_PASSWORD)
+        self.INDEX_PREFIX = "stock-index"
         self.locations = self._load_locations()
-        
-        # Initialize blob container (lazy-loaded)
-        self.container = None
-    
+        self._container = None
+        self._genetics_cache: dict[str, dict] | None = None
+
+    # =========================================================================
+    # Blob Storage
+    # =========================================================================
+
     def _get_blob_container(self):
-        """Get blob container for storing stock index."""
-        if self.container is not None:
-            return self.container
-        
+        """Get jsonfiles blob container."""
+        if self._container is not None:
+            return self._container
         try:
             from azure.storage.blob import BlobServiceClient
             from azure.identity import DefaultAzureCredential
-            
-            # Get blob service client
-            account_url = "https://stterprintsharedgen2.blob.core.windows.net"
+
             credential = DefaultAzureCredential()
-            blob_service_client = BlobServiceClient(account_url=account_url, credential=credential)
-            
-            # Get container
-            self.container = blob_service_client.get_container_client("jsonfiles")
-            return self.container
+            svc = BlobServiceClient(
+                account_url="https://stterprintsharedgen2.blob.core.windows.net",
+                credential=credential,
+            )
+            self._container = svc.get_container_client("jsonfiles")
+            return self._container
         except Exception as e:
-            logger.error(f"Failed to initialize blob container: {e}")
+            logger.error(f"Failed to init blob container: {e}")
             return None
-    
-    def _load_locations(self) -> Dict:
-        """Load dispensary location coordinates from JSON."""
-        import os
-        locations_path = os.path.join(os.path.dirname(__file__), 'dispensary_locations.json')
+
+    def _get_genetics_container(self):
+        """Get genetics-data blob container."""
         try:
-            with open(locations_path, 'r') as f:
+            from azure.storage.blob import BlobServiceClient
+            from azure.identity import DefaultAzureCredential
+
+            credential = DefaultAzureCredential()
+            svc = BlobServiceClient(
+                account_url="https://stterprintsharedgen2.blob.core.windows.net",
+                credential=credential,
+            )
+            return svc.get_container_client("genetics-data")
+        except Exception as e:
+            logger.warning(f"Failed to init genetics container: {e}")
+            return None
+
+    # =========================================================================
+    # Location Data
+    # =========================================================================
+
+    def _load_locations(self) -> dict:
+        """Load dispensary_locations.json."""
+        path = os.path.join(os.path.dirname(__file__), "dispensary_locations.json")
+        try:
+            with open(path, "r") as f:
                 return json.load(f)
         except Exception as e:
             logger.warning(f"Could not load location data: {e}")
             return {}
-    
-    def _get_db_connection(self):
-        """Get database connection using pymssql."""
+
+    def _resolve_store(self, dispensary: str, raw_store: str) -> StoreInfo:
+        """Resolve a raw store identifier to full StoreInfo with coordinates."""
+        disp_locations = self.locations.get(dispensary, {})
+        normalized = raw_store.lower().replace(" ", "-").replace("_", "-") if raw_store else ""
+
+        # Try exact match, then normalized
+        loc = disp_locations.get(normalized) or disp_locations.get(raw_store, {})
+
+        city = raw_store.replace("-", " ").replace("_", " ").title() if raw_store else ""
+
+        return StoreInfo(
+            store_id=f"{dispensary}-{normalized}" if normalized else dispensary,
+            store_name=f"{DISPENSARY_NAMES.get(dispensary, dispensary)} {city}".strip(),
+            city=city,
+            state="FL",
+            latitude=loc.get("lat"),
+            longitude=loc.get("lng"),
+            address=loc.get("address", ""),
+        )
+
+    # =========================================================================
+    # Genetics Data
+    # =========================================================================
+
+    def _load_genetics_index(self) -> dict[str, dict]:
+        """Load genetics index from blob storage. Cached after first call."""
+        if self._genetics_cache is not None:
+            return self._genetics_cache
+
+        self._genetics_cache = {}
         try:
-            conn = pymssql.connect(
-                server=self.SQL_SERVER,
-                user=self.SQL_USER,
-                password=self.sql_password,
-                database=self.SQL_DATABASE,
-                port=1433,
-                timeout=30
-            )
-            return conn
+            container = self._get_genetics_container()
+            if not container:
+                return self._genetics_cache
+
+            blob = container.get_blob_client("index/strains-index.json")
+            content = blob.download_blob().readall()
+            data = json.loads(content)
+            self._genetics_cache = data.get("strains", {})
+            logger.info(f"Loaded genetics index: {len(self._genetics_cache)} strains")
         except Exception as e:
-            logger.error(f"Database connection failed: {e}")
-            raise
-    
-    def build_index_from_database(self, dispensary: str = None, max_age_days: int = 7) -> Dict:
+            logger.warning(f"Could not load genetics index: {e}")
+
+        return self._genetics_cache
+
+    def _get_genetics_for_strain(self, strain_slug: str) -> GeneticsInfo:
+        """Look up genetics data for a strain slug."""
+        index = self._load_genetics_index()
+        info = index.get(strain_slug)
+        if not info:
+            return GeneticsInfo()
+
+        return GeneticsInfo(
+            strain_type=info.get("type"),
+            parent_1=None,  # Index only has basic info; full data in partitions
+            parent_2=None,
+            has_full_genetics=info.get("has_lineage", False),
+        )
+
+    def _load_genetics_partition(self, partition_key: str) -> dict[str, dict]:
+        """Load a single genetics partition for full strain data."""
+        try:
+            container = self._get_genetics_container()
+            if not container:
+                return {}
+            blob = container.get_blob_client(f"partitions/{partition_key}.json")
+            content = blob.download_blob().readall()
+            data = json.loads(content)
+            result = {}
+            for strain in data.get("strains", []):
+                slug = strain.get("strain_slug", "")
+                if slug:
+                    result[slug] = strain
+            return result
+        except Exception:
+            return {}
+
+    def _enrich_genetics(self, item: StockItemV2) -> None:
+        """Enrich a stock item with genetics data."""
+        slug = item.strain_slug
+        if not slug:
+            return
+
+        index = self._load_genetics_index()
+        info = index.get(slug)
+        if not info:
+            return
+
+        item.genetics.strain_type = info.get("type")
+        item.genetics.has_full_genetics = info.get("has_lineage", False)
+
+        # Load partition for parent data if available
+        if info.get("has_lineage"):
+            partition_key = info.get("partition", "other")
+            partition_data = self._load_genetics_partition(partition_key)
+            full = partition_data.get(slug)
+            if full:
+                item.genetics.parent_1 = full.get("parent_1")
+                item.genetics.parent_2 = full.get("parent_2")
+
+    # =========================================================================
+    # SQL Enrichment
+    # =========================================================================
+
+    def _get_db_connection(self):
+        """Get SQL database connection."""
+        import pymssql
+
+        return pymssql.connect(
+            server=self.SQL_SERVER,
+            user=self.SQL_USER,
+            password=self.sql_password,
+            database=self.SQL_DATABASE,
+            port=1433,
+            timeout=30,
+        )
+
+    def _load_sql_enrichment(self, max_age_days: int = 7) -> dict[str, dict]:
         """
-        Build stock index from SQL database.
-        
-        Args:
-            dispensary: Optional - filter by specific dispensary
-            max_age_days: Only include items seen in last N days (default: 7)
-        
-        Returns:
-            Complete stock index dictionary with enriched product data
+        Load enrichment data from SQL Batch table.
+        Returns dict keyed by (dispensary, strain_normalized) → enrichment data.
         """
-        logger.info(f"Building stock index from database (dispensary={dispensary}, max_age_days={max_age_days})...")
-        
+        enrichment: dict[str, dict] = {}
         try:
             conn = self._get_db_connection()
             cursor = conn.cursor(as_dict=True)
-            
-            # Query enriched batch data from database
-            # Note: Using %s placeholders for pymssql (not ? like pyodbc)
+
             query = """
-            SELECT 
-                BatchId,
-                ProductName,
-                Strain,
-                Dispensary,
-                Category,
-                ThcPercent,
-                CbdPercent,
-                CbgPercent,
-                ThcaPercent,
-                CbdaPercent,
-                Terpenes,
-                TerpenesTotal,
-                Price,
-                WeightGrams,
-                InStock,
-                StoreLocation,
-                StoreName,
-                Latitude,
-                Longitude,
-                Address,
-                LastSeen,
-                ProcessedDate
+            SELECT
+                BatchId, ProductName, Strain, Dispensary, Category,
+                ThcPercent, CbdPercent, CbgPercent, ThcaPercent, CbdaPercent,
+                Terpenes, TerpenesTotal,
+                Price, WeightGrams,
+                StoreLocation, StoreName, Latitude, Longitude, Address,
+                LastSeen, ProcessedDate
             FROM Batch
             WHERE InStock = 1
                 AND LastSeen >= DATEADD(day, %s, GETDATE())
+            ORDER BY LastSeen DESC
             """
-            
-            params = [-max_age_days]
-            
-            if dispensary:
-                query += " AND LOWER(Dispensary) = %s"
-                params.append(dispensary.lower())
-            
-            query += " ORDER BY LastSeen DESC"
-            
-            cursor.execute(query, tuple(params))
+
+            cursor.execute(query, (-max_age_days,))
             rows = cursor.fetchall()
-            
-            logger.info(f"Retrieved {len(rows)} in-stock items from database")
-            
-            # Build stock items
-            stock_items = []
-            dispensaries_set = set()
-            strains_set = set()
-            
+            logger.info(f"SQL enrichment: {len(rows)} in-stock rows from database")
+
             for row in rows:
-                # Parse terpenes JSON if present
-                terpenes_dict = None
-                if row.get('Terpenes'):
-                    try:
-                        terpenes_dict = json.loads(row['Terpenes'])
-                    except:
-                        logger.warning(f"Failed to parse terpenes for {row.get('BatchId')}")
-                
-                # Create stock item
-                item = StockItem(
-                    batch_id=row.get('BatchId', ''),
-                    strain=row.get('Strain', 'Unknown'),
-                    strain_normalized=self.normalize_strain_name(row.get('Strain', '')),
-                    dispensary=row.get('Dispensary', '').lower(),
-                    category=row.get('Category', ''),
-                    product_name=row.get('ProductName', ''),
-                    thc_percent=float(row['ThcPercent']) if row.get('ThcPercent') else None,
-                    cbd_percent=float(row['CbdPercent']) if row.get('CbdPercent') else None,
-                    cbg_percent=float(row['CbgPercent']) if row.get('CbgPercent') else None,
-                    thca_percent=float(row['ThcaPercent']) if row.get('ThcaPercent') else None,
-                    cbda_percent=float(row['CbdaPercent']) if row.get('CbdaPercent') else None,
-                    terpenes=terpenes_dict,
-                    terpenes_total=float(row['TerpenesTotal']) if row.get('TerpenesTotal') else None,
-                    price=float(row['Price']) if row.get('Price') else None,
-                    weight_grams=float(row['WeightGrams']) if row.get('WeightGrams') else None,
-                    in_stock=True,
-                    store_location=row.get('StoreLocation'),
-                    store_name=row.get('StoreName'),
-                    latitude=float(row['Latitude']) if row.get('Latitude') else None,
-                    longitude=float(row['Longitude']) if row.get('Longitude') else None,
-                    address=row.get('Address'),
-                    last_seen=row.get('LastSeen').isoformat() if row.get('LastSeen') else None,
-                    source="database"
-                )
-                
-                stock_items.append(item)
-                dispensaries_set.add(item.dispensary)
-                strains_set.add(item.strain_normalized)
-            
+                strain = row.get("Strain", "")
+                dispensary = (row.get("Dispensary") or "").lower()
+                normalized = self.normalize_strain_name(strain)
+                key = f"{dispensary}:{normalized}"
+
+                # Keep first (most recent) row per key
+                if key not in enrichment:
+                    enrichment[key] = row
+
             cursor.close()
             conn.close()
-            
-            # Build index structure
-            index = {
-                "metadata": {
-                    "build_date": datetime.now(timezone.utc).isoformat(),
-                    "total_items": len(stock_items),
-                    "dispensaries": sorted(list(dispensaries_set)),
-                    "unique_strains": len(strains_set),
-                    "source": "database",
-                    "max_age_days": max_age_days
-                },
-                "items": [asdict(item) for item in stock_items],
-                "by_dispensary": self._group_by_dispensary(stock_items),
-                "by_strain": self._group_by_strain(stock_items)
-            }
-            
-            logger.info(f"Stock index built: {len(stock_items)} items, {len(strains_set)} unique strains")
-            return index
-            
+            logger.info(f"SQL enrichment loaded: {len(enrichment)} unique items")
         except Exception as e:
-            logger.error(f"Failed to build index from database: {e}")
-            return self._empty_index()
-    
-    def _get_location_for_item(self, dispensary: str, store_location: str) -> Dict:
-        """Get lat/lng/address for a store location."""
-        if not store_location:
-            return {'lat': None, 'lng': None, 'address': None}
-        
-        dispensary_locations = self.locations.get(dispensary.lower(), {})
-        # Normalize store_location (remove special characters, lowercase)
-        normalized_location = store_location.lower().replace(' ', '-').replace('_', '-')
-        
-        # Try exact match first
-        location_data = dispensary_locations.get(normalized_location)
-        if location_data:
-            return location_data
-        
-        # Try without normalization
-        location_data = dispensary_locations.get(store_location)
-        if location_data:
-            return location_data
-        
-        return {'lat': None, 'lng': None, 'address': None}
-    
-    @staticmethod
-    def calculate_distance(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
-        """
-        Calculate distance in miles using Haversine formula.
-        
-        Args:
-            lat1, lng1: First coordinate pair
-            lat2, lng2: Second coordinate pair
-        
-        Returns:
-            Distance in miles
-        """
-        import math
-        R = 3959  # Earth's radius in miles
-        lat1_rad = math.radians(lat1)
-        lat2_rad = math.radians(lat2)
-        dlat = math.radians(lat2 - lat1)
-        dlng = math.radians(lng2 - lng1)
-        a = math.sin(dlat/2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlng/2)**2
-        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-        return R * c
-    
-    def normalize_strain_name(self, strain: str) -> str:
-        """
-        Normalize strain name for consistent indexing.
-        
-        Examples:
-            'Blue Dream' -> 'bluedream'
-            'OG Kush' -> 'ogkush'
-            'Sour Diesel #4' -> 'sourdiesel4'
-        """
-        if not strain:
-            return "unknown"
-        
-        # Lowercase
-        name = strain.lower()
-        # Remove special chars (keep letters, numbers, spaces)
-        name = re.sub(r'[^a-z0-9\s]', '', name)
-        # Remove extra whitespace
-        name = re.sub(r'\s+', '', name)
-        return name
-    
-    def build_index_from_date(self, date_str: str) -> Dict:
-        """
-        Build stock index from batch files for a specific date.
-        
-        Args:
-            date_str: Date in YYYYMMDD format
-        
-        Returns:
-            Complete stock index dictionary
-        """
-        logger.info(f"Building stock index for {date_str}...")
+            logger.warning(f"SQL enrichment failed (will use menu data only): {e}")
 
-        # Initialize blob container
+        return enrichment
+
+    def _apply_sql_enrichment(self, item: StockItemV2, sql_row: dict) -> None:
+        """Apply SQL batch data to a stock item."""
+        item.source = "database+menu"
+        item.batch_id = sql_row.get("BatchId") or item.batch_id
+
+        # Cannabinoids
+        item.cannabinoids.thc_percent = _safe_float(sql_row.get("ThcPercent")) or item.cannabinoids.thc_percent
+        item.cannabinoids.cbd_percent = _safe_float(sql_row.get("CbdPercent")) or item.cannabinoids.cbd_percent
+        item.cannabinoids.cbg_percent = _safe_float(sql_row.get("CbgPercent"))
+        item.cannabinoids.thca_percent = _safe_float(sql_row.get("ThcaPercent"))
+        item.cannabinoids.cbda_percent = _safe_float(sql_row.get("CbdaPercent"))
+
+        # Terpenes
+        terpenes_raw = sql_row.get("Terpenes")
+        if terpenes_raw:
+            try:
+                profile = json.loads(terpenes_raw) if isinstance(terpenes_raw, str) else terpenes_raw
+                if isinstance(profile, dict):
+                    item.terpenes.profile = profile
+                    sorted_terps = sorted(profile.items(), key=lambda x: x[1], reverse=True)
+                    item.terpenes.top_3 = [t[0] for t in sorted_terps[:3]]
+                    item.terpenes.total_percent = _safe_float(sql_row.get("TerpenesTotal"))
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+        # Pricing (prefer SQL if available)
+        sql_price = _safe_float(sql_row.get("Price"))
+        sql_weight = _safe_float(sql_row.get("WeightGrams"))
+        if sql_price:
+            item.pricing.price = sql_price
+        if sql_weight:
+            item.pricing.weight_grams = sql_weight
+        if item.pricing.price and item.pricing.weight_grams and item.pricing.weight_grams > 0:
+            item.pricing.price_per_gram = round(item.pricing.price / item.pricing.weight_grams, 2)
+
+        # Store location from SQL (may have better data)
+        sql_store = sql_row.get("StoreLocation")
+        if sql_store:
+            resolved = self._resolve_store(item.dispensary, sql_store)
+            # Only override if SQL has coordinates and current doesn't
+            if resolved.latitude and not item.store.latitude:
+                item.store = resolved
+
+        # Availability
+        last_seen = sql_row.get("LastSeen")
+        if last_seen:
+            try:
+                if hasattr(last_seen, "isoformat"):
+                    item.availability.last_seen = last_seen.isoformat()
+                else:
+                    item.availability.last_seen = str(last_seen)
+                item.availability.confidence = "high"
+            except Exception:
+                pass
+
+    # =========================================================================
+    # Menu File Processing
+    # =========================================================================
+
+    def _find_latest_menu_blobs(self, dispensary: str, max_days_back: int = 3) -> list:
+        """Find the most recent menu blobs for a dispensary."""
         container = self._get_blob_container()
         if not container:
-            logger.error("Cannot build index - blob container not available")
-            return self._empty_index()
-
-        # Find all batch files for this date
-        prefix = f"batches/consolidated_{date_str}"
-        batch_blobs = list(container.list_blobs(name_starts_with=prefix))
-        
-        if not batch_blobs:
-            logger.warning(f"No batch files found for {date_str}")
-            return self._empty_index()
-        
-        logger.info(f"Found {len(batch_blobs)} batch file(s)")
-        
-        # Process each batch file
-        all_items: List[StockItem] = []
-        for blob in batch_blobs:
-            items = self._process_batch_file(blob.name)
-            all_items.extend(items)
-        
-        # Build index structures
-        return self._build_index_from_items(all_items, [blob.name for blob in batch_blobs])
-    
-    def build_index_from_latest(self) -> Dict:
-        """Build stock index from the most recent consolidated batch file, plus menu files for missing dispensaries."""
-        logger.info("Finding latest batch file...")
-
-        # CRITICAL: Initialize blob container first
-        container = self._get_blob_container()
-        if not container:
-            logger.error("Cannot build index - blob container not available")
-            return self._empty_index()
-
-        # Known dispensaries we expect to have data for
-        expected_dispensaries = {"trulieve", "muv", "flowery", "curaleaf", "cookies", "sunnyside", "sunburn"}
-
-        # List all consolidated batch files
-        batch_blobs = list(container.list_blobs(name_starts_with="batches/consolidated_"))
-        
-        if not batch_blobs:
-            logger.warning("No batch files found, trying to build from menu files...")
-            return self.build_index_from_menus()
-        
-        # Sort by name (which includes date) and get latest
-        batch_blobs.sort(key=lambda b: b.name, reverse=True)
-        latest_blob = batch_blobs[0]
-        
-        logger.info(f"Processing latest batch file: {latest_blob.name}")
-        
-        # Process the batch file
-        items = self._process_batch_file(latest_blob.name)
-        source_files = [latest_blob.name]
-        
-        # Check which dispensaries are in the batch data
-        dispensaries_in_batch = {item.dispensary.lower() for item in items}
-        missing_dispensaries = expected_dispensaries - dispensaries_in_batch
-        
-        if missing_dispensaries:
-            logger.info(f"Dispensaries missing from batch: {missing_dispensaries}. Checking menu files...")
-            
-            # Try to fill in missing dispensaries from menu files
-            for dispensary in missing_dispensaries:
-                menu_items = self._get_latest_menu_items(dispensary)
-                if menu_items:
-                    items.extend(menu_items)
-                    logger.info(f"Added {len(menu_items)} items from {dispensary} menu files")
-        
-        # Build index
-        return self._build_index_from_items(items, source_files)
-    
-    def _get_latest_menu_items(self, dispensary: str, max_days_back: int = 30) -> List[StockItem]:
-        """Get items from the most recent menu file for a dispensary, looking back up to max_days_back days."""
-        from datetime import timedelta
-        
-        # Ensure container is initialized
-        container = self._get_blob_container()
-        if not container:
-            logger.error("Cannot get menu items - blob container not available")
             return []
 
         for days_back in range(max_days_back):
             check_date = datetime.now(timezone.utc) - timedelta(days=days_back)
             date_str = check_date.strftime("%Y/%m/%d")
             prefix = f"dispensaries/{dispensary}/{date_str}/"
-            
-            menu_blobs = list(container.list_blobs(name_starts_with=prefix))
-            
-            if menu_blobs:
-                # Get the latest file
-                menu_blobs.sort(key=lambda b: b.name, reverse=True)
-                latest_menu = menu_blobs[0]
-                
-                logger.info(f"Found menu file for {dispensary}: {latest_menu.name} ({days_back} days old)")
-                return self._process_menu_file(latest_menu.name, dispensary)
-        
-        logger.warning(f"No menu files found for {dispensary} in last {max_days_back} days")
+
+            blobs = list(container.list_blobs(name_starts_with=prefix))
+            if blobs:
+                blobs.sort(key=lambda b: b.name, reverse=True)
+                logger.info(f"Found {len(blobs)} menu blobs for {dispensary} ({days_back}d ago)")
+                return blobs
+
+        logger.warning(f"No menu files for {dispensary} in last {max_days_back} days")
         return []
-    
-    def build_index_from_menus(self) -> Dict:
-        """Build stock index directly from raw menu files (fallback if no batch files)."""
-        logger.info("Building stock index from menu files...")
 
-        # Initialize container first
-        container = self._get_blob_container()
-        if not container:
-            logger.error("Cannot build index from menus - blob container not available")
-            return self._empty_index()
-
-        # Get today's date
-        today = datetime.now(timezone.utc).strftime("%Y/%m/%d")
-        
-        # Known dispensary folders
-        dispensaries = ["trulieve", "muv", "flowery", "curaleaf", "cookies", "sunnyside", "sunburn"]
-        
-        all_items: List[StockItem] = []
-        source_files: List[str] = []
-        
-        for dispensary in dispensaries:
-            # Look for today's menu files
-            prefix = f"dispensaries/{dispensary}/{today}/"
-            menu_blobs = list(container.list_blobs(name_starts_with=prefix))
-            
-            if not menu_blobs:
-                # Try yesterday
-                from datetime import timedelta
-                yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y/%m/%d")
-                prefix = f"dispensaries/{dispensary}/{yesterday}/"
-                menu_blobs = list(container.list_blobs(name_starts_with=prefix))
-            
-            if menu_blobs:
-                # Get the latest file for this dispensary
-                menu_blobs.sort(key=lambda b: b.name, reverse=True)
-                latest_menu = menu_blobs[0]
-                
-                logger.info(f"Processing menu for {dispensary}: {latest_menu.name}")
-                items = self._process_menu_file(latest_menu.name, dispensary)
-                all_items.extend(items)
-                source_files.append(latest_menu.name)
-        
-        if not all_items:
-            logger.warning("No menu files found")
-            return self._empty_index()
-        
-        return self._build_index_from_items(all_items, source_files)
-    
-    def _process_menu_file(self, blob_name: str, dispensary: str) -> List[StockItem]:
-        """Process a raw menu file and extract stock items."""
+    def _process_menu_blob(self, blob_name: str, dispensary: str) -> list[StockItemV2]:
+        """Process a single menu JSON file into StockItemV2 objects."""
         try:
             container = self._get_blob_container()
             if not container:
-                logger.error("Cannot process menu file - blob container not available")
                 return []
+
             blob_client = container.get_blob_client(blob_name)
             content = blob_client.download_blob().readall()
             data = json.loads(content)
-            
+
+            products = self._extract_products(data)
             items = []
-            
-            # Handle different menu formats
-            products = []
-            
-            # Common product array locations
-            if isinstance(data, list):
-                products = data
-            elif 'products' in data:
-                products = data['products']
-            elif 'data' in data:
-                if isinstance(data['data'], list):
-                    products = data['data']
-                elif 'products' in data['data']:
-                    products = data['data']['products']
-            elif 'items' in data:
-                products = data['items']
-            elif 'menu' in data:
-                products = data['menu']
-            
+            now_iso = datetime.now(timezone.utc).isoformat()
+
+            # Determine store from blob path if possible
+            # Pattern: dispensaries/{dispensary}/{YYYY}/{MM}/{DD}/{store_or_file}.json
+            path_parts = blob_name.split("/")
+            raw_store = ""
+            if len(path_parts) >= 6:
+                filename = path_parts[-1].replace(".json", "")
+                # If filename looks like a store name (not a timestamp)
+                if not filename.replace("-", "").replace("_", "").isdigit():
+                    raw_store = filename
+
+            store = self._resolve_store(dispensary, raw_store)
+
             for product in products:
                 if not isinstance(product, dict):
                     continue
-                
-                # Extract strain name (various field names)
-                strain = (
-                    product.get('strain') or 
-                    product.get('strainName') or 
-                    product.get('strain_name') or
-                    product.get('name') or 
-                    product.get('productName') or
-                    product.get('title') or
-                    'Unknown'
-                )
-                
-                # Extract batch number
-                batch_id = (
-                    product.get('batch_number') or
-                    product.get('batchNumber') or
-                    product.get('batchId') or
-                    product.get('batch_id') or
-                    product.get('sku') or
-                    product.get('id') or
-                    'unknown'
-                )
-                
-                # Extract category
-                category = (
-                    product.get('category') or
-                    product.get('productCategory') or
-                    product.get('product_category') or
-                    product.get('type') or
-                    'unknown'
-                )
-                
-                # Extract THC/CBD
-                thc = product.get('thc') or product.get('thcPercent') or product.get('thc_percent')
-                cbd = product.get('cbd') or product.get('cbdPercent') or product.get('cbd_percent')
-                
-                # Try to convert to float
-                try:
-                    thc = float(thc) if thc else None
-                except (ValueError, TypeError):
-                    thc = None
-                try:
-                    cbd = float(cbd) if cbd else None
-                except (ValueError, TypeError):
-                    cbd = None
-                
-                item = StockItem(
-                    batch_id=str(batch_id),
+
+                strain = self._extract_field(product, [
+                    "strain", "strainName", "strain_name", "name", "productName", "title"
+                ]) or "Unknown"
+
+                batch_id = self._extract_field(product, [
+                    "batch_number", "batchNumber", "batchId", "batch_id", "sku", "id"
+                ]) or "unknown"
+
+                category = self._extract_field(product, [
+                    "category", "productCategory", "product_category", "type"
+                ]) or "unknown"
+
+                product_name = self._extract_field(product, [
+                    "name", "productName", "product_name", "title"
+                ]) or strain
+
+                strain_slug = self.normalize_strain_name(strain)
+                item_id = hashlib.md5(
+                    f"{dispensary}:{store.store_id}:{strain_slug}:{batch_id}".encode()
+                ).hexdigest()[:12]
+
+                # Extract basic cannabinoid/price data from menu
+                thc = _safe_float(product.get("thc") or product.get("thcPercent") or product.get("thc_percent"))
+                cbd = _safe_float(product.get("cbd") or product.get("cbdPercent") or product.get("cbd_percent"))
+                price = _safe_float(product.get("price"))
+                weight = _safe_float(product.get("weight") or product.get("weightGrams") or product.get("weight_grams"))
+
+                # Extract terpene profile from menu if available
+                terpene_profile = {}
+                menu_terpenes = product.get("terpenes")
+                if isinstance(menu_terpenes, dict):
+                    terpene_profile = {k: _safe_float(v) for k, v in menu_terpenes.items() if _safe_float(v) is not None}
+
+                strain_type = product.get("strain_type") or product.get("strainType") or None
+                if strain_type:
+                    strain_type = strain_type.lower()
+
+                ppg = None
+                if price and weight and weight > 0:
+                    ppg = round(price / weight, 2)
+
+                item = StockItemV2(
+                    id=item_id,
                     strain=strain,
-                    strain_normalized=self.normalize_strain_name(strain),
+                    strain_slug=strain_slug,
+                    product_name=product_name,
                     dispensary=dispensary,
-                    category=str(category) if category else 'unknown',
-                    product_name=product.get('name') or strain,
-                    thc_percent=thc,
-                    cbd_percent=cbd,
-                    terpenes=product.get('terpenes'),
-                    price=product.get('price'),
-                    last_seen=datetime.now(timezone.utc).isoformat(),
-                    source_file=blob_name
+                    dispensary_name=DISPENSARY_NAMES.get(dispensary, dispensary.title()),
+                    category=self._normalize_category(str(category)),
+                    batch_id=str(batch_id),
+                    store=store,
+                    cannabinoids=Cannabinoids(thc_percent=thc, cbd_percent=cbd),
+                    terpenes=TerpeneProfile(
+                        profile=terpene_profile,
+                        top_3=sorted(terpene_profile, key=terpene_profile.get, reverse=True)[:3] if terpene_profile else [],
+                    ),
+                    genetics=GeneticsInfo(strain_type=strain_type),
+                    pricing=PricingInfo(price=price, weight_grams=weight, price_per_gram=ppg),
+                    availability=AvailabilityInfo(
+                        in_stock=True,
+                        last_seen=now_iso,
+                        confidence="medium",
+                    ),
+                    source="menu",
+                    source_file=blob_name,
                 )
-                
+
+                # Generate links
+                item.links = {
+                    "terprint_web": f"https://terprint.acidni.net/strains/{strain_slug}",
+                    "dispensary_page": f"https://terprint.acidni.net/dispensaries/{dispensary}",
+                }
+                if batch_id and batch_id != "unknown":
+                    item.links["batch_detail"] = f"https://terprint.acidni.net/batches/{batch_id}"
+
                 items.append(item)
-            
+
             logger.info(f"Extracted {len(items)} items from {blob_name}")
             return items
-            
+
         except Exception as e:
             logger.error(f"Error processing menu file {blob_name}: {e}")
             return []
-    
-    def _process_batch_file(self, blob_name: str) -> List[StockItem]:
-        """Process a single batch file and extract stock items."""
-        container = self._get_blob_container()
-        if not container:
-            logger.error("Cannot process batch file - blob container not available")
-            return []
-        blob_client = container.get_blob_client(blob_name)
-        content = blob_client.download_blob().readall()
-        data = json.loads(content)
-        
-        items = []
-        
-        # Process each batch in the file
-        for batch in data.get('batches', []):
-            dispensary = batch.get('dispensary', 'unknown')
-            
-            # Extract strain name - batch files use 'strain' field
-            # Also check 'strain_name' for compatibility
-            strain = (
-                batch.get('strain') or 
-                batch.get('strain_name') or 
-                batch.get('product_name') or 
-                batch.get('name', 'Unknown')
-            )
-            
-            # Extract batch ID - can be batch_code, batch_number, or batch_name
-            batch_id = (
-                batch.get('batch_code') or
-                batch.get('batch_number') or
-                batch.get('batch_name') or
-                'unknown'
-            )
-            
-            # Get category from product_type or category field
-            category = batch.get('category') or batch.get('product_type') or 'unknown'
-            
-            item = StockItem(
-                batch_id=batch_id,
-                strain=strain,
-                strain_normalized=self.normalize_strain_name(strain),
-                dispensary=dispensary,
-                category=category,
-                product_name=batch.get('product_name') or batch.get('name') or strain,
-                thc_percent=batch.get('thc_percent'),
-                cbd_percent=batch.get('cbd_percent'),
-                terpenes=batch.get('terpenes'),
-                last_seen=batch.get('last_updated') or datetime.now(timezone.utc).isoformat(),
-                source_file=blob_name
-            )
-            
-            items.append(item)
-        
-        logger.info(f"Extracted {len(items)} items from {blob_name}")
-        return items
-    
-    def _build_index_from_items(self, items: List[StockItem], source_files: List[str]) -> Dict:
-        """Build complete index structure from stock items."""
-        
-        # By strain (normalized)
-        by_strain: Dict[str, List[StockItem]] = defaultdict(list)
+
+    @staticmethod
+    def _extract_products(data: Any) -> list:
+        """Extract product array from various menu JSON formats."""
+        if isinstance(data, list):
+            return data
+        if isinstance(data, dict):
+            for key in ("products", "data", "items", "menu", "results"):
+                val = data.get(key)
+                if isinstance(val, list):
+                    return val
+                if isinstance(val, dict):
+                    for sub_key in ("products", "items", "results"):
+                        sub = val.get(sub_key)
+                        if isinstance(sub, list):
+                            return sub
+        return []
+
+    @staticmethod
+    def _extract_field(product: dict, field_names: list[str]) -> str | None:
+        """Extract a field trying multiple possible key names."""
+        for name in field_names:
+            val = product.get(name)
+            if val:
+                return str(val).strip()
+        return None
+
+    @staticmethod
+    def _normalize_category(category: str) -> str:
+        """Normalize product category to standard values."""
+        cat = category.lower().strip()
+        mapping = {
+            "flower": "Flower", "flowers": "Flower", "bud": "Flower",
+            "pre-roll": "Pre-Rolls", "pre-rolls": "Pre-Rolls", "preroll": "Pre-Rolls",
+            "prerolls": "Pre-Rolls", "pre roll": "Pre-Rolls", "pre rolls": "Pre-Rolls",
+            "joint": "Pre-Rolls", "joints": "Pre-Rolls",
+            "vape": "Vape", "vapes": "Vape", "cartridge": "Vape", "cartridges": "Vape",
+            "cart": "Vape", "carts": "Vape", "pod": "Vape", "pods": "Vape",
+            "concentrate": "Concentrates", "concentrates": "Concentrates",
+            "extract": "Concentrates", "extracts": "Concentrates",
+            "wax": "Concentrates", "shatter": "Concentrates", "rosin": "Concentrates",
+            "live resin": "Concentrates", "live rosin": "Concentrates",
+            "edible": "Edibles", "edibles": "Edibles",
+            "gummy": "Edibles", "gummies": "Edibles",
+            "topical": "Topicals", "topicals": "Topicals",
+            "cream": "Topicals", "lotion": "Topicals",
+            "tincture": "Tinctures", "tinctures": "Tinctures",
+            "oral": "Tinctures", "sublingual": "Tinctures",
+            "capsule": "Capsules", "capsules": "Capsules",
+            "rso": "RSO", "rick simpson": "RSO",
+        }
+        return mapping.get(cat, category.title() if category and category != "unknown" else "Other")
+
+    # =========================================================================
+    # Index Building — Main Entry Point
+    # =========================================================================
+
+    def build_index(self, max_age_days: int = 7) -> dict:
+        """
+        Build the full v2 stock index.
+
+        Steps:
+            1. Collect items from ALL dispensary menu files
+            2. Load SQL enrichment data (optional fallback)
+            3. Merge SQL enrichment onto menu items
+            4. Enrich with genetics data
+            5. Compute freshness scores
+            6. Build index structures
+        """
+        logger.info("=== Stock Index v2 Build Starting ===")
+
+        # Step 1: Collect from all dispensary menus
+        all_items: list[StockItemV2] = []
+        source_files: list[str] = []
+
+        for dispensary in EXPECTED_DISPENSARIES:
+            blobs = self._find_latest_menu_blobs(dispensary)
+            if not blobs:
+                continue
+
+            # Process the latest blob for this dispensary
+            latest = blobs[0]
+            items = self._process_menu_blob(latest.name, dispensary)
+            all_items.extend(items)
+            source_files.append(latest.name)
+
+        logger.info(f"Menu scan: {len(all_items)} items from {len(source_files)} dispensary files")
+
+        # Step 2: SQL enrichment
+        sql_data = self._load_sql_enrichment(max_age_days)
+
+        # Step 3: Merge SQL onto menu items
+        enriched_count = 0
+        for item in all_items:
+            key = f"{item.dispensary}:{item.strain_slug}"
+            sql_row = sql_data.get(key)
+            if sql_row:
+                self._apply_sql_enrichment(item, sql_row)
+                enriched_count += 1
+
+        logger.info(f"SQL enrichment applied to {enriched_count}/{len(all_items)} items")
+
+        # Also add SQL-only items not found in menus (recently in stock in DB but not in latest menu)
+        menu_keys = {f"{item.dispensary}:{item.strain_slug}" for item in all_items}
+        sql_only_count = 0
+        for key, row in sql_data.items():
+            if key not in menu_keys:
+                dispensary = (row.get("Dispensary") or "").lower()
+                strain = row.get("Strain", "Unknown")
+                strain_slug = self.normalize_strain_name(strain)
+                store_loc = row.get("StoreLocation", "")
+                store = self._resolve_store(dispensary, store_loc)
+
+                item_id = hashlib.md5(f"{key}:{row.get('BatchId', '')}".encode()).hexdigest()[:12]
+
+                item = StockItemV2(
+                    id=item_id,
+                    strain=strain,
+                    strain_slug=strain_slug,
+                    product_name=row.get("ProductName") or strain,
+                    dispensary=dispensary,
+                    dispensary_name=DISPENSARY_NAMES.get(dispensary, dispensary.title()),
+                    category=self._normalize_category(row.get("Category") or "unknown"),
+                    batch_id=row.get("BatchId", ""),
+                    store=store,
+                    source="database",
+                )
+                self._apply_sql_enrichment(item, row)
+                all_items.append(item)
+                sql_only_count += 1
+
+        if sql_only_count:
+            logger.info(f"Added {sql_only_count} SQL-only items not in menus")
+
+        # Step 4: Genetics enrichment
+        genetics_enriched = 0
+        # Collect unique strain slugs to batch partition loading
+        slug_partitions: dict[str, str] = {}
+        genetics_index = self._load_genetics_index()
+        for item in all_items:
+            if item.strain_slug in genetics_index:
+                info = genetics_index[item.strain_slug]
+                slug_partitions[item.strain_slug] = info.get("partition", "other")
+
+        # Load needed partitions
+        loaded_partitions: dict[str, dict[str, dict]] = {}
+        for partition_key in set(slug_partitions.values()):
+            loaded_partitions[partition_key] = self._load_genetics_partition(partition_key)
+
+        # Apply genetics
+        for item in all_items:
+            if item.strain_slug in genetics_index:
+                info = genetics_index[item.strain_slug]
+                item.genetics.strain_type = item.genetics.strain_type or info.get("type")
+                item.genetics.has_full_genetics = info.get("has_lineage", False)
+
+                if info.get("has_lineage"):
+                    pk = slug_partitions.get(item.strain_slug, "other")
+                    full = loaded_partitions.get(pk, {}).get(item.strain_slug)
+                    if full:
+                        item.genetics.parent_1 = full.get("parent_1")
+                        item.genetics.parent_2 = full.get("parent_2")
+
+                genetics_enriched += 1
+
+        logger.info(f"Genetics enrichment applied to {genetics_enriched} items")
+
+        # Step 5: Compute freshness
+        now = datetime.now(timezone.utc)
+        for item in all_items:
+            if item.availability.last_seen:
+                try:
+                    seen_str = item.availability.last_seen.replace("Z", "+00:00")
+                    seen = datetime.fromisoformat(seen_str)
+                    if seen.tzinfo is None:
+                        seen = seen.replace(tzinfo=timezone.utc)
+                    delta = now - seen
+                    item.availability.freshness_hours = round(delta.total_seconds() / 3600, 1)
+                except Exception:
+                    pass
+
+        # Step 6: Build index
+        logger.info(f"Building index from {len(all_items)} total items...")
+        return self._build_full_index(all_items, source_files)
+
+    # =========================================================================
+    # Index Structures
+    # =========================================================================
+
+    def _build_full_index(self, items: list[StockItemV2], source_files: list[str]) -> dict:
+        """Build the complete index structure with all groupings."""
+
+        # Dedup: same dispensary + strain_slug + store_id → keep first
+        seen_keys: set[str] = set()
+        deduped: list[StockItemV2] = []
         for item in items:
-            by_strain[item.strain_normalized].append(item)
-        
-        # By dispensary
-        by_dispensary: Dict[str, List[StockItem]] = defaultdict(list)
+            key = f"{item.dispensary}:{item.strain_slug}:{item.store.store_id}"
+            if key not in seen_keys:
+                seen_keys.add(key)
+                deduped.append(item)
+
+        items = sorted(deduped, key=lambda x: (x.strain_slug, x.dispensary))
+        logger.info(f"After dedup: {len(items)} unique items")
+
+        by_strain: dict[str, list[dict]] = defaultdict(list)
+        by_dispensary: dict[str, list[dict]] = defaultdict(list)
+        by_category: dict[str, list[dict]] = defaultdict(list)
+        by_store: dict[str, list[dict]] = defaultdict(list)
+
+        items_dicts = []
         for item in items:
-            by_dispensary[item.dispensary].append(item)
-        
-        # By category
-        by_category: Dict[str, List[StockItem]] = defaultdict(list)
-        for item in items:
-            by_category[item.category].append(item)
-        
-        # Full list (sorted by strain, then dispensary)
-        items_sorted = sorted(items, key=lambda x: (x.strain_normalized, x.dispensary))
-        
-        # Metadata
-        dispensaries = list(by_dispensary.keys())
-        unique_strains = len(by_strain)
-        
-        metadata = IndexMetadata(
-            build_date=datetime.now(timezone.utc).isoformat(),
-            total_items=len(items),
-            dispensaries=dispensaries,
-            unique_strains=unique_strains,
-            batch_files_processed=len(source_files),
-            source_date_range={
-                "earliest": min(source_files) if source_files else None,
-                "latest": max(source_files) if source_files else None
+            d = asdict(item)
+            items_dicts.append(d)
+            by_strain[item.strain_slug].append(d)
+            by_dispensary[item.dispensary].append(d)
+            by_category[item.category].append(d)
+            by_store[item.store.store_id].append(d)
+
+        # Dispensary stats
+        dispensary_stats = {}
+        for disp, disp_items in by_dispensary.items():
+            stores = {it.get("store", {}).get("store_id", "") for it in disp_items}
+            freshest = min(
+                (it.get("availability", {}).get("freshness_hours") for it in disp_items
+                 if it.get("availability", {}).get("freshness_hours") is not None),
+                default=None,
+            )
+            dispensary_stats[disp] = {
+                "count": len(disp_items),
+                "stores": len(stores),
+                "freshest_hours": freshest,
             }
-        )
-        
-        # Build complete index
+
+        # Category stats
+        category_stats = [
+            {"category": cat, "count": len(cat_items)}
+            for cat, cat_items in sorted(by_category.items(), key=lambda x: -len(x[1]))
+        ]
+
+        # Top strains
+        top_strains = sorted(by_strain.items(), key=lambda x: -len(x[1]))[:20]
+        top_strains_list = []
+        for slug, strain_items in top_strains:
+            thc_vals = [
+                it.get("cannabinoids", {}).get("thc_percent")
+                for it in strain_items
+                if it.get("cannabinoids", {}).get("thc_percent") is not None
+            ]
+            avg_thc = round(sum(thc_vals) / len(thc_vals), 1) if thc_vals else None
+            disps = list({it.get("dispensary", "") for it in strain_items})
+            stores = list({it.get("store", {}).get("store_id", "") for it in strain_items})
+            top_strains_list.append({
+                "strain": strain_items[0].get("strain", slug),
+                "slug": slug,
+                "dispensaries": disps,
+                "store_count": len(stores),
+                "avg_thc": avg_thc,
+            })
+
+        # Freshness buckets
+        freshness = {"under_2h": 0, "under_6h": 0, "under_24h": 0, "over_24h": 0}
+        for item in items:
+            h = item.availability.freshness_hours
+            if h is None:
+                freshness["over_24h"] += 1
+            elif h < 2:
+                freshness["under_2h"] += 1
+            elif h < 6:
+                freshness["under_6h"] += 1
+            elif h < 24:
+                freshness["under_24h"] += 1
+            else:
+                freshness["over_24h"] += 1
+
+        # Enrichment stats
+        with_coa = sum(1 for it in items if it.cannabinoids.thc_percent is not None)
+        with_terpenes = sum(1 for it in items if it.terpenes.profile)
+        with_genetics = sum(1 for it in items if it.genetics.strain_type is not None)
+        with_location = sum(1 for it in items if it.store.latitude is not None)
+
+        metadata = {
+            "version": "2.0.0",
+            "build_date": datetime.now(timezone.utc).isoformat(),
+            "total_items": len(items),
+            "unique_strains": len(by_strain),
+            "dispensaries": dispensary_stats,
+            "categories": category_stats,
+            "source_files": source_files,
+            "enrichment": {
+                "with_coa": with_coa,
+                "with_terpenes": with_terpenes,
+                "with_genetics": with_genetics,
+                "with_location": with_location,
+            },
+            "freshness": freshness,
+        }
+
+        # Summary (lightweight)
+        summary = {
+            "version": "2.0.0",
+            "updated": metadata["build_date"],
+            "totals": {
+                "products_in_stock": len(items),
+                "unique_strains": len(by_strain),
+                "dispensaries": len(by_dispensary),
+                "stores": len(by_store),
+                "with_coa": with_coa,
+                "with_terpenes": with_terpenes,
+                "with_genetics": with_genetics,
+                "with_location": with_location,
+            },
+            "by_dispensary": [
+                {"name": DISPENSARY_NAMES.get(d, d), "slug": d, **stats}
+                for d, stats in sorted(dispensary_stats.items(), key=lambda x: -x[1]["count"])
+            ],
+            "by_category": category_stats,
+            "top_strains": top_strains_list[:10],
+            "freshness": freshness,
+        }
+
         index = {
-            "metadata": asdict(metadata),
-            "items": [asdict(item) for item in items_sorted],
-            "by_strain": {k: [asdict(item) for item in v] for k, v in by_strain.items()},
-            "by_dispensary": {k: [asdict(item) for item in v] for k, v in by_dispensary.items()},
-            "by_category": {k: [asdict(item) for item in v] for k, v in by_category.items()},
+            "metadata": metadata,
+            "summary": summary,
+            "items": items_dicts,
+            "by_strain": dict(by_strain),
+            "by_dispensary": dict(by_dispensary),
+            "by_category": dict(by_category),
         }
-        
-        logger.info(f"Index built: {len(items)} items, {unique_strains} strains, {len(dispensaries)} dispensaries")
-        
-        return index
-    
-    def _empty_index(self) -> Dict:
-        """Return an empty index structure."""
-        metadata = IndexMetadata(
-            build_date=datetime.now(timezone.utc).isoformat(),
-            total_items=0,
-            dispensaries=[],
-            unique_strains=0,
-            batch_files_processed=0,
-            source_date_range={"earliest": None, "latest": None}
+
+        # Store partitioned data for upload
+        index["_by_store"] = dict(by_store)
+        index["_by_dispensary_files"] = {
+            disp: disp_items for disp, disp_items in by_dispensary.items()
+        }
+
+        logger.info(
+            f"Index built: {len(items)} items, {len(by_strain)} strains, "
+            f"{len(by_dispensary)} dispensaries, {len(by_store)} stores"
         )
-        
-        return {
-            "metadata": asdict(metadata),
-            "items": [],
-            "by_strain": {},
-            "by_dispensary": {},
-            "by_category": {},
-        }
-    
-    def save_index(self, index: Dict) -> str:
+        return index
+
+    # =========================================================================
+    # Save / Load
+    # =========================================================================
+
+    def save_index(self, index: dict) -> str:
         """
-        Save index to blob storage.
-        
-        Saves:
-        - stock-index/current.json (full index)
-        - stock-index/metadata.json (metadata only)
-        
-        Returns:
-            Path to saved index
+        Save v2 index with partitioned files.
+
+        Outputs:
+            stock-index/current.json         Full index (items + by_strain + by_dispensary)
+            stock-index/summary.json         Lightweight dashboard data
+            stock-index/metadata.json        Build metadata
+            stock-index/by-dispensary/{x}.json   Per-dispensary files
+            stock-index/by-store/{x}.json        Per-store files
         """
         container = self._get_blob_container()
         if not container:
-            logger.error("Cannot save index - blob container not available")
-            return None
-            
-        current_path = f"{self.INDEX_PREFIX}/current.json"
-        metadata_path = f"{self.INDEX_PREFIX}/metadata.json"
-        
-        # Save full index
-        blob_client = container.get_blob_client(current_path)
-        content = json.dumps(index, indent=2)
-        blob_client.upload_blob(content, overwrite=True)
-        logger.info(f"Saved full index to {current_path}")
-        
-        # Save metadata separately
-        metadata_blob = container.get_blob_client(metadata_path)
-        metadata_content = json.dumps(index['metadata'], indent=2)
-        metadata_blob.upload_blob(metadata_content, overwrite=True)
-        logger.info(f"Saved metadata to {metadata_path}")
-        
-        # Save timestamp
-        timestamp_path = f"{self.INDEX_PREFIX}/last_updated.txt"
-        timestamp_blob = container.get_blob_client(timestamp_path)
-        timestamp_blob.upload_blob(
-            datetime.now(timezone.utc).isoformat(),
-            overwrite=True
-        )
-        
-        return current_path
-    
-    def get_index(self) -> Optional[Dict]:
-        """Load the current stock index from storage."""
+            logger.error("Cannot save index — blob container unavailable")
+            return ""
+
+        prefix = self.INDEX_PREFIX
+        saved_paths = []
+
+        # --- current.json (full index without internal partition data) ---
+        export = {
+            "metadata": index["metadata"],
+            "summary": index["summary"],
+            "items": index["items"],
+            "by_strain": index["by_strain"],
+            "by_dispensary": index["by_dispensary"],
+            "by_category": index["by_category"],
+        }
+        self._upload_json(container, f"{prefix}/current.json", export)
+        saved_paths.append(f"{prefix}/current.json")
+
+        # --- summary.json ---
+        self._upload_json(container, f"{prefix}/summary.json", index["summary"])
+        saved_paths.append(f"{prefix}/summary.json")
+
+        # --- metadata.json ---
+        self._upload_json(container, f"{prefix}/metadata.json", index["metadata"])
+        saved_paths.append(f"{prefix}/metadata.json")
+
+        # --- Per-dispensary files ---
+        for disp, disp_items in index.get("_by_dispensary_files", {}).items():
+            path = f"{prefix}/by-dispensary/{disp}.json"
+            self._upload_json(container, path, {
+                "dispensary": disp,
+                "dispensary_name": DISPENSARY_NAMES.get(disp, disp.title()),
+                "total_items": len(disp_items),
+                "updated": index["metadata"]["build_date"],
+                "items": disp_items,
+            })
+            saved_paths.append(path)
+
+        # --- Per-store files ---
+        for store_id, store_items in index.get("_by_store", {}).items():
+            # Sanitize store_id for blob path
+            safe_id = re.sub(r"[^a-z0-9\-]", "-", store_id.lower()).strip("-")
+            if not safe_id:
+                continue
+            path = f"{prefix}/by-store/{safe_id}.json"
+            self._upload_json(container, path, {
+                "store_id": store_id,
+                "total_items": len(store_items),
+                "updated": index["metadata"]["build_date"],
+                "items": store_items,
+            })
+            saved_paths.append(path)
+
+        # --- Timestamp ---
+        ts_blob = container.get_blob_client(f"{prefix}/last_updated.txt")
+        ts_blob.upload_blob(datetime.now(timezone.utc).isoformat(), overwrite=True)
+
+        logger.info(f"Saved {len(saved_paths)} index files to blob storage")
+        return f"{prefix}/current.json"
+
+    def get_index(self) -> dict | None:
+        """Load current stock index from blob storage."""
         try:
             container = self._get_blob_container()
             if not container:
-                logger.error("Cannot load index - blob container not available")
                 return None
-                
-            path = f"{self.INDEX_PREFIX}/current.json"
-            blob_client = container.get_blob_client(path)
-            content = blob_client.download_blob().readall()
+            blob = container.get_blob_client(f"{self.INDEX_PREFIX}/current.json")
+            content = blob.download_blob().readall()
             return json.loads(content)
         except Exception as e:
             logger.error(f"Failed to load stock index: {e}")
             return None
 
+    def get_summary(self) -> dict | None:
+        """Load lightweight summary from blob storage."""
+        try:
+            container = self._get_blob_container()
+            if not container:
+                return None
+            blob = container.get_blob_client(f"{self.INDEX_PREFIX}/summary.json")
+            content = blob.download_blob().readall()
+            return json.loads(content)
+        except Exception as e:
+            logger.error(f"Failed to load stock summary: {e}")
+            return None
+
+    @staticmethod
+    def _upload_json(container, path: str, data: dict) -> None:
+        """Upload JSON to blob storage."""
+        blob = container.get_blob_client(path)
+        blob.upload_blob(json.dumps(data, indent=2, default=str), overwrite=True)
+        logger.debug(f"Uploaded {path}")
+
+    # =========================================================================
+    # Utilities
+    # =========================================================================
+
+    @staticmethod
+    def normalize_strain_name(strain: str) -> str:
+        """Normalize strain name to slug format for consistent indexing."""
+        if not strain:
+            return "unknown"
+        slug = strain.lower().strip()
+        slug = re.sub(r"[^a-z0-9\s-]", "", slug)
+        slug = re.sub(r"\s+", "-", slug)
+        return slug.strip("-") or "unknown"
+
+    @staticmethod
+    def calculate_distance(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+        """Haversine distance in miles."""
+        import math
+
+        R = 3959
+        lat1_rad, lat2_rad = math.radians(lat1), math.radians(lat2)
+        dlat = math.radians(lat2 - lat1)
+        dlng = math.radians(lng2 - lng1)
+        a = math.sin(dlat / 2) ** 2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlng / 2) ** 2
+        return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+# =============================================================================
+# Helpers
+# =============================================================================
+
+def _safe_float(val) -> float | None:
+    """Safely convert a value to float."""
+    if val is None:
+        return None
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return None
+
+
+# =============================================================================
+# Backwards Compatibility Aliases
+# =============================================================================
+
+# Keep the old class name working for imports in stock_routes.py and main.py
+StockIndexer = StockIndexerV2
+StockItem = StockItemV2
+IndexMetadata = None  # No longer a dataclass, metadata is a plain dict
+
 
 def main():
-    """Build stock index from latest batch files."""
-    logging.basicConfig(level=logging.INFO)
-    
-    indexer = StockIndexer()
-    
-    # Build from latest
-    index = indexer.build_index_from_latest()
-    
-    # Save
+    """CLI entry point: build and save the stock index."""
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    indexer = StockIndexerV2()
+    index = indexer.build_index()
     indexer.save_index(index)
-    
-    print(f"\n=== Stock Index Built ===")
-    print(f"Total items: {index['metadata']['total_items']}")
-    print(f"Unique strains: {index['metadata']['unique_strains']}")
-    print(f"Dispensaries: {', '.join(index['metadata']['dispensaries'])}")
-    print(f"Build date: {index['metadata']['build_date']}")
+
+    meta = index["metadata"]
+    print(f"\n=== Stock Index v2 Built ===")
+    print(f"Total items: {meta['total_items']}")
+    print(f"Unique strains: {meta['unique_strains']}")
+    print(f"Dispensaries: {list(meta['dispensaries'].keys())}")
+    print(f"Enrichment: COA={meta['enrichment']['with_coa']}, "
+          f"Terpenes={meta['enrichment']['with_terpenes']}, "
+          f"Genetics={meta['enrichment']['with_genetics']}, "
+          f"Location={meta['enrichment']['with_location']}")
+    print(f"Build date: {meta['build_date']}")
 
 
 if __name__ == "__main__":
     main()
-
-
-
