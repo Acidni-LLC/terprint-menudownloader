@@ -211,17 +211,52 @@ class StockIndexerV2:
             return {}
 
     def _resolve_store(self, dispensary: str, raw_store: str) -> StoreInfo:
-        """Resolve a raw store identifier to full StoreInfo with coordinates."""
+        """Resolve a raw store identifier to full StoreInfo with coordinates.
+
+        Handles blob filenames like:
+            curaleaf_products_store_curaleaf-tampa-dale-mabry-midtown_20260301_230805
+            cookies_menu_cookies-miami_20260301_120000
+        Extracts city slug and matches against dispensary_locations.json keys.
+        """
         disp_locations = self.locations.get(dispensary, {})
         normalized = raw_store.lower().replace(" ", "-").replace("_", "-") if raw_store else ""
 
-        # Try exact match, then normalized
-        loc = disp_locations.get(normalized) or disp_locations.get(raw_store, {})
+        # Strip dispensary prefix and timestamp suffix from blob filenames
+        # Pattern: {dispensary}[-_]...{city-slug}[-_]{YYYYMMDD}[-_]{HHMMSS}
+        clean = normalized
+        # Remove common prefixes like "curaleaf-products-store-curaleaf-"
+        for prefix in (
+            f"{dispensary}-products-store-{dispensary}-",
+            f"{dispensary}-products-store-",
+            f"{dispensary}-menu-{dispensary}-",
+            f"{dispensary}-menu-",
+            f"{dispensary}-store-",
+            f"{dispensary}-",
+        ):
+            if clean.startswith(prefix):
+                clean = clean[len(prefix):]
+                break
+        # Remove timestamp suffix (YYYYMMDD-HHMMSS or YYYYMMDD)
+        clean = re.sub(r"-?\d{8}(-\d{6})?$", "", clean).strip("-")
 
-        city = raw_store.replace("-", " ").replace("_", " ").title() if raw_store else ""
+        # Try matching: exact → cleaned → partial contains
+        loc = disp_locations.get(normalized) or disp_locations.get(clean)
+
+        if not loc:
+            # Partial match: check if any location key appears in the cleaned store name
+            for loc_key, loc_data in disp_locations.items():
+                if loc_key in clean or clean in loc_key:
+                    loc = loc_data
+                    clean = loc_key
+                    break
+
+        if not loc:
+            loc = {}
+
+        city = clean.replace("-", " ").replace("_", " ").title() if clean else ""
 
         return StoreInfo(
-            store_id=f"{dispensary}-{normalized}" if normalized else dispensary,
+            store_id=f"{dispensary}-{clean}" if clean else dispensary,
             store_name=f"{DISPENSARY_NAMES.get(dispensary, dispensary)} {city}".strip(),
             city=city,
             state="FL",
@@ -646,11 +681,11 @@ class StockIndexerV2:
             if not blobs:
                 continue
 
-            # Process the latest blob for this dispensary
-            latest = blobs[0]
-            items = self._process_menu_blob(latest.name, dispensary)
-            all_items.extend(items)
-            source_files.append(latest.name)
+            # Process ALL blobs for this dispensary (one per store)
+            for blob in blobs:
+                items = self._process_menu_blob(blob.name, dispensary)
+                all_items.extend(items)
+                source_files.append(blob.name)
 
         logger.info(f"Menu scan: {len(all_items)} items from {len(source_files)} dispensary files")
 
