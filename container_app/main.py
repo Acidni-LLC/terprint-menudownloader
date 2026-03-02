@@ -374,7 +374,12 @@ def run_download() -> dict:
 
 
 async def scheduled_download_job():
-    """Background job for scheduled menu downloads with email notifications."""
+    """Background job for scheduled menu downloads with email notifications.
+
+    IMPORTANT: All heavy sync operations run via asyncio.to_thread() so the
+    FastAPI event loop stays responsive for health checks and API requests.
+    """
+    import asyncio
     import time
     global app_state
     
@@ -391,11 +396,11 @@ async def scheduled_download_job():
     logger.info(f"Scheduled menu download triggered at {app_state['last_run']}")
 
     try:
-        # ===== STAGE 1: Menu Download =====
+        # ===== STAGE 1: Menu Download (sync → thread) =====
         download_start = time.time()
         notify_stage_start('download', {'trigger': 'scheduled', 'run_number': app_state['scheduled_runs']})
         
-        result = run_download()
+        result = await asyncio.to_thread(run_download)
         success_val = result.get('summary', {}).get('overall_success', False)
         success = success_val if isinstance(success_val, bool) else str(success_val).lower() == 'true'
 
@@ -408,7 +413,7 @@ async def scheduled_download_job():
 
         logger.info(f"Scheduled download completed. Success: {success}")
 
-        # ===== STAGE 2: COA Processor =====
+        # ===== STAGE 2: COA Processor (sync → thread) =====
         logger.info("Triggering Batch Processor for COA extraction...")
         coa_start = time.time()
         notify_stage_start('coa_process', {'date': datetime.now().strftime('%Y-%m-%d')})
@@ -416,7 +421,7 @@ async def scheduled_download_job():
         batch_processor_result = {'status': 'skipped'}
         try:
             today = datetime.now().strftime('%Y-%m-%d')
-            batch_processor_result = trigger_batch_processor(date=today)
+            batch_processor_result = await asyncio.to_thread(trigger_batch_processor, date=today)
             coa_success = batch_processor_result.get('status') == 'success'
             logger.info(f"Batch Processor result: {batch_processor_result.get('status', 'unknown')}")
         except Exception as batch_err:
@@ -428,14 +433,14 @@ async def scheduled_download_job():
         notify_stage_complete('coa_process', coa_success, batch_processor_result, coa_duration)
         pipeline_results['coa_process_result'] = batch_processor_result
 
-        # ===== STAGE 3: Stock Index Build =====
+        # ===== STAGE 3: Stock Index Build (sync → thread) =====
         logger.info("Building stock index from consolidated batches...")
         index_start = time.time()
         notify_stage_start('stock_index')
         
         index_result = {'success': False, 'error': 'Not attempted'}
         try:
-            index_result = build_stock_index_from_menus()
+            index_result = await asyncio.to_thread(build_stock_index_from_menus)
             if index_result.get('success'):
                 logger.info(f"Stock index built: {index_result.get('total_items', 0)} items")
             else:
@@ -638,21 +643,21 @@ async def manual_run(request: RunRequest, background_tasks: BackgroundTasks):
     logger.info(f"Manual menu download triggered at {app_state['last_run']}")
     
     try:
-        result = run_download()
+        import asyncio
+        result = await asyncio.to_thread(run_download)
         success_val = result.get('summary', {}).get('overall_success', False)
         success = success_val if isinstance(success_val, bool) else str(success_val).lower() == 'true'
         
         app_state["last_run_status"] = "success" if success else "partial"
         app_state["last_run_result"] = result.get('summary', {})
         
-        # Pipeline: Download â†’ Batch Creator â†’ Stock Index
+        # Pipeline: Download → Batch Creator → Stock Index
         batch_creator_result = None
         if not request.skip_batch_processor:
-            # Trigger Batch Creator (which will trigger Batch Processor if trigger_coa=True)
-            batch_creator_result = trigger_batch_creator(trigger_coa=True)
+            batch_creator_result = await asyncio.to_thread(trigger_batch_creator, trigger_coa=True)
         
         # Build stock index from the consolidated batches
-        index_result = build_stock_index_from_menus()
+        index_result = await asyncio.to_thread(build_stock_index_from_menus)
         
         return {
             "status": "completed",
@@ -683,8 +688,9 @@ async def trigger_batch(request: BatchTriggerRequest):
 @app.post("/build-stock-index")
 async def build_stock_index():
     """Manually trigger stock index rebuild from latest menu data."""
+    import asyncio
     logger.info("Manual stock index build requested")
-    result = build_stock_index_from_menus()
+    result = await asyncio.to_thread(build_stock_index_from_menus)
     if result.get('success'):
         return result
     else:

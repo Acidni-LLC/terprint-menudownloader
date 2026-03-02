@@ -468,7 +468,17 @@ class StockIndexerV2:
     # =========================================================================
 
     def _find_latest_menu_blobs(self, dispensary: str, max_days_back: int = 3) -> list:
-        """Find the most recent menu blobs for a dispensary."""
+        """
+        Find the most recent menu blobs for a dispensary.
+
+        Smart filtering:
+        - Prefers summary files when available (contain all products consolidated)
+        - For per-store/category files (e.g. Trulieve), deduplicates to one file per store
+        - Excludes batch_list files and other non-menu artifacts
+        - Caps at MAX_BLOBS_PER_DISPENSARY to prevent resource exhaustion
+        """
+        MAX_BLOBS_PER_DISPENSARY = 50
+
         container = self._get_blob_container()
         if not container:
             return []
@@ -478,14 +488,99 @@ class StockIndexerV2:
             date_str = check_date.strftime("%Y/%m/%d")
             prefix = f"dispensaries/{dispensary}/{date_str}/"
 
-            blobs = list(container.list_blobs(name_starts_with=prefix))
-            if blobs:
-                blobs.sort(key=lambda b: b.name, reverse=True)
-                logger.info(f"Found {len(blobs)} menu blobs for {dispensary} ({days_back}d ago)")
-                return blobs
+            raw_blobs = list(container.list_blobs(name_starts_with=prefix))
+            if not raw_blobs:
+                continue
+
+            # --- Filter out non-menu files ---
+            menu_blobs = []
+            summary_blob = None
+            for b in raw_blobs:
+                fname = b.name.split("/")[-1].lower()
+                # Skip batch lists, genetics exports, etc.
+                if "batch_list" in fname or "genetics" in fname:
+                    continue
+                # Detect summary files (e.g. trulieve_products_summary_*.json)
+                if "summary" in fname:
+                    summary_blob = b
+                    continue
+                menu_blobs.append(b)
+
+            # --- If a summary file exists, prefer it (has all products already) ---
+            if summary_blob:
+                logger.info(
+                    f"Using summary file for {dispensary} ({days_back}d ago): "
+                    f"{summary_blob.name} (skipping {len(menu_blobs)} individual files)"
+                )
+                return [summary_blob]
+
+            # --- Deduplicate per-store files ---
+            # Trulieve creates per-store-per-category files:
+            #   trulieve_products_store-venice_cat-MjA8_20260302_010337.json
+            # We want one file per store (the latest/largest).
+            if len(menu_blobs) > MAX_BLOBS_PER_DISPENSARY:
+                store_best: dict[str, Any] = {}
+                for b in menu_blobs:
+                    fname = b.name.split("/")[-1]
+                    # Extract store identifier from filename
+                    store_key = self._extract_store_from_filename(fname, dispensary)
+                    existing = store_best.get(store_key)
+                    if not existing or (b.size and existing.size and b.size > existing.size):
+                        store_best[store_key] = b
+
+                menu_blobs = list(store_best.values())
+                logger.info(
+                    f"Deduplicated {dispensary} to {len(menu_blobs)} store-level blobs "
+                    f"(from {len(raw_blobs)} total files)"
+                )
+
+            # --- Cap ---
+            menu_blobs.sort(key=lambda b: b.name, reverse=True)
+            if len(menu_blobs) > MAX_BLOBS_PER_DISPENSARY:
+                logger.warning(
+                    f"Capping {dispensary} blobs from {len(menu_blobs)} to {MAX_BLOBS_PER_DISPENSARY}"
+                )
+                menu_blobs = menu_blobs[:MAX_BLOBS_PER_DISPENSARY]
+
+            logger.info(f"Found {len(menu_blobs)} menu blobs for {dispensary} ({days_back}d ago)")
+            return menu_blobs
 
         logger.warning(f"No menu files for {dispensary} in last {max_days_back} days")
         return []
+
+    @staticmethod
+    def _extract_store_from_filename(filename: str, dispensary: str) -> str:
+        """
+        Extract a store identifier from a blob filename for deduplication.
+
+        Examples:
+            trulieve_products_store-venice_cat-MjA8_20260302_010337.json → venice
+            cookies_bradenton_menu_20260302_010420.json → bradenton
+            curaleaf_products_store_curaleaf-tampa_20260301_230805.json → tampa
+        """
+        name = filename.replace(".json", "").lower()
+
+        # Remove timestamp suffix (YYYYMMDD_HHMMSS)
+        import re as _re
+        name = _re.sub(r"_\d{8}_\d{6}$", "", name)
+
+        # Trulieve pattern: store-{store}_cat-{cat}
+        m = _re.search(r"store[_-]([^_]+?)(?:_cat[_-]|$)", name)
+        if m:
+            return m.group(1)
+
+        # Generic: strip dispensary prefix, return remainder
+        for prefix in [f"{dispensary}_products_store_{dispensary}-",
+                       f"{dispensary}_products_store_",
+                       f"{dispensary}_products_",
+                       f"{dispensary}_"]:
+            if name.startswith(prefix):
+                name = name[len(prefix):]
+                break
+
+        # Remove trailing _menu or similar suffixes
+        name = _re.sub(r"_menu$", "", name)
+        return name or filename
 
     def _process_menu_blob(self, blob_name: str, dispensary: str) -> list[StockItemV2]:
         """Process a single menu JSON file into StockItemV2 objects."""
