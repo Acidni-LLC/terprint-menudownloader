@@ -1,0 +1,338 @@
+[
+  {
+    "state": "FL",
+    "store": "palm_coast",
+    "category": "Flower",
+    "status": 200,
+    "products_returned": 5,
+    "total_count": 46,
+    "has_terpenes": true,
+    "has_batch_codes": true,
+    "sample_product": "Sun Cake Flower",
+    "sample_sku": "65044",
+    "error": null
+  },
+  {
+    "state": "FL",
+    "store": "palm_coast",
+    "category": "Pre-Rolls",
+    "status": 200,
+    "products_returned": 5,
+    "total_count": 26,
+    "has_terpenes": true,
+    "has_batch_codes": true,
+    "sample_product": "Chemdog Vape Cart",
+    "sample_sku": "17496",
+    "error": null
+  },
+  {
+    "state": "FL",
+    "store": "palm_coast",
+    "category": "Vaporizers",
+    "status": 200,
+    "products_returned": 5,
+    "total_count": 54,
+    "has_terpenes": true,
+    "has_batch_codes": true,
+    "sample_product": "Sun Cake Flower",
+    "sample_sku": "65044",
+    "error": null
+  },
+  {
+    "state": "FL",
+    "store": "palm_coast",
+    "category": "Edibles",
+    "status": 200,
+    "products_returned": 5,
+    "total_count": 67,
+    "has_terpenes": true,
+    "has_batch_codes": true,
+    "sample_product": "Kief",
+    "sample_sku": "64385",
+    "error": null
+  },
+  {
+    "state": "AZ",
+    "store": "apache_junction",
+    "category": "Flower",
+    "status": 550,
+    "error": "HTTP 550",
+    "products": 0,
+    "total": 0
+  },
+  {
+    "state": "AZ",
+    "store": "apache_junction",
+    "category": "Pre-Rolls",
+    "status": 550,
+    "error": "HTTP 550",
+    "products": 0,
+    "total": 0
+  },
+  {
+    "state": "AZ",
+    "store": "apache_junction",
+    "category": "Vaporizers",
+    "status": 550,
+    "error": "HTTP 550",
+    "products": 0,
+    "total": 0
+  },
+  {
+    "state": "AZ",
+    "store": "apache_junction",
+    "category": "Edibles",
+    "status": 550,
+    "error": "HTTP 550",
+    "products": 0,
+    "total": 0
+  },
+  {
+    "state": "PA",
+    "store": "camp_hill",
+    "category": "Flower",
+    "status": 550,
+    "error": "HTTP 550",
+    "products": 0,
+    "total": 0
+  },
+  {
+    "state": "PA",
+    "store": "camp_hill",
+    "category": "Pre-Rolls",
+    "status": 550,
+    "error": "HTTP 550",
+    "products": 0,
+    "total": 0
+  },
+  {
+    "state": "PA",
+    "store": "camp_hill",
+    "category": "Vaporizers",
+    "status": 550,
+    "error": "HTTP 550",
+    "products": 0,
+    "total": 0
+  },
+  {
+    "state": "PA",
+    "store": "camp_hill",
+    "category": "Edibles",
+    "status": 550,
+    "error": "HTTP 550",
+    "products": 0,
+    "total": 0
+  },
+  {
+    "state": "WV",
+    "store": "morgantown",
+    "category": "Flower",
+    "status": 200,
+    "products_returned": 5,
+    "total_count": 60,
+    "has_terpenes": false,
+    "has_batch_codes": true,
+    "sample_product": "Big Love Flower",
+    "sample_sku": "56636",
+    "error": null
+  },
+  {
+    "state": "WV",
+    "store": "morgantown",
+    "category": "Pre-Rolls",
+    "status": 200,
+    "products_returned": 5,
+    "total_count": 16,
+    "has_terpenes": false,
+    "has_batch_codes": true,
+    "sample_product": "Asteroid Belt Vape Cart",
+    "sample_sku": "61181",
+    "error": null
+  },
+  {
+    "state": "WV",
+    "store": "morgantown",
+    "category": "Vaporizers",
+    "status": 200,
+    "products_returned": 5,
+    "total_count": 34,
+    "has_terpenes": false,
+    "has_batch_codes": true,
+    "sample_product": "Big Love Flower",
+    "sample_sku": "56636",
+    "error": null
+  },
+  {
+    "state": "WV",
+    "store": "morgantown",
+    "category": "Edibles",
+    "status": 200,
+    "products_returned": 5,
+    "total_count": 25,
+    "has_terpenes": false,
+    "has_batch_codes": true,
+    "sample_product": "Mimosa Kief",
+    "sample_sku": "64207",
+    "error": null
+  },
+  {
+    "state": "GA",
+    "store": "columbus",
+    "category": "Flower",
+    "status": 200,
+    "products_returned": 0,
+    "total_count": 0,
+    "has_terpenes": false,
+    "has_batch_codes": false,
+    "sample_product": null,
+    "sample_sku": null,
+    "error": null
+  },
+  {
+    "state": "GA",
+    "store": "columbus",
+    "category": "Pre-Rolls",
+    "status": 200,
+    "products_returned": 0,
+    "total_count": 0,
+    "has_terpenes": false,
+    "has_batch_codes": false,
+    "sample_product": null,
+    "sample_sku": null,
+    "error": null
+  },
+  {
+    "state": "GA",
+    "store": "columbus",
+    "category": "Vaporizers",
+    "status": 200,
+    "products_returned": 0,
+    "total_count": 0,
+    "has_terpenes": false,
+    "has_batch_codes": false,
+    "sample_product": null,
+    "sample_sku": null,
+    "error": null
+  },
+  {
+    "state": "GA",
+    "store": "columbus",
+    "category": "Edibles",
+    "status": 200,
+    "products_returned": 0,
+    "total_count": 0,
+    "has_terpenes": false,
+    "has_batch_codes": false,
+    "sample_product": null,
+    "sample_sku": null,
+    "error": null
+  },
+  {
+    "state": "MD",
+    "store": "rockville",
+    "category": "Flower",
+    "status": 550,
+    "error": "HTTP 550",
+    "products": 0,
+    "total": 0
+  },
+  {
+    "state": "MD",
+    "store": "rockville",
+    "category": "Pre-Rolls",
+    "status": 550,
+    "error": "HTTP 550",
+    "products": 0,
+    "total": 0
+  },
+  {
+    "state": "MD",
+    "store": "rockville",
+    "category": "Vaporizers",
+    "status": 550,
+    "error": "HTTP 550",
+    "products": 0,
+    "total": 0
+  },
+  {
+    "state": "MD",
+    "store": "rockville",
+    "category": "Edibles",
+    "status": 550,
+    "error": "HTTP 550",
+    "products": 0,
+    "total": 0
+  },
+  {
+    "state": "CT",
+    "store": "bristol",
+    "category": "Flower",
+    "status": 550,
+    "error": "HTTP 550",
+    "products": 0,
+    "total": 0
+  },
+  {
+    "state": "CT",
+    "store": "bristol",
+    "category": "Pre-Rolls",
+    "status": 550,
+    "error": "HTTP 550",
+    "products": 0,
+    "total": 0
+  },
+  {
+    "state": "CT",
+    "store": "bristol",
+    "category": "Vaporizers",
+    "status": 550,
+    "error": "HTTP 550",
+    "products": 0,
+    "total": 0
+  },
+  {
+    "state": "CT",
+    "store": "bristol",
+    "category": "Edibles",
+    "status": 550,
+    "error": "HTTP 550",
+    "products": 0,
+    "total": 0
+  },
+  {
+    "state": "CA",
+    "store": "paso_robles",
+    "category": "Flower",
+    "status": 550,
+    "error": "HTTP 550",
+    "products": 0,
+    "total": 0
+  },
+  {
+    "state": "CA",
+    "store": "paso_robles",
+    "category": "Pre-Rolls",
+    "status": 550,
+    "error": "HTTP 550",
+    "products": 0,
+    "total": 0
+  },
+  {
+    "state": "CA",
+    "store": "paso_robles",
+    "category": "Vaporizers",
+    "status": 550,
+    "error": "HTTP 550",
+    "products": 0,
+    "total": 0
+  },
+  {
+    "state": "CA",
+    "store": "paso_robles",
+    "category": "Edibles",
+    "status": 550,
+    "error": "HTTP 550",
+    "products": 0,
+    "total": 0
+  }
+]
