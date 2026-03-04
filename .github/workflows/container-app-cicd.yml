@@ -24,7 +24,7 @@ on:
           - prod
 
 env:
-  REGISTRY_LOGIN_SERVER: crterprint.azurecr.io
+  REGISTRY_LOGIN_SERVER: cracidnidev.azurecr.io
   CONTAINER_APP_NAME: ca-terprint-menudownloader
   RESOURCE_GROUP: rg-dev-terprint-ca
   IMAGE_NAME: terprint-menudownloader
@@ -51,7 +51,7 @@ jobs:
 
       - name: Log in to Azure Container Registry
         run: |
-          az acr login --name crterprint
+          az acr login --name cracidnidev
 
       - name: Extract metadata
         id: meta
@@ -78,14 +78,14 @@ jobs:
           
           # Build with build context as parent directory to access src/
           az acr build \
-            --registry crterprint \
+            --registry cracidnidev \
             --image ${{ env.IMAGE_NAME }}:${SHORT_SHA} \
             --image ${{ env.IMAGE_NAME }}:latest \
             --file Dockerfile \
             ..
           
           # Get the digest
-          DIGEST=$(az acr repository show-manifests --name crterprint --repository ${{ env.IMAGE_NAME }} --query "[0].digest" -o tsv)
+          DIGEST=$(az acr repository show-manifests --name cracidnidev --repository ${{ env.IMAGE_NAME }} --query "[0].digest" -o tsv)
           echo "digest=${DIGEST}" >> $GITHUB_OUTPUT
           echo "image-tag=${SHORT_SHA}" >> $GITHUB_OUTPUT
 
