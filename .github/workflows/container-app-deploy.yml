@@ -15,10 +15,6 @@ on:
       - 'src/**'
       - 'pyproject.toml'
   workflow_dispatch:
-    paths:
-      - 'container_app/**'
-      - 'src/**'
-      - 'pyproject.toml'
 
 env:
   APP_NAME: terprint-menudownloader
