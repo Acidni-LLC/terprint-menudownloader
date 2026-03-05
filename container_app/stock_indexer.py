@@ -662,24 +662,54 @@ class StockIndexerV2:
                         cbd = _safe_float(attr_map.get("cbd_percentage") or attr_map.get("cbd_content"))
 
                     # Trulieve category: from categories[].name array
-                    # Categories are hierarchical: ["Brands", "Roll One", "Flower", "Whole Flower", "3.5g", ...]
-                    # Skip non-product categories to find the actual product type
+                    # Categories are hierarchical: ["Brands", "Sunshine Cannabis", "Flower", "3.5g", "Minis"]
+                    # The first few are brand hierarchies under url_path "brands/...", we want the product type
                     _TRULIEVE_SKIP_CATEGORIES = {
                         "brands", "bundle deals", "accessories", "bundles",
                         "new arrivals", "sale", "clearance", "best sellers",
+                    }
+                    _TRULIEVE_PRODUCT_CATEGORIES = {
+                        "flower", "concentrates", "edibles", "vapes", "vaporizers", "cartridges",
+                        "pre-rolls", "pre-roll", "topicals", "tinctures", "capsules", "rso",
+                        "minis", "ground", "whole flower", "diamonds", "live rosin", "live resin",
+                        "shatter", "wax", "crumble", "budder", "distillate", "syringes", "dabs",
                     }
                     cats = product.get("categories")
                     if isinstance(cats, list):
                         for cat_item in cats:
                             if isinstance(cat_item, dict):
                                 cat_name = cat_item.get("name", "")
+                                cat_url = cat_item.get("url_path", "")
                             elif isinstance(cat_item, str):
                                 cat_name = cat_item
+                                cat_url = ""
                             else:
                                 continue
-                            if cat_name and cat_name.lower() not in _TRULIEVE_SKIP_CATEGORIES:
+                            cat_lower = cat_name.lower() if cat_name else ""
+                            # Skip if it's a brand, non-product category, or under brands/ path
+                            if cat_lower in _TRULIEVE_SKIP_CATEGORIES:
+                                continue
+                            if cat_url.startswith("brands/"):
+                                continue  # Brand sub-category like "brands/sunshine-cannabis"
+                            # Prefer actual product type categories
+                            if cat_lower in _TRULIEVE_PRODUCT_CATEGORIES:
                                 category = cat_name
                                 break
+                        # Fallback: if no product category found, take first non-skipped
+                        if not category and isinstance(cats, list):
+                            for cat_item in cats:
+                                if isinstance(cat_item, dict):
+                                    cat_name = cat_item.get("name", "")
+                                    cat_url = cat_item.get("url_path", "")
+                                elif isinstance(cat_item, str):
+                                    cat_name = cat_item
+                                    cat_url = ""
+                                else:
+                                    continue
+                                cat_lower = cat_name.lower() if cat_name else ""
+                                if cat_lower not in _TRULIEVE_SKIP_CATEGORIES and not cat_url.startswith("brands/"):
+                                    category = cat_name
+                                    break
 
                     # Trulieve pricing: price_range.minimum_price.final_price.value
                     price_range = product.get("price_range", {})
