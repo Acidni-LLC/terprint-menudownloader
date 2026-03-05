@@ -382,6 +382,67 @@ async def get_nearest_stock(
     }
 
 
+# ===========================================================================
+# Alert Endpoints — Strain Watchlist
+# ===========================================================================
+
+@router.post("/alerts")
+async def create_strain_alert(request: AlertCreateRequest):
+    """Subscribe to email alerts when a strain comes in stock."""
+    if not STOCK_ALERTS_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Alert service not available")
+
+    indexer = get_indexer()
+    strain_slug = indexer.normalize_strain_name(request.strain)
+
+    alert = create_alert(
+        email=request.email,
+        strain=request.strain,
+        strain_slug=strain_slug,
+        dispensary=request.dispensary,
+        max_distance_miles=request.max_distance_miles,
+        lat=request.lat,
+        lng=request.lng,
+    )
+
+    is_dup = alert.pop("_duplicate", False)
+    return {
+        "success": True,
+        "alert": alert,
+        "message": "Alert already exists" if is_dup else f"Alert created — you'll be emailed when '{request.strain}' is in stock",
+    }
+
+
+@router.get("/alerts/{email}")
+async def get_user_alerts(email: str):
+    """Get all active alerts for an email address."""
+    if not STOCK_ALERTS_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Alert service not available")
+
+    alerts = get_alerts_for_email(email)
+    return {
+        "email": email,
+        "alerts": alerts,
+        "total": len(alerts),
+    }
+
+
+@router.delete("/alerts/{alert_id}")
+async def remove_alert(alert_id: str):
+    """Deactivate a strain alert."""
+    if not STOCK_ALERTS_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Alert service not available")
+
+    success = delete_alert(alert_id)
+    if not success:
+        raise HTTPException(status_code=404, detail=f"Alert {alert_id} not found")
+    return {"success": True, "message": f"Alert {alert_id} deactivated"}
+
+
+# ===========================================================================
+# Catch-all dispensary routes (MUST be last - matches any path segment)
+# ===========================================================================
+
 @router.get("/{dispensary}")
 async def get_dispensary_stock(
     dispensary: str,
@@ -498,60 +559,3 @@ async def bulk_stock_check(request: BulkStockRequest):
         "not_found": sum(1 for r in results if not r["found"]),
         "results": results,
     }
-
-
-# ===========================================================================
-# Alert Endpoints — Strain Watchlist
-# ===========================================================================
-
-@router.post("/alerts")
-async def create_strain_alert(request: AlertCreateRequest):
-    """Subscribe to email alerts when a strain comes in stock."""
-    if not STOCK_ALERTS_AVAILABLE:
-        raise HTTPException(status_code=503, detail="Alert service not available")
-
-    indexer = get_indexer()
-    strain_slug = indexer.normalize_strain_name(request.strain)
-
-    alert = create_alert(
-        email=request.email,
-        strain=request.strain,
-        strain_slug=strain_slug,
-        dispensary=request.dispensary,
-        max_distance_miles=request.max_distance_miles,
-        lat=request.lat,
-        lng=request.lng,
-    )
-
-    is_dup = alert.pop("_duplicate", False)
-    return {
-        "success": True,
-        "alert": alert,
-        "message": "Alert already exists" if is_dup else f"Alert created — you'll be emailed when '{request.strain}' is in stock",
-    }
-
-
-@router.get("/alerts/{email}")
-async def get_user_alerts(email: str):
-    """Get all active alerts for an email address."""
-    if not STOCK_ALERTS_AVAILABLE:
-        raise HTTPException(status_code=503, detail="Alert service not available")
-
-    alerts = get_alerts_for_email(email)
-    return {
-        "email": email,
-        "alerts": alerts,
-        "total": len(alerts),
-    }
-
-
-@router.delete("/alerts/{alert_id}")
-async def remove_alert(alert_id: str):
-    """Deactivate a strain alert."""
-    if not STOCK_ALERTS_AVAILABLE:
-        raise HTTPException(status_code=503, detail="Alert service not available")
-
-    success = delete_alert(alert_id)
-    if not success:
-        raise HTTPException(status_code=404, detail=f"Alert {alert_id} not found")
-    return {"success": True, "message": f"Alert {alert_id} deactivated"}

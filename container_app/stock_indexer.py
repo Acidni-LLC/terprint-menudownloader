@@ -238,6 +238,8 @@ class StockIndexerV2:
                 break
         # Remove timestamp suffix (YYYYMMDD-HHMMSS or YYYYMMDD)
         clean = re.sub(r"-?\d{8}(-\d{6})?$", "", clean).strip("-")
+        # Remove Trulieve category suffix (e.g., -cat-mja5 from store_miami_cat-MjA5)
+        clean = re.sub(r"-cat-[a-z0-9]+$", "", clean).strip("-")
 
         # Try matching: exact → cleaned → partial contains
         loc = disp_locations.get(normalized) or disp_locations.get(clean)
@@ -660,16 +662,23 @@ class StockIndexerV2:
                         cbd = _safe_float(attr_map.get("cbd_percentage") or attr_map.get("cbd_content"))
 
                     # Trulieve category: from categories[].name array
+                    # Categories are hierarchical: ["Brands", "Roll One", "Flower", "Whole Flower", "3.5g", ...]
+                    # Skip non-product categories to find the actual product type
+                    _TRULIEVE_SKIP_CATEGORIES = {
+                        "brands", "bundle deals", "accessories", "bundles",
+                        "new arrivals", "sale", "clearance", "best sellers",
+                    }
                     cats = product.get("categories")
                     if isinstance(cats, list):
                         for cat_item in cats:
                             if isinstance(cat_item, dict):
                                 cat_name = cat_item.get("name", "")
-                                if cat_name:
-                                    category = cat_name
-                                    break
-                            elif isinstance(cat_item, str) and cat_item:
-                                category = cat_item
+                            elif isinstance(cat_item, str):
+                                cat_name = cat_item
+                            else:
+                                continue
+                            if cat_name and cat_name.lower() not in _TRULIEVE_SKIP_CATEGORIES:
+                                category = cat_name
                                 break
 
                     # Trulieve pricing: price_range.minimum_price.final_price.value
