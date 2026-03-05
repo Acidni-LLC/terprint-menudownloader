@@ -25,7 +25,7 @@ env:
   ENVIRONMENT: dev
   ACR_NAME: cracidnidev
   CONTAINER_APP_NAME: ca-terprint-menudownloader
-  RESOURCE_GROUP: rg-dev-terprint-ca
+  RESOURCE_GROUP: rg-dev-acidni-shared
 
 jobs:
   # Build and Test
