@@ -2,7 +2,8 @@
 Stock API Routes v2 for Menu Downloader
 
 Provides real-time stock lookup endpoints with v2 nested schema.
-Supports: search, geo-nearest, dispensary/store drill-down, summary, genetics.
+Supports: search, geo-nearest, dispensary/store drill-down, summary,
+genetics, strain alerts.
 
 Copyright (c) 2026 Acidni LLC
 """
@@ -27,6 +28,17 @@ except ImportError as e1:
 except Exception as e:
     STOCK_INDEXER_AVAILABLE = False
     logging.error(f"Unexpected error importing StockIndexer: {e}", exc_info=True)
+
+# Import stock alerts
+try:
+    from .stock_alerts import create_alert, get_alerts_for_email, delete_alert
+    STOCK_ALERTS_AVAILABLE = True
+except ImportError:
+    try:
+        from stock_alerts import create_alert, get_alerts_for_email, delete_alert
+        STOCK_ALERTS_AVAILABLE = True
+    except ImportError:
+        STOCK_ALERTS_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +78,16 @@ def get_stock_index() -> dict:
 class BulkStockRequest(BaseModel):
     """Request model for bulk stock check."""
     batch_ids: List[str]
+
+
+class AlertCreateRequest(BaseModel):
+    """Request model for creating a strain alert."""
+    email: str
+    strain: str
+    dispensary: Optional[str] = None
+    max_distance_miles: Optional[float] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
 
 
 # ===========================================================================
@@ -115,6 +137,52 @@ async def get_status():
         }
 
 
+@router.get("/strains")
+async def list_strains(
+    q: Optional[str] = Query(None, description="Optional search filter"),
+    dispensary: Optional[str] = Query(None, description="Filter by dispensary"),
+    limit: int = Query(200, description="Max results", le=1000),
+):
+    """List all available strain slugs (for autocomplete/browsing)."""
+    index = get_stock_index()
+    indexer = get_indexer()
+    by_strain = index.get("by_strain", {})
+
+    results = []
+    for slug, items in sorted(by_strain.items()):
+        if dispensary:
+            items = [i for i in items if i.get("dispensary", "").lower() == dispensary.lower()]
+            if not items:
+                continue
+
+        display_name = items[0].get("strain", slug) if items else slug
+        dispensaries = sorted({i.get("dispensary", "") for i in items})
+        categories = sorted({i.get("category", "") for i in items})
+
+        entry = {
+            "slug": slug,
+            "name": display_name,
+            "dispensaries": dispensaries,
+            "categories": categories,
+            "count": len(items),
+        }
+
+        if q:
+            q_norm = indexer.normalize_strain_name(q)
+            if q_norm not in slug and slug not in q_norm:
+                # Word-level check
+                q_words = set(q_norm.split("-"))
+                slug_words = set(slug.split("-"))
+                if not (q_words & slug_words):
+                    continue
+
+        results.append(entry)
+        if len(results) >= limit:
+            break
+
+    return {"strains": results, "total": len(results)}
+
+
 @router.get("/summary")
 async def get_summary():
     """Get lightweight stock index summary for dashboards."""
@@ -137,20 +205,44 @@ async def search_stock(
     max_distance: Optional[float] = Query(None, description="Max distance in miles", le=100),
     limit: int = Query(50, description="Max results to return", le=200),
 ):
-    """Search for products by strain name with optional filters."""
+    """Search for products by strain name with fuzzy/substring matching."""
     index = get_stock_index()
     indexer = get_indexer()
 
     strain_normalized = indexer.normalize_strain_name(strain)
-    items = index.get("by_strain", {}).get(strain_normalized, [])
+    by_strain = index.get("by_strain", {})
+
+    # 1. Try exact match first
+    items = by_strain.get(strain_normalized, [])
+    match_type = "exact"
+
+    # 2. If no exact match, try substring matching (e.g. "cookie-crip" in "cookie-crip-whole-flower-35g")
+    if not items:
+        match_type = "substring"
+        for slug, slug_items in by_strain.items():
+            if strain_normalized in slug or slug in strain_normalized:
+                items.extend(slug_items)
+
+    # 3. If still nothing, try word-overlap matching (any word in the search appears in the slug)
+    if not items:
+        match_type = "fuzzy"
+        search_words = set(strain_normalized.split("-"))
+        for slug, slug_items in by_strain.items():
+            slug_words = set(slug.split("-"))
+            # Require at least 50% of search words to match
+            overlap = search_words & slug_words
+            if len(overlap) >= max(1, len(search_words) // 2):
+                items.extend(slug_items)
 
     if not items:
         return {
             "strain": strain,
             "strain_normalized": strain_normalized,
+            "match_type": "none",
             "matches": [],
             "total": 0,
             "message": f"No products found for strain '{strain}'",
+            "suggestion": "Try a shorter or more common name",
         }
 
     filtered = list(items)
@@ -186,6 +278,7 @@ async def search_stock(
     return {
         "strain": strain,
         "strain_normalized": strain_normalized,
+        "match_type": match_type,
         "matches": filtered,
         "total": len(filtered),
         "total_all_dispensaries": len(items),
@@ -249,7 +342,14 @@ async def get_nearest_stock(
     indexer = get_indexer()
 
     strain_normalized = indexer.normalize_strain_name(strain)
-    items = index.get("by_strain", {}).get(strain_normalized, [])
+    by_strain = index.get("by_strain", {})
+
+    # Exact match first, then substring
+    items = by_strain.get(strain_normalized, [])
+    if not items:
+        for slug, slug_items in by_strain.items():
+            if strain_normalized in slug or slug in strain_normalized:
+                items.extend(slug_items)
 
     if not items:
         return {
@@ -398,3 +498,60 @@ async def bulk_stock_check(request: BulkStockRequest):
         "not_found": sum(1 for r in results if not r["found"]),
         "results": results,
     }
+
+
+# ===========================================================================
+# Alert Endpoints — Strain Watchlist
+# ===========================================================================
+
+@router.post("/alerts")
+async def create_strain_alert(request: AlertCreateRequest):
+    """Subscribe to email alerts when a strain comes in stock."""
+    if not STOCK_ALERTS_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Alert service not available")
+
+    indexer = get_indexer()
+    strain_slug = indexer.normalize_strain_name(request.strain)
+
+    alert = create_alert(
+        email=request.email,
+        strain=request.strain,
+        strain_slug=strain_slug,
+        dispensary=request.dispensary,
+        max_distance_miles=request.max_distance_miles,
+        lat=request.lat,
+        lng=request.lng,
+    )
+
+    is_dup = alert.pop("_duplicate", False)
+    return {
+        "success": True,
+        "alert": alert,
+        "message": "Alert already exists" if is_dup else f"Alert created — you'll be emailed when '{request.strain}' is in stock",
+    }
+
+
+@router.get("/alerts/{email}")
+async def get_user_alerts(email: str):
+    """Get all active alerts for an email address."""
+    if not STOCK_ALERTS_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Alert service not available")
+
+    alerts = get_alerts_for_email(email)
+    return {
+        "email": email,
+        "alerts": alerts,
+        "total": len(alerts),
+    }
+
+
+@router.delete("/alerts/{alert_id}")
+async def remove_alert(alert_id: str):
+    """Deactivate a strain alert."""
+    if not STOCK_ALERTS_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Alert service not available")
+
+    success = delete_alert(alert_id)
+    if not success:
+        raise HTTPException(status_code=404, detail=f"Alert {alert_id} not found")
+    return {"success": True, "message": f"Alert {alert_id} deactivated"}

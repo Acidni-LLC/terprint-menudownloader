@@ -79,6 +79,18 @@ except ImportError:
         notify_stage_complete = lambda *args, **kwargs: False
         notify_pipeline_summary = lambda *args, **kwargs: False
 
+# Import stock alerts for post-build watchlist checking
+try:
+    from .stock_alerts import check_alerts_against_index
+    STOCK_ALERTS_AVAILABLE = True
+except ImportError:
+    try:
+        from stock_alerts import check_alerts_against_index
+        STOCK_ALERTS_AVAILABLE = True
+    except ImportError:
+        STOCK_ALERTS_AVAILABLE = False
+        check_alerts_against_index = lambda *args, **kwargs: {"active_alerts": 0, "matches": 0, "emails_sent": 0}
+
 # Ensure writable directories for logs in container environment
 # Set log directory before any package imports that might try to create logs
 os.environ.setdefault('LOG_DIR', '/tmp/logs')
@@ -321,6 +333,20 @@ def build_stock_index_from_menus() -> dict:
                 f"{metadata['unique_strains']} strains, "
                 f"{len(metadata.get('dispensaries', {}))} dispensaries"
             )
+
+            # Check strain alerts against the new index
+            alert_result = {"active_alerts": 0, "matches": 0, "emails_sent": 0}
+            if STOCK_ALERTS_AVAILABLE:
+                try:
+                    alert_result = check_alerts_against_index(index)
+                    if alert_result.get("emails_sent", 0) > 0:
+                        logger.info(
+                            f"Stock alerts: {alert_result['emails_sent']} notification(s) sent "
+                            f"for {alert_result['matches']} match(es)"
+                        )
+                except Exception as alert_err:
+                    logger.error(f"Stock alert check failed (non-fatal): {alert_err}")
+
             return {
                 "success": True,
                 "total_items": metadata["total_items"],
@@ -328,6 +354,7 @@ def build_stock_index_from_menus() -> dict:
                 "dispensaries": metadata.get("dispensaries", {}),
                 "enrichment": metadata.get("enrichment", {}),
                 "index_path": path,
+                "alerts": alert_result,
             }
         else:
             logger.warning("No items found for stock index - menu files may not exist yet")

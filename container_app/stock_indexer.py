@@ -506,13 +506,29 @@ class StockIndexerV2:
                     continue
                 menu_blobs.append(b)
 
-            # --- If a summary file exists, prefer it (has all products already) ---
+            # --- If a summary file exists, validate it has actual products ---
+            # Some dispensaries (e.g. Trulieve) create "summary" files that are
+            # manifests (containing file lists, batch counts) rather than product
+            # arrays.  Only prefer the summary if it contains real products.
             if summary_blob:
-                logger.info(
-                    f"Using summary file for {dispensary} ({days_back}d ago): "
-                    f"{summary_blob.name} (skipping {len(menu_blobs)} individual files)"
-                )
-                return [summary_blob]
+                try:
+                    _sc = container.get_blob_client(summary_blob.name)
+                    _sd = json.loads(_sc.download_blob().readall())
+                    _sp = self._extract_products(_sd)
+                    if len(_sp) > 0:
+                        logger.info(
+                            f"Using summary file for {dispensary} ({days_back}d ago): "
+                            f"{summary_blob.name} ({len(_sp)} products, "
+                            f"skipping {len(menu_blobs)} individual files)"
+                        )
+                        return [summary_blob]
+                    else:
+                        logger.info(
+                            f"Summary file for {dispensary} is a manifest (0 products), "
+                            f"falling through to {len(menu_blobs)} per-store files"
+                        )
+                except Exception as _e:
+                    logger.warning(f"Could not validate summary file for {dispensary}: {_e}")
 
             # --- Deduplicate per-store files ---
             # Trulieve creates per-store-per-category files:
@@ -613,40 +629,160 @@ class StockIndexerV2:
                 if not isinstance(product, dict):
                     continue
 
-                strain = self._extract_field(product, [
-                    "strain", "strainName", "strain_name", "name", "productName", "title"
-                ]) or "Unknown"
+                # ---------------------------------------------------------
+                # Dispensary-specific extraction overrides
+                # ---------------------------------------------------------
+                strain = None
+                batch_id = None
+                category = None
+                product_name = None
+                thc = None
+                cbd = None
+                price = None
+                weight = None
+                strain_type = None
+                terpene_profile: dict[str, float] = {}
 
-                batch_id = self._extract_field(product, [
-                    "batch_number", "batchNumber", "batchId", "batch_id", "sku", "id"
-                ]) or "unknown"
+                if dispensary == "trulieve":
+                    # Trulieve: strain/category/THC live in custom_attributes_product[]
+                    custom_attrs = product.get("custom_attributes_product")
+                    if isinstance(custom_attrs, list):
+                        attr_map = {}
+                        for attr in custom_attrs:
+                            if isinstance(attr, dict):
+                                code = attr.get("code", "")
+                                val = attr.get("value", "")
+                                if code and val:
+                                    attr_map[code] = val
+                        strain = attr_map.get("strain") or attr_map.get("product_display_name")
+                        strain_type = (attr_map.get("strain_type") or "").lower() or None
+                        thc = _safe_float(attr_map.get("thc_percentage") or attr_map.get("thc_content"))
+                        cbd = _safe_float(attr_map.get("cbd_percentage") or attr_map.get("cbd_content"))
 
-                category = self._extract_field(product, [
-                    "category", "productCategory", "product_category", "type"
-                ]) or "unknown"
+                    # Trulieve category: from categories[].name array
+                    cats = product.get("categories")
+                    if isinstance(cats, list):
+                        for cat_item in cats:
+                            if isinstance(cat_item, dict):
+                                cat_name = cat_item.get("name", "")
+                                if cat_name:
+                                    category = cat_name
+                                    break
+                            elif isinstance(cat_item, str) and cat_item:
+                                category = cat_item
+                                break
 
-                product_name = self._extract_field(product, [
-                    "name", "productName", "product_name", "title"
-                ]) or strain
+                    # Trulieve pricing: price_range.minimum_price.final_price.value
+                    price_range = product.get("price_range", {})
+                    min_price = price_range.get("minimum_price", {}) if isinstance(price_range, dict) else {}
+                    if isinstance(min_price, dict):
+                        fp = min_price.get("final_price", {})
+                        if isinstance(fp, dict):
+                            price = _safe_float(fp.get("value"))
+                        if price is None:
+                            rp = min_price.get("regular_price", {})
+                            if isinstance(rp, dict):
+                                price = _safe_float(rp.get("value"))
+
+                    product_name = product.get("name") or strain
+                    batch_id = str(product.get("sku") or product.get("id") or "unknown")
+
+                elif dispensary == "muv":
+                    # MUV: strain is nested {name, prevalence: {name}}
+                    strain_obj = product.get("strain")
+                    if isinstance(strain_obj, dict):
+                        strain = strain_obj.get("name")
+                        prevalence = strain_obj.get("prevalence")
+                        if isinstance(prevalence, dict):
+                            strain_type = (prevalence.get("name") or "").lower() or None
+                    cat_obj = product.get("category")
+                    if isinstance(cat_obj, dict):
+                        category = cat_obj.get("name")
+                    elif isinstance(cat_obj, str):
+                        category = cat_obj
+                    product_name = product.get("name")
+
+                    # MUV: pricing/weight from variants list
+                    variants = product.get("variants")
+                    if isinstance(variants, list) and variants:
+                        v0 = variants[0] if isinstance(variants[0], dict) else {}
+                        price = _safe_float(v0.get("promoPrice") or v0.get("price"))
+                        unit_size = v0.get("unitSize")
+                        if isinstance(unit_size, dict):
+                            weight = _safe_float(unit_size.get("value"))
+
+                elif dispensary == "flowery":
+                    # Flowery: strain is nested, categories is array, rich terpenes
+                    strain_obj = product.get("strain")
+                    if isinstance(strain_obj, dict):
+                        strain = strain_obj.get("name")
+                        strain_type = (strain_obj.get("lineage") or "").lower() or None
+                    categories_arr = product.get("categories")
+                    if isinstance(categories_arr, list) and categories_arr:
+                        category = str(categories_arr[0])
+                    product_name = product.get("name")
+                    price = _safe_float(product.get("sale_price") or product.get("unit_price"))
+                    weight = _safe_float(product.get("unit_weight"))
+                    thc = _safe_float(product.get("total_thc"))
+                    cbd = _safe_float(product.get("total_cbd"))
+                    batch_id = str(product.get("batch_num") or product.get("id") or "unknown")
+
+                    # Flowery: terpenes are a flat dict {myrcene: 0.824, ...}
+                    terps = product.get("terpenes")
+                    if isinstance(terps, dict):
+                        terpene_profile = {
+                            k: _safe_float(v)
+                            for k, v in terps.items()
+                            if _safe_float(v) is not None and _safe_float(v) > 0
+                        }
+
+                # ---------------------------------------------------------
+                # Generic fallback for any field not yet set
+                # ---------------------------------------------------------
+                if not strain:
+                    strain = self._extract_field(product, [
+                        "strain", "strainName", "strain_name", "name", "productName", "title"
+                    ]) or "Unknown"
+
+                if not batch_id:
+                    batch_id = self._extract_field(product, [
+                        "batch_number", "batchNumber", "batchId", "batch_id", "batch_num",
+                        "sku", "id"
+                    ]) or "unknown"
+
+                if not category:
+                    category = self._extract_field(product, [
+                        "category", "categories", "productCategory", "product_category", "type"
+                    ]) or "unknown"
+
+                if not product_name:
+                    product_name = self._extract_field(product, [
+                        "name", "productName", "product_name", "title"
+                    ]) or strain
 
                 strain_slug = self.normalize_strain_name(strain)
                 item_id = hashlib.md5(
                     f"{dispensary}:{store.store_id}:{strain_slug}:{batch_id}".encode()
                 ).hexdigest()[:12]
 
-                # Extract basic cannabinoid/price data from menu
-                thc = _safe_float(product.get("thc") or product.get("thcPercent") or product.get("thc_percent"))
-                cbd = _safe_float(product.get("cbd") or product.get("cbdPercent") or product.get("cbd_percent"))
-                price = _safe_float(product.get("price"))
-                weight = _safe_float(product.get("weight") or product.get("weightGrams") or product.get("weight_grams"))
+                # Generic fallbacks for cannabinoids/price/weight (if not set above)
+                if thc is None:
+                    thc = _safe_float(product.get("thc") or product.get("thcPercent") or product.get("thc_percent") or product.get("total_thc"))
+                if cbd is None:
+                    cbd = _safe_float(product.get("cbd") or product.get("cbdPercent") or product.get("cbd_percent") or product.get("total_cbd"))
+                if price is None:
+                    price = _safe_float(product.get("price") or product.get("unit_price") or product.get("sale_price"))
+                if weight is None:
+                    weight = _safe_float(product.get("weight") or product.get("weightGrams") or product.get("weight_grams") or product.get("unit_weight"))
 
-                # Extract terpene profile from menu if available
-                terpene_profile = {}
-                menu_terpenes = product.get("terpenes")
-                if isinstance(menu_terpenes, dict):
-                    terpene_profile = {k: _safe_float(v) for k, v in menu_terpenes.items() if _safe_float(v) is not None}
+                # Generic terpene profile fallback
+                if not terpene_profile:
+                    menu_terpenes = product.get("terpenes")
+                    if isinstance(menu_terpenes, dict):
+                        terpene_profile = {k: _safe_float(v) for k, v in menu_terpenes.items() if _safe_float(v) is not None}
 
-                strain_type = product.get("strain_type") or product.get("strainType") or None
+                if not strain_type:
+                    strain_type = product.get("strain_type") or product.get("strainType") or None
                 if strain_type:
                     strain_type = strain_type.lower()
 
@@ -699,7 +835,14 @@ class StockIndexerV2:
 
     @staticmethod
     def _extract_products(data: Any) -> list:
-        """Extract product array from various menu JSON formats."""
+        """Extract product array from various menu JSON formats.
+
+        Handles:
+        - Direct list: [{...}, {...}]
+        - Keyed: {products: [{...}]}
+        - Nested: {data: {products: [{...}]}}  (Curaleaf, Flowery)
+        - Double-nested: {data: {products: {list: [{...}]}}}  (MUV)
+        """
         if isinstance(data, list):
             return data
         if isinstance(data, dict):
@@ -708,17 +851,48 @@ class StockIndexerV2:
                 if isinstance(val, list):
                     return val
                 if isinstance(val, dict):
-                    for sub_key in ("products", "items", "results"):
+                    for sub_key in ("products", "items", "results", "list"):
                         sub = val.get(sub_key)
                         if isinstance(sub, list):
                             return sub
+                    # One more level: {data: {products: {list: [...]}}}
+                    for sub_key in ("products", "items", "results"):
+                        sub = val.get(sub_key)
+                        if isinstance(sub, dict):
+                            for deep_key in ("list", "items", "results"):
+                                deep = sub.get(deep_key)
+                                if isinstance(deep, list):
+                                    return deep
         return []
 
     @staticmethod
     def _extract_field(product: dict, field_names: list[str]) -> str | None:
-        """Extract a field trying multiple possible key names."""
+        """Extract a field trying multiple possible key names.
+
+        Handles nested objects (MUV/Flowery: strain={name: ...})
+        and array values (Flowery: categories=["Concentrates", "Solventless"]).
+        """
         for name in field_names:
             val = product.get(name)
+            if val is None:
+                continue
+            # Nested dict with 'name' key (e.g. strain: {name: "Blue Dream"})
+            if isinstance(val, dict):
+                inner = val.get("name") or val.get("title") or val.get("label")
+                if inner:
+                    return str(inner).strip()
+                # Fallback: skip dicts without a name key
+                continue
+            # Array — take the first element (e.g. categories: ["Flower", "Roll-On"])
+            if isinstance(val, list):
+                for elem in val:
+                    if isinstance(elem, dict):
+                        inner = elem.get("name") or elem.get("title") or elem.get("label")
+                        if inner:
+                            return str(inner).strip()
+                    elif elem:
+                        return str(elem).strip()
+                continue
             if val:
                 return str(val).strip()
         return None
@@ -729,23 +903,30 @@ class StockIndexerV2:
         cat = category.lower().strip()
         mapping = {
             "flower": "Flower", "flowers": "Flower", "bud": "Flower",
+            "whole flower": "Flower", "ground flower": "Flower", "ground": "Flower",
             "pre-roll": "Pre-Rolls", "pre-rolls": "Pre-Rolls", "preroll": "Pre-Rolls",
             "prerolls": "Pre-Rolls", "pre roll": "Pre-Rolls", "pre rolls": "Pre-Rolls",
-            "joint": "Pre-Rolls", "joints": "Pre-Rolls",
+            "joint": "Pre-Rolls", "joints": "Pre-Rolls", "infused pre-roll": "Pre-Rolls",
             "vape": "Vape", "vapes": "Vape", "cartridge": "Vape", "cartridges": "Vape",
             "cart": "Vape", "carts": "Vape", "pod": "Vape", "pods": "Vape",
+            "510 cartridge": "Vape", "510 thread": "Vape", "disposable": "Vape",
             "concentrate": "Concentrates", "concentrates": "Concentrates",
             "extract": "Concentrates", "extracts": "Concentrates",
             "wax": "Concentrates", "shatter": "Concentrates", "rosin": "Concentrates",
             "live resin": "Concentrates", "live rosin": "Concentrates",
+            "solventless": "Concentrates", "badder": "Concentrates", "budder": "Concentrates",
+            "crumble": "Concentrates", "sauce": "Concentrates", "diamonds": "Concentrates",
+            "distillate": "Concentrates", "hash": "Concentrates",
             "edible": "Edibles", "edibles": "Edibles",
-            "gummy": "Edibles", "gummies": "Edibles",
+            "gummy": "Edibles", "gummies": "Edibles", "chocolate": "Edibles",
             "topical": "Topicals", "topicals": "Topicals",
-            "cream": "Topicals", "lotion": "Topicals",
+            "cream": "Topicals", "lotion": "Topicals", "balm": "Topicals",
             "tincture": "Tinctures", "tinctures": "Tinctures",
-            "oral": "Tinctures", "sublingual": "Tinctures",
+            "oral": "Tinctures", "sublingual": "Tinctures", "drops": "Tinctures",
             "capsule": "Capsules", "capsules": "Capsules",
             "rso": "RSO", "rick simpson": "RSO",
+            "syringe": "Syringes", "syringes": "Syringes",
+            "accessories": "Accessories", "accessory": "Accessories",
         }
         return mapping.get(cat, category.title() if category and category != "unknown" else "Other")
 
