@@ -1,4 +1,4 @@
-﻿<policies>
+<policies>
     <inbound>
         <base />
         <cors allow-credentials="false">
@@ -19,7 +19,7 @@
                 <header>*</header>
             </expose-headers>
         </cors>
-        <set-backend-service base-url="https://ca-terprint-menudownloader.kindmoss-c6723cbe.eastus2.azurecontainerapps.io" />
+        <set-backend-service base-url="https://ca-terprint-menudownloader.greenbay-731aa80e.eastus2.azurecontainerapps.io" />
     </inbound>
     <backend>
         <base />

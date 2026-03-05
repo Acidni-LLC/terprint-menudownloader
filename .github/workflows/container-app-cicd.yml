@@ -95,7 +95,7 @@ jobs:
     if: github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
     environment: 
       name: dev
-      url: https://${{ env.CONTAINER_APP_NAME }}.kindmoss-c6723cbe.eastus2.azurecontainerapps.io
+      url: https://${{ env.CONTAINER_APP_NAME }}.greenbay-731aa80e.eastus2.azurecontainerapps.io
       
     steps:
       - name: Azure CLI Login
@@ -120,7 +120,7 @@ jobs:
           sleep 30
           
           # Check health endpoint
-          RESPONSE=$(curl -s -o /tmp/health.json -w "%{http_code}" "https://${{ env.CONTAINER_APP_NAME }}.kindmoss-c6723cbe.eastus2.azurecontainerapps.io/health")
+          RESPONSE=$(curl -s -o /tmp/health.json -w "%{http_code}" "https://${{ env.CONTAINER_APP_NAME }}.greenbay-731aa80e.eastus2.azurecontainerapps.io/health")
           
           echo "HTTP Status: $RESPONSE"
           if [ -f /tmp/health.json ]; then
@@ -155,7 +155,7 @@ jobs:
               "service": "menu-downloader",
               "environment": "dev",
               "image_tag": "${{ needs.build.outputs.image-tag }}",
-              "deployment_url": "https://${{ env.CONTAINER_APP_NAME }}.kindmoss-c6723cbe.eastus2.azurecontainerapps.io"
+              "deployment_url": "https://${{ env.CONTAINER_APP_NAME }}.greenbay-731aa80e.eastus2.azurecontainerapps.io"
             }
 
   deploy-prod:
@@ -164,7 +164,7 @@ jobs:
     if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
     environment: 
       name: production
-      url: https://ca-terprint-menudownloader-prod.kindmoss-c6723cbe.eastus2.azurecontainerapps.io
+      url: https://ca-terprint-menudownloader-prod.greenbay-731aa80e.eastus2.azurecontainerapps.io
       
     steps:
       - name: Azure CLI Login
@@ -190,7 +190,7 @@ jobs:
           sleep 60
           
           # Check health endpoint
-          RESPONSE=$(curl -s -o /tmp/health.json -w "%{http_code}" "https://ca-terprint-menudownloader-prod.kindmoss-c6723cbe.eastus2.azurecontainerapps.io/health")
+          RESPONSE=$(curl -s -o /tmp/health.json -w "%{http_code}" "https://ca-terprint-menudownloader-prod.greenbay-731aa80e.eastus2.azurecontainerapps.io/health")
           
           echo "HTTP Status: $RESPONSE"
           if [ -f /tmp/health.json ]; then

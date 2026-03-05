@@ -1,4 +1,4 @@
----
+﻿---
 description: 'Azure API Management (APIM) standards and patterns for Terprint services - routing, policies, caching, security, and service mesh'
 applyTo: '**/apim/**,**/*policy*.xml,**/openapi*.json,**/openapi*.yaml,**/*client*.py,**/*api*.py,**/*service*.py,**/*client*.ts,**/*api*.ts,**/*service*.ts'
 ---
@@ -20,7 +20,7 @@ applyTo: '**/apim/**,**/*policy*.xml,**/openapi*.json,**/openapi*.yaml,**/*clien
 |----------|-------|
 | Instance Name | `apim-terprint-dev` |
 | Resource Group | `rg-dev-terprint-shared` |
-| Gateway URL | `https://apim-terprint-dev.azure-api.net` |
+| Gateway URL | `https://api.acidni.net` |
 | Developer Portal | `https://apim-terprint-dev.developer.azure-api.net` |
 | Management API | `https://apim-terprint-dev.management.azure-api.net` |
 | SKU | Developer (upgrade to Standard for prod) |
@@ -42,25 +42,25 @@ applyTo: '**/apim/**,**/*policy*.xml,**/openapi*.json,**/openapi*.yaml,**/*clien
 ### Base URL Pattern
 
 ```
-https://apim-terprint-dev.azure-api.net/{api-path}/{endpoint}
+https://api.acidni.net/{api-path}/{endpoint}
 ```
 
 ### Example Calls
 
 ```powershell
 # AI Chat - through APIM
-$response = Invoke-RestMethod -Uri "https://apim-terprint-dev.azure-api.net/chat/api/chat" `
+$response = Invoke-RestMethod -Uri "https://api.acidni.net/chat/api/chat" `
     -Method Post `
     -Headers @{ "Ocp-Apim-Subscription-Key" = $subscriptionKey } `
     -Body $body `
     -ContentType "application/json"
 
 # Data API - through APIM  
-$strains = Invoke-RestMethod -Uri "https://apim-terprint-dev.azure-api.net/data/api/strains" `
+$strains = Invoke-RestMethod -Uri "https://api.acidni.net/data/api/strains" `
     -Headers @{ "Ocp-Apim-Subscription-Key" = $subscriptionKey }
 
 # Stock Check - through APIM
-$stock = Invoke-RestMethod -Uri "https://apim-terprint-dev.azure-api.net/stock/api/stock-check" `
+$stock = Invoke-RestMethod -Uri "https://api.acidni.net/stock/api/stock-check" `
     -Method Post `
     -Headers @{ "Ocp-Apim-Subscription-Key" = $subscriptionKey } `
     -Body '{"dispensary": "cookies"}' `
@@ -77,7 +77,7 @@ class TerprintAPIClient:
     """Client for calling Terprint services through APIM."""
     
     def __init__(self):
-        self.base_url = os.environ.get("APIM_GATEWAY_URL", "https://apim-terprint-dev.azure-api.net")
+        self.base_url = os.environ.get("APIM_GATEWAY_URL", "https://api.acidni.net")
         self.subscription_key = os.environ.get("APIM_SUBSCRIPTION_KEY")
         
     def _get_headers(self) -> dict:
@@ -122,14 +122,14 @@ class TerprintAPIClient:
 ### 1. Subscription Key (Default)
 
 ```http
-GET https://apim-terprint-dev.azure-api.net/data/api/strains
+GET https://api.acidni.net/data/api/strains
 Ocp-Apim-Subscription-Key: {your-subscription-key}
 ```
 
 ### 2. OAuth 2.0 / Entra ID (Recommended for Production)
 
 ```http
-GET https://apim-terprint-dev.azure-api.net/data/api/strains
+GET https://api.acidni.net/data/api/strains
 Authorization: Bearer {access-token}
 ```
 
@@ -139,7 +139,7 @@ Configured per-API in APIM policies.
 
 ## Internal Service API Keys
 
-> **⚠️ CONFIDENTIAL** - Do not commit actual keys to git. Use Azure Key Vault in production.
+> **âš ï¸ CONFIDENTIAL** - Do not commit actual keys to git. Use Azure Key Vault in production.
 
 These are the internal service-to-service API keys for backend services to call APIs through APIM.
 Calls made with these keys are **NOT billed** to customers - they are identified by `svc-*` prefix.
@@ -150,17 +150,17 @@ Calls made with these keys are **NOT billed** to customers - they are identified
 
 | API | Container App Name | Backend URL (FOR REFERENCE ONLY) |
 |-----|-------------------|----------------------------------|
-| Communications | `func-terprint-communications` | `https://func-terprint-communications.greensky-9390af85.eastus.azurecontainerapps.io/api` |
-| AI Chat | `ca-terprint-ai-chat` | `https://ca-terprint-ai-chat.greensky-9390af85.eastus.azurecontainerapps.io/api` |
-| AI Deals | `ca-terprint-ai-deals` | `https://ca-terprint-ai-deals.happyflower-d0e85283.eastus.azurecontainerapps.io/api` |
-| AI Lab | `ca-terprint-ai-lab` | `https://ca-terprint-ai-lab.livelyfield-beaa429b.eastus.azurecontainerapps.io/api` |
-| AI Recommender | `ca-terprint-ai-recommender` | `https://ca-terprint-ai-recommender.blacksky-230827a0.eastus2.azurecontainerapps.io/api` |
-| Data API | `capp-terprint-data-api` | `https://capp-terprint-data-api.proudcoast-fb994cae.eastus.azurecontainerapps.io/api` |
-| Menu Downloader | `ca-terprint-menudownloader` | `https://ca-terprint-menudownloader.blacksky-230827a0.eastus2.azurecontainerapps.io/api` |
-| Stock API | (shares AI Deals backend) | `https://ca-terprint-ai-deals.happyflower-d0e85283.eastus.azurecontainerapps.io/api/stock` |
+| Communications | `func-terprint-communications` | `https://func-terprint-communications.greenbay-731aa80e.eastus2.azurecontainerapps.io/api` |
+| AI Chat | `ca-terprint-ai-chat` | `https://ca-terprint-ai-chat.greenbay-731aa80e.eastus2.azurecontainerapps.io/api` |
+| AI Deals | `ca-terprint-ai-deals` | `https://ca-terprint-ai-deals.greenbay-731aa80e.eastus2.azurecontainerapps.io/api` |
+| AI Lab | `ca-terprint-ai-lab` | `https://ca-terprint-ai-lab.greenbay-731aa80e.eastus2.azurecontainerapps.io/api` |
+| AI Recommender | `ca-terprint-ai-recommender` | `https://ca-terprint-ai-recommender.greenbay-731aa80e.eastus2.azurecontainerapps.io/api` |
+| Data API | `capp-terprint-data-api` | `https://capp-terprint-data-api.greenbay-731aa80e.eastus2.azurecontainerapps.io/api` |
+| Menu Downloader | `ca-terprint-menudownloader` | `https://ca-terprint-menudownloader.greenbay-731aa80e.eastus2.azurecontainerapps.io/api` |
+| Stock API | (shares AI Deals backend) | `https://ca-terprint-ai-deals.greenbay-731aa80e.eastus2.azurecontainerapps.io/api/stock` |
 | Infographics | `func-terprint-infographics` | `https://func-terprint-infographics.azurewebsites.net/api` (still Function App) |
 
-> **⚠️ SECURITY:**
+> **âš ï¸ SECURITY:**
 > - All backends require `X-Backend-Api-Key` header (injected by APIM global policy)
 > - **NEVER call these URLs directly** - Always use APIM gateway!
 > - Backend API key stored in Key Vault: `kv-terprint-dev/backend-api-key`
@@ -197,18 +197,18 @@ az rest --method POST `
 az functionapp config appsettings set \
   --name func-terprint-infographics \
   --resource-group rg-terprint-dev \
-  --settings APIM_GATEWAY_URL="https://apim-terprint-dev.azure-api.net" \
+  --settings APIM_GATEWAY_URL="https://api.acidni.net" \
              APIM_SUBSCRIPTION_KEY="@Microsoft.KeyVault(SecretUri=https://kv-terprint.vault.azure.net/secrets/svc-infographics-key)" \
-             DATA_API_BASE_URL="https://apim-terprint-dev.azure-api.net/data"
+             DATA_API_BASE_URL="https://api.acidni.net/data"
 ```
 
 **For Local Development (`local.settings.json`):**
 ```json
 {
   "Values": {
-    "APIM_GATEWAY_URL": "https://apim-terprint-dev.azure-api.net",
+    "APIM_GATEWAY_URL": "https://api.acidni.net",
     "APIM_SUBSCRIPTION_KEY": "<your-svc-key-from-keyvault>",
-    "DATA_API_BASE_URL": "https://apim-terprint-dev.azure-api.net/data"
+    "DATA_API_BASE_URL": "https://api.acidni.net/data"
   }
 }
 ```
@@ -217,8 +217,8 @@ az functionapp config appsettings set \
 
 | Key Type | Prefix | Billed | Rate Limited |
 |----------|--------|--------|--------------|
-| Customer | (varies) | ✅ Yes | ✅ By tier |
-| Internal Service | `svc-*` | ❌ No | ✅ Professional tier |
+| Customer | (varies) | âœ… Yes | âœ… By tier |
+| Internal Service | `svc-*` | âŒ No | âœ… Professional tier |
 
 The metering service filters out calls from `svc-*` subscriptions so internal service-to-service calls don't generate customer bills.
 
@@ -556,7 +556,7 @@ requests
 Add trace to request:
 
 ```http
-GET https://apim-terprint-dev.azure-api.net/data/api/strains
+GET https://api.acidni.net/data/api/strains
 Ocp-Apim-Subscription-Key: {key}
 Ocp-Apim-Trace: true
 ```
@@ -565,8 +565,8 @@ Response includes `Ocp-Apim-Trace-Location` header with debug trace URL.
 
 ### Test from Portal
 
-1. Go to Azure Portal → APIM → APIs
-2. Select API → Test tab
+1. Go to Azure Portal â†’ APIM â†’ APIs
+2. Select API â†’ Test tab
 3. Select operation
 4. Add headers/body
 5. Click Send
@@ -578,7 +578,7 @@ All services should use these environment variables:
 
 ```json
 {
-  "APIM_GATEWAY_URL": "https://apim-terprint-dev.azure-api.net",
+  "APIM_GATEWAY_URL": "https://api.acidni.net",
   "APIM_SUBSCRIPTION_KEY": "@Microsoft.KeyVault(SecretUri=https://kv-terprint.vault.azure.net/secrets/apim-subscription-key/)",
   "APIM_MANAGEMENT_URL": "https://apim-terprint-dev.management.azure-api.net"
 }
@@ -611,13 +611,13 @@ from dataclasses import dataclass
 @dataclass
 class APIMConfig:
     """APIM Configuration - loaded from environment."""
-    gateway_url: str = "https://apim-terprint-dev.azure-api.net"
+    gateway_url: str = "https://api.acidni.net"
     subscription_key: Optional[str] = None
     
     @classmethod
     def from_env(cls) -> "APIMConfig":
         return cls(
-            gateway_url=os.environ.get("APIM_GATEWAY_URL", "https://apim-terprint-dev.azure-api.net"),
+            gateway_url=os.environ.get("APIM_GATEWAY_URL", "https://api.acidni.net"),
             subscription_key=os.environ.get("APIM_SUBSCRIPTION_KEY")
         )
 
@@ -744,7 +744,7 @@ export class TerprintAPIMClient {
 
   constructor(config?: Partial<APIMConfig>) {
     this.config = {
-      gatewayUrl: config?.gatewayUrl || process.env.APIM_GATEWAY_URL || "https://apim-terprint-dev.azure-api.net",
+      gatewayUrl: config?.gatewayUrl || process.env.APIM_GATEWAY_URL || "https://api.acidni.net",
       subscriptionKey: config?.subscriptionKey || process.env.APIM_SUBSCRIPTION_KEY,
     };
   }
@@ -839,7 +839,7 @@ public class TerprintAPIMClient : IDisposable
     {
         _gatewayUrl = gatewayUrl 
             ?? Environment.GetEnvironmentVariable("APIM_GATEWAY_URL") 
-            ?? "https://apim-terprint-dev.azure-api.net";
+            ?? "https://api.acidni.net";
             
         _client = new HttpClient();
         
@@ -912,5 +912,5 @@ az apim api show -g rg-dev-terprint-shared -n apim-terprint-dev --api-id terprin
 
 # Test API (get subscription key first)
 $key = az apim subscription show -g rg-dev-terprint-shared -n apim-terprint-dev --subscription-id internal-key --query primaryKey -o tsv
-Invoke-RestMethod -Uri "https://apim-terprint-dev.azure-api.net/data/api/health" -Headers @{"Ocp-Apim-Subscription-Key"=$key}
+Invoke-RestMethod -Uri "https://api.acidni.net/data/api/health" -Headers @{"Ocp-Apim-Subscription-Key"=$key}
 ```

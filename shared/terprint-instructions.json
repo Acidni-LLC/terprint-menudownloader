@@ -103,7 +103,7 @@
                                          "ALL API calls between Terprint services MUST route through APIM gateway",
                                          "NEVER call function apps directly (e.g., func-terprint-communications.azurewebsites.net)"
                                      ],
-                           "baseUrl":  "https://apim-terprint-dev.azure-api.net"
+                           "baseUrl":  "https://api.acidni.net"
                        },
                        {
                            "id":  6,
@@ -290,7 +290,7 @@
                            "geography":  "Florida dispensaries",
                            "activeDispensaries":  [
                                                       "Cookies",
-                                                      "MÜV",
+                                                      "MÃœV",
                                                       "Flowery",
                                                       "Trulieve",
                                                       "Curaleaf"
@@ -500,7 +500,7 @@
                                                                },
                                                                {
                                                                    "type":  "Container Apps Environment",
-                                                                   "name":  "kindmoss-c6723cbe.eastus2.azurecontainerapps.io",
+                                                                   "name":  "greenbay-731aa80e.eastus2.azurecontainerapps.io",
                                                                    "resourceGroup":  "rg-dev-terprint-ca"
                                                                },
                                                                {
@@ -712,12 +712,12 @@
                                                   },
                                                   {
                                                       "name":  "ORG_APIM_BASE_URL",
-                                                      "value":  "https://apim-terprint-dev.azure-api.net",
+                                                      "value":  "https://api.acidni.net",
                                                       "description":  "APIM gateway"
                                                   },
                                                   {
                                                       "name":  "ORG_CONTAINER_ENV",
-                                                      "value":  "kindmoss-c6723cbe.eastus2.azurecontainerapps.io",
+                                                      "value":  "greenbay-731aa80e.eastus2.azurecontainerapps.io",
                                                       "description":  "Container Apps Environment"
                                                   },
                                                   {
@@ -733,7 +733,7 @@
                                               ]
                             },
     "apim":  {
-                 "baseUrl":  "https://apim-terprint-dev.azure-api.net",
+                 "baseUrl":  "https://api.acidni.net",
                  "apis":  [
                               {
                                   "id":  "terprint-communications",
@@ -825,7 +825,7 @@
                              "notes":  "Stable"
                          },
                          {
-                             "name":  "MÜV",
+                             "name":  "MÃœV",
                              "growerId":  2,
                              "status":  "active",
                              "notes":  "Stable"
@@ -1008,7 +1008,7 @@
                                    ],
     "quickReferenceLinks":  {
                                 "azureDevOps":  "https://dev.azure.com/Acidni/Terprint",
-                                "apimGateway":  "https://apim-terprint-dev.azure-api.net",
+                                "apimGateway":  "https://api.acidni.net",
                                 "testDashboard":  "https://brave-stone-0d8700d0f.3.azurestaticapps.net",
                                 "salesSite":  "https://sales.terprint.com",
                                 "mainWebApp":  "https://terprint.acidni.net",

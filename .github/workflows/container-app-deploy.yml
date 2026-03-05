@@ -132,7 +132,7 @@ jobs:
               "AZURE_STORAGE_ACCOUNT_NAME=stterprintsharedgen2" \
               "AZURE_CONTAINER_NAME=jsonfiles" \
               "BATCH_PROCESSOR_KEY=secretref:batch-processor-key" \
-              "BATCH_PROCESSOR_URL=https://ca-terprint-batchprocessor.kindmoss-c6723cbe.eastus2.azurecontainerapps.io/api/run-batch-processor" \
+              "BATCH_PROCESSOR_URL=https://ca-terprint-batchprocessor.greenbay-731aa80e.eastus2.azurecontainerapps.io/api/run-batch-processor" \
               "TRULIEVE_DEV_MODE=false"
           
           echo "✅ Deployment completed successfully"

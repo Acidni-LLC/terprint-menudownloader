@@ -1,4 +1,4 @@
----
+﻿---
 description: 'CI/CD standards for Terprint services using GitHub Actions - build, test, deploy patterns for Container Apps'
 applyTo: '**/.github/workflows/*.yml,**/.github/workflows/*.yaml,**/azure-pipelines.yml'
 ---
@@ -15,28 +15,28 @@ applyTo: '**/.github/workflows/*.yml,**/.github/workflows/*.yaml,**/azure-pipeli
 ## Pipeline Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        GitHub Repository                             │
-│                    (terprint-ai-chat, etc.)                         │
-└─────────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼ push to main
-┌─────────────────────────────────────────────────────────────────────┐
-│                     GitHub Actions Workflow                          │
-│  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐      │
-│  │  Lint    │ -> │  Test    │ -> │  Build   │ -> │  Push    │      │
-│  │  (ruff)  │    │ (pytest) │    │ (Docker) │    │  (ACR)   │      │
-│  └──────────┘    └──────────┘    └──────────┘    └──────────┘      │
-└─────────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼ deploy
-┌─────────────────────────────────────────────────────────────────────┐
-│                   Azure Container Apps                               │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐             │
-│  │  Dev (auto) │ -> │ Staging     │ -> │ Prod        │             │
-│  │             │    │ (manual)    │    │ (approval)  │             │
-│  └─────────────┘    └─────────────┘    └─────────────┘             │
-└─────────────────────────────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                        GitHub Repository                             â”‚
+â”‚                    (terprint-ai-chat, etc.)                         â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                                â”‚
+                                â–¼ push to main
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                     GitHub Actions Workflow                          â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”      â”‚
+â”‚  â”‚  Lint    â”‚ -> â”‚  Test    â”‚ -> â”‚  Build   â”‚ -> â”‚  Push    â”‚      â”‚
+â”‚  â”‚  (ruff)  â”‚    â”‚ (pytest) â”‚    â”‚ (Docker) â”‚    â”‚  (ACR)   â”‚      â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜      â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                                â”‚
+                                â–¼ deploy
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                   Azure Container Apps                               â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”             â”‚
+â”‚  â”‚  Dev (auto) â”‚ -> â”‚ Staging     â”‚ -> â”‚ Prod        â”‚             â”‚
+â”‚  â”‚             â”‚    â”‚ (manual)    â”‚    â”‚ (approval)  â”‚             â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜             â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ## Workflow Templates
@@ -74,17 +74,17 @@ jobs:
 
 Copy from `terprint-config/.github/workflow-templates/container-app-deploy.yml`
 
-## 🔐 Organization-Level Secrets (RECOMMENDED)
+## ðŸ” Organization-Level Secrets (RECOMMENDED)
 
 > **NEW:** We've migrated to organization-level secrets for better security and easier management.
 > See [Organization Secrets Migration Guide](../../docs/ORGANIZATION_SECRETS_MIGRATION.md) for full details.
 
 ### Benefits
 
-- ✅ **Single source of truth** - Update once, applies to all repos
-- ✅ **Easier secret rotation** - Rotate credentials in one place
-- ✅ **Reduced configuration** - New repos inherit org secrets automatically
-- ✅ **Better security** - Fewer places secrets can leak
+- âœ… **Single source of truth** - Update once, applies to all repos
+- âœ… **Easier secret rotation** - Rotate credentials in one place
+- âœ… **Reduced configuration** - New repos inherit org secrets automatically
+- âœ… **Better security** - Fewer places secrets can leak
 
 ### Organization Secrets (Configured Once)
 
@@ -108,12 +108,12 @@ These are configured at the **Acidni-LLC organization level** and inherited by a
 | Variable Name | Value | Description |
 |---------------|-------|-------------|
 | `ORG_ACR_LOGIN_SERVER` | `crterprint.azurecr.io` | Primary ACR |
-| `ORG_APIM_BASE_URL` | `https://apim-terprint-dev.azure-api.net` | APIM gateway |
+| `ORG_APIM_BASE_URL` | `https://api.acidni.net` | APIM gateway |
 | `ORG_PYTHON_VERSION` | `3.12` | Default Python version |
 
 ### Repository-Level Secrets (Deprecated)
 
-> ⚠️ **DEPRECATED:** Repository-level secrets are being phased out. Use organization secrets instead.
+> âš ï¸ **DEPRECATED:** Repository-level secrets are being phased out. Use organization secrets instead.
 
 If you haven't migrated yet, configure these in each repo's Settings > Secrets:
 
@@ -129,7 +129,7 @@ If you haven't migrated yet, configure these in each repo's Settings > Secrets:
 ### Setting Up AZURE_CREDENTIALS (Legacy - For Reference Only)
 
 ```bash
-# ⚠️ DEPRECATED: Use ORG_AZURE_CREDENTIALS instead
+# âš ï¸ DEPRECATED: Use ORG_AZURE_CREDENTIALS instead
 # Create Service Principal for GitHub Actions
 az ad sp create-for-rbac \
   --name "sp-github-terprint-{app-name}" \
@@ -226,11 +226,11 @@ jobs:
     
     for i in {1..5}; do
       response=$(curl -s -o /dev/null -w "%{http_code}" \
-        "https://apim-terprint-dev.azure-api.net/${{ env.APP_NAME }}/api/health" \
+        "https://api.acidni.net/${{ env.APP_NAME }}/api/health" \
         -H "Ocp-Apim-Subscription-Key: ${{ secrets.APIM_SUBSCRIPTION_KEY }}")
       
       if [ "$response" = "200" ]; then
-        echo "✅ Health check passed"
+        echo "âœ… Health check passed"
         exit 0
       fi
       
@@ -238,7 +238,7 @@ jobs:
       sleep 10
     done
     
-    echo "❌ Health check failed"
+    echo "âŒ Health check failed"
     exit 1
 ```
 
@@ -383,8 +383,8 @@ az containerapp update \
     
     # Health check
     sleep 45
-    if ! curl -sf "https://apim-terprint-dev.azure-api.net/${{ env.APP_NAME }}/api/health" -H "Ocp-Apim-Subscription-Key: ${{ secrets.APIM_SUBSCRIPTION_KEY }}"; then
-      echo "❌ Rolling back to $CURRENT"
+    if ! curl -sf "https://api.acidni.net/${{ env.APP_NAME }}/api/health" -H "Ocp-Apim-Subscription-Key: ${{ secrets.APIM_SUBSCRIPTION_KEY }}"; then
+      echo "âŒ Rolling back to $CURRENT"
       az containerapp update -n ca-terprint-${{ env.APP_NAME }} -g rg-dev-terprint-shared --image $CURRENT
       exit 1
     fi
@@ -462,27 +462,27 @@ az containerapp update \
 ### Test Trigger Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    Your App Repo (e.g., terprint-ai-chat)           │
-│                                                                      │
-│  deploy.yml:                                                         │
-│  ┌──────────┐    ┌──────────┐    ┌──────────────────┐              │
-│  │  Build   │ -> │  Deploy  │ -> │ Trigger Tests    │              │
-│  │          │    │  to CA   │    │ (repository_     │              │
-│  │          │    │          │    │  dispatch)       │              │
-│  └──────────┘    └──────────┘    └──────────────────┘              │
-└─────────────────────────────────────────────────────────────────────┘
-                                              │
-                                              ▼ event: post-deploy-tests
-┌─────────────────────────────────────────────────────────────────────┐
-│                    terprint-tests Repository                         │
-│                                                                      │
-│  terprint-tests.yml:                                                │
-│  ┌──────────┐    ┌──────────┐    ┌──────────────────┐              │
-│  │  Setup   │ -> │  Run All │ -> │ Upload Reports   │              │
-│  │  Python  │    │  Tests   │    │ to Dashboard     │              │
-│  └──────────┘    └──────────┘    └──────────────────┘              │
-└─────────────────────────────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                    Your App Repo (e.g., terprint-ai-chat)           â”‚
+â”‚                                                                      â”‚
+â”‚  deploy.yml:                                                         â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”              â”‚
+â”‚  â”‚  Build   â”‚ -> â”‚  Deploy  â”‚ -> â”‚ Trigger Tests    â”‚              â”‚
+â”‚  â”‚          â”‚    â”‚  to CA   â”‚    â”‚ (repository_     â”‚              â”‚
+â”‚  â”‚          â”‚    â”‚          â”‚    â”‚  dispatch)       â”‚              â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜              â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                                              â”‚
+                                              â–¼ event: post-deploy-tests
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                    terprint-tests Repository                         â”‚
+â”‚                                                                      â”‚
+â”‚  terprint-tests.yml:                                                â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”              â”‚
+â”‚  â”‚  Setup   â”‚ -> â”‚  Run All â”‚ -> â”‚ Upload Reports   â”‚              â”‚
+â”‚  â”‚  Python  â”‚    â”‚  Tests   â”‚    â”‚ to Dashboard     â”‚              â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜              â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ### Adding Test Trigger to Your Workflow
@@ -527,16 +527,16 @@ jobs:
 
 | Service | Trigger Tests | Reason |
 |---------|---------------|--------|
-| terprint-data-api | ✅ **Yes** | Core API - validates data endpoints |
-| terprint-ai-chat | ✅ **Yes** | Customer-facing - APIM tests |
-| terprint-ai-recommender | ✅ **Yes** | Customer-facing - APIM tests |
-| terprint-ai-deals | ✅ **Yes** | Customer-facing - APIM tests |
-| terprint-infographics | ✅ **Yes** | Customer-facing - APIM tests |
-| terprint-ai-lab | ✅ **Yes** | Integration tests |
-| terprint-metering | ✅ **Yes** | Billing validation critical |
-| acidni-publisher-portal-webhook | ✅ **Yes** | Subscription tests |
-| terprint-menudownloader | ⚠️ Optional | Data pipeline (health only) |
-| terprint-batch-processor | ⚠️ Optional | Data pipeline (health only) |
+| terprint-data-api | âœ… **Yes** | Core API - validates data endpoints |
+| terprint-ai-chat | âœ… **Yes** | Customer-facing - APIM tests |
+| terprint-ai-recommender | âœ… **Yes** | Customer-facing - APIM tests |
+| terprint-ai-deals | âœ… **Yes** | Customer-facing - APIM tests |
+| terprint-infographics | âœ… **Yes** | Customer-facing - APIM tests |
+| terprint-ai-lab | âœ… **Yes** | Integration tests |
+| terprint-metering | âœ… **Yes** | Billing validation critical |
+| acidni-publisher-portal-webhook | âœ… **Yes** | Subscription tests |
+| terprint-menudownloader | âš ï¸ Optional | Data pipeline (health only) |
+| terprint-batch-processor | âš ï¸ Optional | Data pipeline (health only) |
 
 ### Viewing Test Results
 
@@ -615,8 +615,8 @@ jobs:
           sleep 45
           curl -sf "https://apim-terprint-${{ env.ENVIRONMENT }}.azure-api.net/${{ env.APP_NAME }}/api/health" \
             -H "Ocp-Apim-Subscription-Key: ${{ secrets.APIM_SUBSCRIPTION_KEY }}" \
-            || (echo "❌ Health check failed" && exit 1)
-          echo "✅ Deployment healthy"
+            || (echo "âŒ Health check failed" && exit 1)
+          echo "âœ… Deployment healthy"
 
   integration-tests:
     needs: deploy
@@ -640,7 +640,7 @@ jobs:
       
       - name: Post Test Dashboard Link
         run: |
-          echo "## 🧪 Integration Tests Triggered" >> $GITHUB_STEP_SUMMARY
+          echo "## ðŸ§ª Integration Tests Triggered" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "View results at: https://brave-stone-0d8700d0f.3.azurestaticapps.net" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

@@ -1,52 +1,52 @@
-# GitHub Organization Secrets Migration Guide
+﻿# GitHub Organization Secrets Migration Guide
 
 **Version:** 1.0.1  
 **Last Updated:** January 19, 2026 19:20:00 EST  
-**Status:** 🚀 Ready for Implementation
+**Status:** ðŸš€ Ready for Implementation
 
-**Organization Secrets:** ✅ **SETUP COMPLETE** (7 secrets + 5 variables configured)
+**Organization Secrets:** âœ… **SETUP COMPLETE** (7 secrets + 5 variables configured)
 
 ---
 
-## 📋 Migration Tracking Table
+## ðŸ“‹ Migration Tracking Table
 
 > **INSTRUCTIONS:** When you migrate a repository, update this table and commit to `terprint-config`.
 > Then run `.\copy-instructions-to-repos.ps1` to distribute updates to all repos.
 
 | Repository | Status | Migrated By | Date | Workflow Updated | Secrets Removed | Notes |
 |------------|--------|-------------|------|------------------|-----------------|-------|
-| terprint-config | ✅ Complete | - | 2026-01-19 | N/A (master repo) | N/A | Contains reusable workflow |
-| terprint-ai-chat | 🔄 In Progress | - | - | ⬜ No | ⬜ No | - |
-| terprint-ai-recommender | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
-| terprint-ai-deals | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
-| terprint-ai-lab | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
-| terprint-ai-health | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
-| terprint-data | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
-| terprint-communications | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
-| terprint-menudownloader | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
-| terprint-batches | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
-| terprint-batch-processor | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
-| terprint-coa-extractor | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
-| terprint-infographics | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
-| acidni-publisher-portal | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
-| terprint-metering | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
-| terprint-stock-api | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
-| Terprint.Web | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
-| terprint-tests | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
-| terprint-doctor-portal | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
-| terprint-powerbi-visuals | ⬜ Not Started | - | - | ⬜ No | ⬜ No | - |
+| terprint-config | âœ… Complete | - | 2026-01-19 | N/A (master repo) | N/A | Contains reusable workflow |
+| terprint-ai-chat | ðŸ”„ In Progress | - | - | â¬œ No | â¬œ No | - |
+| terprint-ai-recommender | â¬œ Not Started | - | - | â¬œ No | â¬œ No | - |
+| terprint-ai-deals | â¬œ Not Started | - | - | â¬œ No | â¬œ No | - |
+| terprint-ai-lab | â¬œ Not Started | - | - | â¬œ No | â¬œ No | - |
+| terprint-ai-health | â¬œ Not Started | - | - | â¬œ No | â¬œ No | - |
+| terprint-data | â¬œ Not Started | - | - | â¬œ No | â¬œ No | - |
+| terprint-communications | â¬œ Not Started | - | - | â¬œ No | â¬œ No | - |
+| terprint-menudownloader | â¬œ Not Started | - | - | â¬œ No | â¬œ No | - |
+| terprint-batches | â¬œ Not Started | - | - | â¬œ No | â¬œ No | - |
+| terprint-batch-processor | â¬œ Not Started | - | - | â¬œ No | â¬œ No | - |
+| terprint-coa-extractor | â¬œ Not Started | - | - | â¬œ No | â¬œ No | - |
+| terprint-infographics | â¬œ Not Started | - | - | â¬œ No | â¬œ No | - |
+| acidni-publisher-portal | â¬œ Not Started | - | - | â¬œ No | â¬œ No | - |
+| terprint-metering | â¬œ Not Started | - | - | â¬œ No | â¬œ No | - |
+| terprint-stock-api | â¬œ Not Started | - | - | â¬œ No | â¬œ No | - |
+| Terprint.Web | â¬œ Not Started | - | - | â¬œ No | â¬œ No | - |
+| terprint-tests | â¬œ Not Started | - | - | â¬œ No | â¬œ No | - |
+| terprint-doctor-portal | â¬œ Not Started | - | - | â¬œ No | â¬œ No | - |
+| terprint-powerbi-visuals | â¬œ Not Started | - | - | â¬œ No | â¬œ No | - |
 
 **Status Legend:**
-- ⬜ Not Started
-- 🔄 In Progress
-- ✅ Complete
-- ⚠️ Blocked (see Notes)
-- ❌ Failed (see Notes)
+- â¬œ Not Started
+- ðŸ”„ In Progress
+- âœ… Complete
+- âš ï¸ Blocked (see Notes)
+- âŒ Failed (see Notes)
 
 **How to Update This Table:**
 1. Find your repository in the table
 2. Update Status, Migrated By (your name), Date
-3. Check workflow updated and secrets removed boxes (✅ Yes / ⬜ No)
+3. Check workflow updated and secrets removed boxes (âœ… Yes / â¬œ No)
 4. Add any notes (blockers, issues, etc.)
 5. Commit changes to `terprint-config/docs/ORGANIZATION_SECRETS_MIGRATION.md`
 6. Run `.\copy-instructions-to-repos.ps1` to sync to all repos
@@ -75,39 +75,39 @@ This guide describes the migration from **repository-level secrets** to **organi
 ### Before (Repository-Level)
 
 ```
-┌────────────────────┐
-│  terprint-ai-chat  │ ──► AZURE_CREDENTIALS (repo secret)
-└────────────────────┘     ACR_USERNAME (repo secret)
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚  terprint-ai-chat  â”‚ â”€â”€â–º AZURE_CREDENTIALS (repo secret)
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜     ACR_USERNAME (repo secret)
                            ACR_PASSWORD (repo secret)
 
-┌────────────────────┐
-│  terprint-data     │ ──► AZURE_CREDENTIALS (repo secret)
-└────────────────────┘     ACR_USERNAME (repo secret)
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚  terprint-data     â”‚ â”€â”€â–º AZURE_CREDENTIALS (repo secret)
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜     ACR_USERNAME (repo secret)
                            ACR_PASSWORD (repo secret)
 
-❌ Problem: 50+ repos × 8 secrets = 400 duplicated secrets
+âŒ Problem: 50+ repos Ã— 8 secrets = 400 duplicated secrets
 ```
 
 ### After (Organization-Level)
 
 ```
-┌─────────────────────────────────────────┐
-│  Acidni-LLC Organization                │
-│  ┌─────────────────────────────────┐    │
-│  │  Organization Secrets           │    │
-│  │  • AZURE_CREDENTIALS            │    │
-│  │  • ACR_USERNAME                 │    │
-│  │  • ACR_PASSWORD                 │    │
-│  │  • APIM_SUBSCRIPTION_KEY        │    │
-│  │  • GH_PAT_TERPRINT_TESTS        │    │
-│  │  • AZURE_ARTIFACTS_TOKEN        │    │
-│  └─────────────────────────────────┘    │
-└─────────────────────────────────────────┘
-         │         │         │
-         ▼         ▼         ▼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚  Acidni-LLC Organization                â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”‚
+â”‚  â”‚  Organization Secrets           â”‚    â”‚
+â”‚  â”‚  â€¢ AZURE_CREDENTIALS            â”‚    â”‚
+â”‚  â”‚  â€¢ ACR_USERNAME                 â”‚    â”‚
+â”‚  â”‚  â€¢ ACR_PASSWORD                 â”‚    â”‚
+â”‚  â”‚  â€¢ APIM_SUBSCRIPTION_KEY        â”‚    â”‚
+â”‚  â”‚  â€¢ GH_PAT_TERPRINT_TESTS        â”‚    â”‚
+â”‚  â”‚  â€¢ AZURE_ARTIFACTS_TOKEN        â”‚    â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+         â”‚         â”‚         â”‚
+         â–¼         â–¼         â–¼
     repo-1    repo-2    repo-3
     
-✅ Solution: 1 organization × 8 secrets = 8 secrets total
+âœ… Solution: 1 organization Ã— 8 secrets = 8 secrets total
 ```
 
 ---
@@ -148,8 +148,8 @@ GitHub Variables are **non-sensitive** configuration values that can be referenc
 | Variable Name | Value | Description |
 |---------------|-------|-------------|
 | `ORG_ACR_LOGIN_SERVER` | `crterprint.azurecr.io` | Primary ACR |
-| `ORG_APIM_BASE_URL` | `https://apim-terprint-dev.azure-api.net` | APIM gateway |
-| `ORG_CONTAINER_ENV` | `kindmoss-c6723cbe.eastus2.azurecontainerapps.io` | Container Apps Environment |
+| `ORG_APIM_BASE_URL` | `https://api.acidni.net` | APIM gateway |
+| `ORG_CONTAINER_ENV` | `greenbay-731aa80e.eastus2.azurecontainerapps.io` | Container Apps Environment |
 | `ORG_RESOURCE_GROUP_PREFIX` | `rg-dev-terprint` | Default RG prefix |
 | `ORG_PYTHON_VERSION` | `3.12` | Default Python version |
 | `ORG_DOTNET_VERSION` | `8.0` | Default .NET version |
@@ -241,7 +241,7 @@ gh secret set ORG_APIM_SUBSCRIPTION_KEY --org Acidni-LLC --body "$(az keyvault s
 
 # Set organization variables
 gh variable set ORG_ACR_LOGIN_SERVER --org Acidni-LLC --body "crterprint.azurecr.io" --visibility all
-gh variable set ORG_APIM_BASE_URL --org Acidni-LLC --body "https://apim-terprint-dev.azure-api.net" --visibility all
+gh variable set ORG_APIM_BASE_URL --org Acidni-LLC --body "https://api.acidni.net" --visibility all
 gh variable set ORG_PYTHON_VERSION --org Acidni-LLC --body "3.12" --visibility all
 ```
 
@@ -347,7 +347,7 @@ After migration, verify each repo:
 
 ### Before (50+ repos)
 ```bash
-# ❌ Old way - update 50+ repos
+# âŒ Old way - update 50+ repos
 for repo in repo1 repo2 repo3 ...; do
   gh secret set AZURE_CREDENTIALS --repo $repo --body "$(cat new-creds.json)"
 done
@@ -355,7 +355,7 @@ done
 
 ### After (1 organization)
 ```bash
-# ✅ New way - update once
+# âœ… New way - update once
 gh secret set ORG_AZURE_CREDENTIALS --org Acidni-LLC --body "$(cat new-creds.json)" --visibility all
 ```
 
@@ -408,10 +408,10 @@ az role assignment create \
 
 4. **Never Log Secrets**
    ```yaml
-   # ❌ WRONG
+   # âŒ WRONG
    - run: echo "Secret is ${{ secrets.ORG_AZURE_CREDENTIALS }}"
    
-   # ✅ CORRECT
+   # âœ… CORRECT
    - run: echo "Deploying with service principal..."
    ```
 

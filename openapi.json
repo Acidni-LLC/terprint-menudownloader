@@ -1,4 +1,4 @@
-{
+﻿{
   "openapi": "3.0.3",
   "info": {
     "title": "Terprint Menu Downloader & Stock API",
@@ -12,11 +12,11 @@
   },
   "servers": [
     {
-      "url": "https://ca-terprint-menudownloader.kindmoss-c6723cbe.eastus2.azurecontainerapps.io",
+      "url": "https://ca-terprint-menudownloader.greenbay-731aa80e.eastus2.azurecontainerapps.io",
       "description": "Container App (Development)"
     },
     {
-      "url": "https://apim-terprint-dev.azure-api.net/menus",
+      "url": "https://api.acidni.net/menus",
       "description": "APIM Gateway"
     }
   ],

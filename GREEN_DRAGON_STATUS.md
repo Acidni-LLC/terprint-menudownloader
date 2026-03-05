@@ -1,6 +1,6 @@
-# 🟢 Green Dragon Implementation - Status Report
+﻿# ðŸŸ¢ Green Dragon Implementation - Status Report
 
-## ✅ COMPLETION STATUS: READY FOR BATCH PROCESSING
+## âœ… COMPLETION STATUS: READY FOR BATCH PROCESSING
 
 ### Timeline
 - **Start**: Decision to pivot from blocked Ayr (Cloudflare 403) to Green Dragon
@@ -11,80 +11,80 @@
 
 ---
 
-## 📦 ARTIFACTS CREATED
+## ðŸ“¦ ARTIFACTS CREATED
 
 ### Configuration Layer
 ```
 src/terprint_menu_downloader/dispensaries/green_dragon/
-├── config.py (197 lines)
-│   └── GreenDragonConfig: Squarespace settings, CSS selectors, rate limiting
-│   └── FL_STORES: 13 locations with slugs, names, cities
-│   └── Helper functions: get_store_by_slug(), get_store_by_name(), etc.
-│
-├── __init__.py (20 lines)
-│   └── Exports for config and helper functions
-│
-└── scraper.py (211 lines)
-    └── GreenDragonScraper: Async HTML scraper using httpx + BeautifulSoup
-    └── Async/await pattern with Semaphore concurrency control
-    └── CSS selectors: .strain-name, .strain-type, .strain-info-content
-    └── Returns parsed products with effects, type, cannabinoids
+â”œâ”€â”€ config.py (197 lines)
+â”‚   â””â”€â”€ GreenDragonConfig: Squarespace settings, CSS selectors, rate limiting
+â”‚   â””â”€â”€ FL_STORES: 13 locations with slugs, names, cities
+â”‚   â””â”€â”€ Helper functions: get_store_by_slug(), get_store_by_name(), etc.
+â”‚
+â”œâ”€â”€ __init__.py (20 lines)
+â”‚   â””â”€â”€ Exports for config and helper functions
+â”‚
+â””â”€â”€ scraper.py (211 lines)
+    â””â”€â”€ GreenDragonScraper: Async HTML scraper using httpx + BeautifulSoup
+    â””â”€â”€ Async/await pattern with Semaphore concurrency control
+    â””â”€â”€ CSS selectors: .strain-name, .strain-type, .strain-info-content
+    â””â”€â”€ Returns parsed products with effects, type, cannabinoids
 ```
 
 ### Downloader Layer
 ```
 src/terprint_menu_downloader/downloaders/green_dragon_downloader.py (309 lines)
-├── GreenDragonDownloader class with batching support
-├── Methods:
-│   ├── download_location(store_slug) - Single store download
-│   ├── download(parallel=True) - Batch with ThreadPoolExecutor
-│   ├── download_all_batches() - Process all batches sequentially
-│   ├── download_single_store(store_slug) - Direct store access
-│   └── _download_store_with_save(store) - Download + Azure upload + local save
-├── Azure Integration: Automatic blob storage upload
-├── Threading: ThreadPoolExecutor for parallel downloads (configurable)
-└── Output: Dict with {dispensary, store_slug, store_name, products[], metadata}
+â”œâ”€â”€ GreenDragonDownloader class with batching support
+â”œâ”€â”€ Methods:
+â”‚   â”œâ”€â”€ download_location(store_slug) - Single store download
+â”‚   â”œâ”€â”€ download(parallel=True) - Batch with ThreadPoolExecutor
+â”‚   â”œâ”€â”€ download_all_batches() - Process all batches sequentially
+â”‚   â”œâ”€â”€ download_single_store(store_slug) - Direct store access
+â”‚   â””â”€â”€ _download_store_with_save(store) - Download + Azure upload + local save
+â”œâ”€â”€ Azure Integration: Automatic blob storage upload
+â”œâ”€â”€ Threading: ThreadPoolExecutor for parallel downloads (configurable)
+â””â”€â”€ Output: Dict with {dispensary, store_slug, store_name, products[], metadata}
 ```
 
 ### Orchestrator Integration
 ```
 src/terprint_menu_downloader/orchestrator.py
-├── Line 173: Added GreenDragonDownloader to imports (3x: main + 2x fallback paths)
-├── Line 548-573: Added initialization block:
-│   ├── Creates GreenDragonDownloader instance
-│   ├── Registers in downloaders dict with key 'green_dragon'
-│   ├── Logs batch info and parallel settings
-│   ├── Sets write_local flag based on in_memory mode
-│   └── Includes error handling
-└── Grower ID: 11 (assigned for database tracking)
+â”œâ”€â”€ Line 173: Added GreenDragonDownloader to imports (3x: main + 2x fallback paths)
+â”œâ”€â”€ Line 548-573: Added initialization block:
+â”‚   â”œâ”€â”€ Creates GreenDragonDownloader instance
+â”‚   â”œâ”€â”€ Registers in downloaders dict with key 'green_dragon'
+â”‚   â”œâ”€â”€ Logs batch info and parallel settings
+â”‚   â”œâ”€â”€ Sets write_local flag based on in_memory mode
+â”‚   â””â”€â”€ Includes error handling
+â””â”€â”€ Grower ID: 11 (assigned for database tracking)
 ```
 
 ### Export Updates
 ```
 src/terprint_menu_downloader/downloaders/__init__.py
-├── Added: from .green_dragon_downloader import GreenDragonDownloader
-└── Added to __all__: 'GreenDragonDownloader'
+â”œâ”€â”€ Added: from .green_dragon_downloader import GreenDragonDownloader
+â””â”€â”€ Added to __all__: 'GreenDragonDownloader'
 ```
 
 ---
 
-## 🧪 TESTING RESULTS
+## ðŸ§ª TESTING RESULTS
 
-### Import Verification ✅
+### Import Verification âœ…
 ```
-✅ GreenDragonDownloader imported successfully
-✅ Config loaded: 13 stores found
-✅ All imports resolved
+âœ… GreenDragonDownloader imported successfully
+âœ… Config loaded: 13 stores found
+âœ… All imports resolved
 ```
 
-### Scraper Test ✅
+### Scraper Test âœ…
 ```
 Store Tested: Green Dragon - Avon Park (avon-park)
 URL: https://www.greendragonfl.com/avon-park
 Response: HTTP 200 OK (successful!)
 Products Extracted: 1 (minimum viable data)
 Status: success
-No Cloudflare blocking: ✅ (unlike Ayr/Dutchie)
+No Cloudflare blocking: âœ… (unlike Ayr/Dutchie)
 ```
 
 ### Issues Fixed
@@ -93,7 +93,7 @@ No Cloudflare blocking: ✅ (unlike Ayr/Dutchie)
 
 ---
 
-## 📊 GREEN DRAGON LOCATIONS (13 Total)
+## ðŸ“Š GREEN DRAGON LOCATIONS (13 Total)
 
 | # | Location | Slug | City |
 |---|----------|------|------|
@@ -113,7 +113,7 @@ No Cloudflare blocking: ✅ (unlike Ayr/Dutchie)
 
 ---
 
-## 🔄 DATA PIPELINE INTEGRATION
+## ðŸ”„ DATA PIPELINE INTEGRATION
 
 ### Stage 2: Menu Downloader
 - **Trigger**: Every 2 hours (8am-10pm EST)
@@ -132,14 +132,14 @@ No Cloudflare blocking: ✅ (unlike Ayr/Dutchie)
 
 ### Stage 4: Presentation (API)
 - **Endpoint**: `GET /menus?dispensary=green_dragon`
-- **Via**: APIM gateway `https://apim-terprint-dev.azure-api.net/menus`
+- **Via**: APIM gateway `https://api.acidni.net/menus`
 - **Format**: JSON with full product details, cannabinoids, effects
 
 ---
 
-## 🚀 DEPLOYMENT STATUS
+## ðŸš€ DEPLOYMENT STATUS
 
-### Git Commit ✅
+### Git Commit âœ…
 ```
 Commit: 0056203
 Message: feat(downloader): Add Green Dragon HTML scraper with 13 FL locations - 
@@ -148,10 +148,10 @@ Message: feat(downloader): Add Green Dragon HTML scraper with 13 FL locations -
 Files: 6 changed, 646 insertions(+), 8 deletions(-)
 ```
 
-### GitHub Actions CI/CD 🔄
+### GitHub Actions CI/CD ðŸ”„
 ```
 Workflows Triggered:
-- 🚀 Deploy Menu Downloader Container App (queued)
+- ðŸš€ Deploy Menu Downloader Container App (queued)
 - Container App CI/CD (queued)
 
 Expected Steps:
@@ -165,7 +165,7 @@ Expected Steps:
 
 ---
 
-## 📈 ARCHITECTURE DECISIONS
+## ðŸ“ˆ ARCHITECTURE DECISIONS
 
 ### Why Async/Await
 - **Pattern**: Matches existing Curaleaf scraper
@@ -190,12 +190,12 @@ Expected Steps:
 
 ---
 
-## 🎯 IMMEDIATE NEXT STEPS
+## ðŸŽ¯ IMMEDIATE NEXT STEPS
 
 ### Within 5 Minutes (Automated)
-1. ✅ CI/CD pipeline completes Docker build
-2. ✅ New image pushed to Azure Container Registry
-3. ✅ Container App updated with new build
+1. âœ… CI/CD pipeline completes Docker build
+2. âœ… New image pushed to Azure Container Registry
+3. âœ… Container App updated with new build
 
 ### Within 2 Hours
 1. Menu Downloader container app runs on schedule
@@ -214,7 +214,7 @@ Expected Steps:
 
 ---
 
-## 💡 LESSONS FOR AYR IMPLEMENTATION
+## ðŸ’¡ LESSONS FOR AYR IMPLEMENTATION
 
 ### Ayr/Dutchie Challenges Identified
 1. **Cloudflare WAF**: Blocks simple HTTP requests with 403 Forbidden
@@ -232,15 +232,15 @@ Expected Steps:
 4. **Alternative**: Use Dutchie's official API with proper authentication (if available)
 
 ### Why Green Dragon First
-- ✅ No API barriers
-- ✅ HTML scraping proven to work
-- ✅ Faster implementation (hours vs days)
-- ✅ 13 locations ready immediately
-- ✅ Lessons apply to other HTML-based dispensaries
+- âœ… No API barriers
+- âœ… HTML scraping proven to work
+- âœ… Faster implementation (hours vs days)
+- âœ… 13 locations ready immediately
+- âœ… Lessons apply to other HTML-based dispensaries
 
 ---
 
-## 📋 FILES FOR REFERENCE
+## ðŸ“‹ FILES FOR REFERENCE
 
 ### Test Script (for local validation)
 ```
@@ -269,20 +269,20 @@ Concurrent Limits:
 
 ---
 
-## ✨ SUMMARY
+## âœ¨ SUMMARY
 
-**Status**: 🟢 **READY FOR PRODUCTION**
+**Status**: ðŸŸ¢ **READY FOR PRODUCTION**
 
 Green Dragon HTML scraper is fully implemented, tested, and deployed. The integration with existing Terprint pipeline is complete. Data will begin flowing within the next batch cycle (next 2 hours for Menu Downloader, next 24 hours for full processing).
 
 **Key Achievements**:
-- ✅ 13 FL locations configured
-- ✅ Async scraper with no Cloudflare blocking
-- ✅ Batching and parallel download support
-- ✅ Azure integration (blob storage)
-- ✅ Full orchestrator integration
-- ✅ CI/CD deployment initiated
-- ✅ Tested and verified working
+- âœ… 13 FL locations configured
+- âœ… Async scraper with no Cloudflare blocking
+- âœ… Batching and parallel download support
+- âœ… Azure integration (blob storage)
+- âœ… Full orchestrator integration
+- âœ… CI/CD deployment initiated
+- âœ… Tested and verified working
 
 **Next Phase**: Apply lessons to Ayr/Dutchie implementation using Selenium with stealth techniques.
 

@@ -1,4 +1,4 @@
----
+﻿---
 description: 'Azure Functions development standards for Acidni LLC'
 applyTo: '**/function.json, **/host.json, **/*_trigger.py, **/function_app.py'
 ---
@@ -19,7 +19,7 @@ Instructions for developing Azure Functions in Acidni LLC projects, focusing on 
 ### Authentication Levels
 
 ```json
-// ✅ CORRECT - Requires function key or bearer token
+// âœ… CORRECT - Requires function key or bearer token
 {
   "authLevel": "function",
   "type": "httpTrigger",
@@ -28,7 +28,7 @@ Instructions for developing Azure Functions in Acidni LLC projects, focusing on 
   "methods": ["get", "post"]
 }
 
-// ❌ WRONG - No authentication (security risk)
+// âŒ WRONG - No authentication (security risk)
 {
   "authLevel": "anonymous",
   "type": "httpTrigger"
@@ -118,7 +118,7 @@ This prevents direct access to backends, forcing all traffic through APIM.
 | **FastAPI (app-wide)** | `BackendApiKeyMiddleware` | Add once, protects all routes |
 | **FastAPI (per-endpoint)** | `Depends(require_api_key())` | Fine-grained control, migration-friendly |
 
-> ⚠️ **Common Mistake**: Do NOT use `@require_backend_api_key` decorator with FastAPI!
+> âš ï¸ **Common Mistake**: Do NOT use `@require_backend_api_key` decorator with FastAPI!
 > The decorator expects `func.HttpRequest` (Azure Functions type). FastAPI uses different request types.
 
 ### Azure Functions (Decorator Pattern)
@@ -214,20 +214,20 @@ async def health():
 
 ```
 function-app/
-├── src/
-│   ├── __init__.py
-│   ├── function_app.py         # Main function app entry
-│   ├── http_trigger/
-│   │   ├── __init__.py
-│   │   └── function.json
-│   └── timer_trigger/
-│       ├── __init__.py
-│       └── function.json
-├── tests/
-├── host.json
-├── local.settings.json         # Local development (gitignored)
-├── requirements.txt
-└── openapi.json               # API specification (required)
+â”œâ”€â”€ src/
+â”‚   â”œâ”€â”€ __init__.py
+â”‚   â”œâ”€â”€ function_app.py         # Main function app entry
+â”‚   â”œâ”€â”€ http_trigger/
+â”‚   â”‚   â”œâ”€â”€ __init__.py
+â”‚   â”‚   â””â”€â”€ function.json
+â”‚   â””â”€â”€ timer_trigger/
+â”‚       â”œâ”€â”€ __init__.py
+â”‚       â””â”€â”€ function.json
+â”œâ”€â”€ tests/
+â”œâ”€â”€ host.json
+â”œâ”€â”€ local.settings.json         # Local development (gitignored)
+â”œâ”€â”€ requirements.txt
+â””â”€â”€ openapi.json               # API specification (required)
 ```
 
 ## Host Configuration
@@ -338,14 +338,14 @@ az keyvault set-policy --name kv-terprint \
     "FUNCTIONS_WORKER_RUNTIME": "python",
     "AZURE_TENANT_ID": "3278dcb1-0a18-42e7-8acf-d3b5f8ae33cd",
     "AZURE_CLIENT_ID": "<from-app-registration>",
-    "APIM_GATEWAY_URL": "https://apim-terprint-dev.azure-api.net",
+    "APIM_GATEWAY_URL": "https://api.acidni.net",
     "APIM_SUBSCRIPTION_KEY": "<from-keyvault: svc-{app}-key>",
     "DATABASE_CONNECTION_STRING": "<from-keyvault: sql-connection-string>"
   }
 }
 ```
 
-> **⚠️ NEVER commit local.settings.json** - It's in .gitignore for a reason!
+> **âš ï¸ NEVER commit local.settings.json** - It's in .gitignore for a reason!
 
 ## HTTP Trigger Patterns
 
@@ -430,7 +430,7 @@ Each function app has assigned ports for running multiple services locally:
 
 ```powershell
 # Start with custom port and window title
-$Host.UI.RawUI.WindowTitle = "🔔 Communications (7071)"
+$Host.UI.RawUI.WindowTitle = "ðŸ”” Communications (7071)"
 func host start --port 7071
 ```
 

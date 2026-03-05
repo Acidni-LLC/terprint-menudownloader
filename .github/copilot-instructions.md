@@ -1,4 +1,4 @@
-# Terprint AI Software Engineer & Architect Guidelines
+﻿# Terprint AI Software Engineer & Architect Guidelines
 
 **Version:** 2.1.21
 **Last Updated:** January 21, 2026 13:07:00
@@ -34,19 +34,19 @@ The following standards are inherited from `shared/acidni-copilot-instructions.m
 
 ---
 
-## ?? CRITICAL DIRECTIVES — ABSOLUTE RULES ??
+## ?? CRITICAL DIRECTIVES â€” ABSOLUTE RULES ??
 
 > **These rules are MANDATORY. Violations will break the system.**
 
 ### DIRECTIVE 0: USE GITHUB ACTIONS FOR ALL CI/CD
-- **ALL Terprint services use GitHub Actions for CI/CD** — NEVER use Azure Pipelines
-- **GitHub is the source control AND CI/CD platform** — Azure DevOps is only for work item tracking
+- **ALL Terprint services use GitHub Actions for CI/CD** â€” NEVER use Azure Pipelines
+- **GitHub is the source control AND CI/CD platform** â€” Azure DevOps is only for work item tracking
 - **Deployment target**: Azure Container Apps through APIM gateway
 - **Organization secrets**: Use ORG_* prefixed secrets and variables for consistency
 
 ### DIRECTIVE 1: REPOSITORY BOUNDARIES
-- **EACH APP LIVES IN ITS OWN REPOSITORY** — Do NOT edit files in sibling repos
-- **ALL CODE CHANGES ARE COORDINATED BY `terprint-config`** — Cross-cutting changes go through the config project  
+- **EACH APP LIVES IN ITS OWN REPOSITORY** â€” Do NOT edit files in sibling repos
+- **ALL CODE CHANGES ARE COORDINATED BY `terprint-config`** â€” Cross-cutting changes go through the config project  
 - **CREATE AZURE DEVOPS WORK ITEMS** to track config changes needed across GitHub repos
 - If you need changes in another repo, document the requirement and create a work item
 
@@ -56,8 +56,8 @@ The following standards are inherited from `shared/acidni-copilot-instructions.m
 
 > **MANDATORY: Poetry is the ONLY supported Python package manager for Terprint**
 
-- **NEVER use `pip install` directly** — Always use `poetry add`
-- **NEVER use `requirements.txt` as source of truth** — Use `pyproject.toml`
+- **NEVER use `pip install` directly** â€” Always use `poetry add`
+- **NEVER use `requirements.txt` as source of truth** â€” Use `pyproject.toml`
 - **ALWAYS activate Poetry environment** before running Python code
 - **Export requirements.txt for Docker** only when building containers
 
@@ -179,7 +179,7 @@ CMD ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "
 }
 ```
 
-**Migration Checklist (requirements.txt → Poetry):**
+**Migration Checklist (requirements.txt â†’ Poetry):**
 - [ ] Run `poetry init` in project root
 - [ ] Add dependencies: `poetry add <package>` for each requirement
 - [ ] Add dev dependencies: `poetry add --group dev <package>`
@@ -195,10 +195,10 @@ CMD ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "
 - Always use `pymssql` with `%s` placeholders (not `?`)
 
 ```python
-# ✅ CORRECT - pymssql style
+# âœ… CORRECT - pymssql style
 cursor.execute("SELECT * FROM Users WHERE Id = %s", (user_id,))
 
-# ❌ WRONG - pyodbc style (will NOT work)
+# âŒ WRONG - pyodbc style (will NOT work)
 cursor.execute("SELECT * FROM Users WHERE Id = ?", (user_id,))
 ```
 
@@ -210,7 +210,7 @@ cursor.execute("SELECT * FROM Users WHERE Id = ?", (user_id,))
 
 ### DIRECTIVE 5: ALL INTER-SERVICE CALLS THROUGH APIM
 - **ALL** API calls between Terprint services MUST route through APIM gateway
-- **Base URL**: `https://apim-terprint-dev.azure-api.net`
+- **Base URL**: `https://api.acidni.net`
 - **NEVER** call function apps directly (e.g., `func-terprint-communications.azurewebsites.net`)
 
 ### DIRECTIVE 6: ALL SECRETS IN AZURE KEY VAULT
@@ -359,8 +359,8 @@ jobs:
 | Variable Name | Value | Description |
 |---------------|-------|-------------|
 | `ORG_ACR_LOGIN_SERVER` | `crterprint.azurecr.io` | Primary ACR |
-| `ORG_APIM_BASE_URL` | `https://apim-terprint-dev.azure-api.net` | APIM gateway |
-| `ORG_CONTAINER_ENV` | `kindmoss-c6723cbe.eastus2.azurecontainerapps.io` | Container Apps Environment |
+| `ORG_APIM_BASE_URL` | `https://api.acidni.net` | APIM gateway |
+| `ORG_CONTAINER_ENV` | `greenbay-731aa80e.eastus2.azurecontainerapps.io` | Container Apps Environment |
 | `ORG_PYTHON_VERSION` | `3.12` | Default Python version |
 | `ORG_DOTNET_VERSION` | `8.0` | Default .NET version |
 
@@ -381,7 +381,7 @@ jobs:
     with:
       app-name: 'ai-chat'
       environment: 'dev'
-    secrets: inherit  # ✅ Inherits all ORG_* secrets automatically
+    secrets: inherit  # âœ… Inherits all ORG_* secrets automatically
 ```
 
 #### Setting Organization Secrets (GitHub CLI)
@@ -416,10 +416,10 @@ When migrating a repository to organization secrets:
 #### Secret Rotation (Organization-Wide)
 
 ```bash
-# ✅ New way - rotate once for all repos
+# âœ… New way - rotate once for all repos
 gh secret set ORG_AZURE_CREDENTIALS --org Acidni-LLC --body "$(cat new-creds.json)" --visibility all
 
-# ❌ Old way - update 50+ repos individually (NO LONGER NEEDED)
+# âŒ Old way - update 50+ repos individually (NO LONGER NEEDED)
 ```
 
 **Key Vault Secret Names:**
@@ -435,7 +435,7 @@ $key = az keyvault secret show --vault-name kv-terprint-dev --name apim-subscrip
 
 # Use in API calls
 $headers = @{"Ocp-Apim-Subscription-Key" = $key}
-Invoke-RestMethod -Uri "https://apim-terprint-dev.azure-api.net/data/api/health" -Headers $headers
+Invoke-RestMethod -Uri "https://api.acidni.net/data/api/health" -Headers $headers
 ```
 
 **Access Pattern (Python - from terprint-metering or any service):**
@@ -455,7 +455,7 @@ event = UsageEvent(
 # Submit to metering service via APIM
 import requests
 response = requests.post(
-    "https://apim-terprint-dev.azure-api.net/metering/api/record",
+    "https://api.acidni.net/metering/api/record",
     headers={"Ocp-Apim-Subscription-Key": os.environ["APIM_SUBSCRIPTION_KEY"]},
     json=event.to_dict()
 )
@@ -646,11 +646,11 @@ Apply these pillars to ALL architectural decisions:
 ## ?? 5-Stage Pipeline Architecture
 
 ```
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│  Stage 1    │    │  Stage 2    │    │ Stage 2.5   │    │  Stage 3    │    │  Stage 4/5  │
-│  Discovery  │ -> │  Ingestion  │ -> │   Batch     │ -> │    COA      │ -> │ Presentation│
-│             │    │             │    │ Extraction  │    │ Processing  │    │ & Analytics │
-└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚  Stage 1    â”‚    â”‚  Stage 2    â”‚    â”‚ Stage 2.5   â”‚    â”‚  Stage 3    â”‚    â”‚  Stage 4/5  â”‚
+â”‚  Discovery  â”‚ -> â”‚  Ingestion  â”‚ -> â”‚   Batch     â”‚ -> â”‚    COA      â”‚ -> â”‚ Presentationâ”‚
+â”‚             â”‚    â”‚             â”‚    â”‚ Extraction  â”‚    â”‚ Processing  â”‚    â”‚ & Analytics â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
      Manual         Every 2hrs         Daily 7AM         3x Daily           On-demand
                     8am-10pm EST                         9:30am/3:30pm
                                                          9:30pm
@@ -669,7 +669,7 @@ Apply these pillars to ALL architectural decisions:
 
 ---
 
-## ??️ Service Catalog (All Terprint Components)
+## ??ï¸ Service Catalog (All Terprint Components)
 
 ### AI Services
 
@@ -711,7 +711,7 @@ Apply these pillars to ALL architectural decisions:
 
 ### Core Infrastructure
 
-> ⚠️ **DO NOT GUESS RESOURCE GROUPS** - Each resource has a specific RG. Always reference this table.
+> âš ï¸ **DO NOT GUESS RESOURCE GROUPS** - Each resource has a specific RG. Always reference this table.
 
 | Resource Type | Name | Resource Group |
 |---------------|------|----------------|
@@ -720,7 +720,7 @@ Apply these pillars to ALL architectural decisions:
 | APIM | `apim-terprint-dev` | **rg-terprint-apim-dev** |
 | Key Vault | `kv-terprint-dev` | rg-dev-terprint-shared |
 | Container Registry | `crterprint.azurecr.io` | rg-dev-terprint-health |
-| Container Apps Environment | `kindmoss-c6723cbe.eastus2.azurecontainerapps.io` | rg-dev-terprint-ca |
+| Container Apps Environment | `greenbay-731aa80e.eastus2.azurecontainerapps.io` | rg-dev-terprint-ca |
 | Cosmos DB | `cosmos-terprint-dev` | rg-dev-terprint-shared |
 
 ### Cosmos DB Databases & Containers
@@ -775,16 +775,16 @@ container = db.get_container_client("chat_sessions")
 
 ```
 jsonfiles/
-├── dispensaries/                    # Raw menu downloads (Stage 2 output)
-│   ├── cookies/{year}/{month}/{day}/{timestamp}.json
-│   ├── muv/...
-│   ├── flowery/...
-│   ├── trulieve/...
-│   └── curaleaf/...
-├── menus/                           # Processed menu data
-│   └── {dispensary}/{year}/{month}/{day}/*.json
-└── batches/                         # Consolidated batch files (Stage 2.5 output)
-    └── consolidated_batches_YYYYMMDD.json
+â”œâ”€â”€ dispensaries/                    # Raw menu downloads (Stage 2 output)
+â”‚   â”œâ”€â”€ cookies/{year}/{month}/{day}/{timestamp}.json
+â”‚   â”œâ”€â”€ muv/...
+â”‚   â”œâ”€â”€ flowery/...
+â”‚   â”œâ”€â”€ trulieve/...
+â”‚   â””â”€â”€ curaleaf/...
+â”œâ”€â”€ menus/                           # Processed menu data
+â”‚   â””â”€â”€ {dispensary}/{year}/{month}/{day}/*.json
+â””â”€â”€ batches/                         # Consolidated batch files (Stage 2.5 output)
+    â””â”€â”€ consolidated_batches_YYYYMMDD.json
 ```
 
 ### Container Apps (All Terprint Services)
@@ -808,9 +808,9 @@ jsonfiles/
 
 | Function App | Status | Notes |
 |--------------|--------|-------|
-| `func-acidni-publisher-portal` | ⚠️ Pending | Migrate to Container App |
-| `func-terprint-metering` | ⚠️ Pending | Migrate to Container App |
-| `func-terprint-coadataextractor` | ⚠️ Pending | Migrate to Container App |
+| `func-acidni-publisher-portal` | âš ï¸ Pending | Migrate to Container App |
+| `func-terprint-metering` | âš ï¸ Pending | Migrate to Container App |
+| `func-terprint-coadataextractor` | âš ï¸ Pending | Migrate to Container App |
 
 ### Static Web Apps
 
@@ -823,7 +823,7 @@ jsonfiles/
 
 ## ?? APIM API Catalog
 
-**Base URL**: `https://apim-terprint-dev.azure-api.net`
+**Base URL**: `https://api.acidni.net`
 
 | API ID | Path | Backend | Caching |
 |--------|------|---------|---------|
@@ -853,7 +853,7 @@ class TerprintAPIClient:
     """Client for calling Terprint services through APIM."""
     
     def __init__(self):
-        self.base_url = os.environ.get("APIM_GATEWAY_URL", "https://apim-terprint-dev.azure-api.net")
+        self.base_url = os.environ.get("APIM_GATEWAY_URL", "https://api.acidni.net")
         self.subscription_key = os.environ.get("APIM_SUBSCRIPTION_KEY")
         
     def _get_headers(self) -> dict:
@@ -1013,14 +1013,14 @@ jobs:
 
 ### Organization Secrets Usage
 
-**✅ CORRECT - Use organization secrets:**
+**âœ… CORRECT - Use organization secrets:**
 ```yaml
 with:
   creds: ${{ secrets.ORG_AZURE_CREDENTIALS }}  # From organization
   registry: ${{ vars.ORG_ACR_LOGIN_SERVER }}   # From organization variables
 ```
 
-**❌ WRONG - Don't use repo secrets:**
+**âŒ WRONG - Don't use repo secrets:**
 ```yaml
 with:
   creds: ${{ secrets.AZURE_CREDENTIALS }}     # Old way - don't use
@@ -1071,7 +1071,7 @@ if not result.valid:
 
 ---
 
-## ??️ Operational Commands
+## ??ï¸ Operational Commands
 
 ### Service Health Verification
 
@@ -1082,12 +1082,12 @@ if not result.valid:
 $key = (az keyvault secret show --vault-name kv-terprint-dev --name apim-subscription-key --query value -o tsv)
 $services = @("chat", "data", "recommend", "communications", "stock")
 foreach ($svc in $services) {
-    $url = "https://apim-terprint-dev.azure-api.net/$svc/health"
+    $url = "https://api.acidni.net/$svc/health"
     try {
         $result = Invoke-RestMethod -Uri $url -Headers @{"Ocp-Apim-Subscription-Key"=$key}
-        Write-Host "✅ $svc: $($result.status)" -ForegroundColor Green
+        Write-Host "âœ… $svc: $($result.status)" -ForegroundColor Green
     } catch {
-        Write-Host "❌ $svc: FAILED" -ForegroundColor Red
+        Write-Host "âŒ $svc: FAILED" -ForegroundColor Red
     }
 }
 ```
@@ -1096,15 +1096,15 @@ foreach ($svc in $services) {
 
 ```powershell
 # Stage 2.5: Batch Creator
-Invoke-RestMethod -Uri "https://ca-terprint-batches.kindmoss-c6723cbe.eastus2.azurecontainerapps.io/api/trigger" `
+Invoke-RestMethod -Uri "https://ca-terprint-batches.greenbay-731aa80e.eastus2.azurecontainerapps.io/api/trigger" `
     -Method POST -Body '{"preset": "today"}' -ContentType "application/json"
 
 # Stage 2.5: Batch Creator (specific date backfill)
-Invoke-RestMethod -Uri "https://ca-terprint-batches.kindmoss-c6723cbe.eastus2.azurecontainerapps.io/api/trigger" `
+Invoke-RestMethod -Uri "https://ca-terprint-batches.greenbay-731aa80e.eastus2.azurecontainerapps.io/api/trigger" `
     -Method POST -Body '{"date": "2026-01-17"}' -ContentType "application/json"
 
 # Stage 3: Batch Processor
-Invoke-RestMethod -Uri "https://ca-terprint-batchprocessor.kindmoss-c6723cbe.eastus2.azurecontainerapps.io/api/run-batch-processor" `
+Invoke-RestMethod -Uri "https://ca-terprint-batchprocessor.greenbay-731aa80e.eastus2.azurecontainerapps.io/api/run-batch-processor" `
     -Method POST -Body '{"date": "2026-01-17"}' -ContentType "application/json"
 ```
 
@@ -1199,7 +1199,7 @@ poetry run mypy src/
 4. **Manual recovery - trigger each stage:**
    ```powershell
    # Re-run Batch Creator for specific date
-   Invoke-RestMethod -Uri "https://ca-terprint-batches.kindmoss-c6723cbe.eastus2.azurecontainerapps.io/api/trigger" `
+   Invoke-RestMethod -Uri "https://ca-terprint-batches.greenbay-731aa80e.eastus2.azurecontainerapps.io/api/trigger" `
        -Method POST -Body '{"date": "2026-01-17"}' -ContentType "application/json"
    ```
 
@@ -1225,7 +1225,7 @@ poetry run mypy src/
 
 ---
 
-## ??️ Local Development Ports
+## ??ï¸ Local Development Ports
 
 | App | Default Port | Window Title |
 |-----|--------------|--------------|
@@ -1253,11 +1253,11 @@ func host start --port 7071
 
 | Dispensary | Grower ID | Status | Notes |
 |------------|-----------|--------|-------|
-| Cookies | 1 | ✅ Active | Stable |
-| MV | 2 | ✅ Active | Stable |
-| Flowery | 3 | ✅ Active | All FL locations |
-| Trulieve | 4 | ✅ Active | 162 stores, 4 categories |
-| Curaleaf | 10 | ✅ Active | ~45-60 stores |
+| Cookies | 1 | âœ… Active | Stable |
+| MV | 2 | âœ… Active | Stable |
+| Flowery | 3 | âœ… Active | All FL locations |
+| Trulieve | 4 | âœ… Active | 162 stores, 4 categories |
+| Curaleaf | 10 | âœ… Active | ~45-60 stores |
 | Sunnyside | 5 | ?? Discovery | In progress |
 | Liberty | 6 | ?? Discovery | Planned |
 | Fluent | 7 | ?? Discovery | Planned |
@@ -1332,7 +1332,7 @@ trigger-integration-tests:
 
 ---
 
-## ✅ Code Review Checklist
+## âœ… Code Review Checklist
 
 Before approving any PR, verify:
 
@@ -1367,7 +1367,7 @@ refactor(ai-chat): extract embedding logic to shared module
 | Resource | URL |
 |----------|-----|
 | Azure DevOps | https://dev.azure.com/Acidni/Terprint |
-| APIM Gateway | https://apim-terprint-dev.azure-api.net |
+| APIM Gateway | https://api.acidni.net |
 | Test Dashboard | https://brave-stone-0d8700d0f.3.azurestaticapps.net |
 | Sales Site | https://sales.terprint.com |
 | Main Web App | https://terprint.acidni.net |
@@ -1384,7 +1384,7 @@ refactor(ai-chat): extract embedding logic to shared module
 - **Azure Managed Identities**: Never hardcode credentials
 - **Domain Knowledge Matters**: Understand cannabis terminology (strain types, terpene effects, COA interpretation)
 - **Quality Over Speed**: Accurate data > fast but wrong data
-- **Idempotency**: The consolidated batch file is overwritten throughout the day—Batch Processor runs multiple times to catch updates
+- **Idempotency**: The consolidated batch file is overwritten throughout the dayâ€”Batch Processor runs multiple times to catch updates
 - **Poetry for Python**: All Python apps must use Poetry for dependency management
 
 ---

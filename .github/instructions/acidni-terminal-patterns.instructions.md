@@ -1,4 +1,4 @@
----
+﻿---
 description: 'Terminal command patterns for Acidni LLC projects - Windows/PowerShell specifics, working commands, and known failure patterns'
 applyTo: '**/*.ps1, **/*.sh, **/*.cmd, **/*.bat'
 ---
@@ -64,7 +64,7 @@ your-repo/
 
 - **ALL apps MUST implement caching by default**
 - **Cache layer**: Azure Cache for Redis (shared instance) or in-memory for local
-- **Cache-aside pattern**: Check cache → miss → fetch → store → return
+- **Cache-aside pattern**: Check cache â†’ miss â†’ fetch â†’ store â†’ return
 - **Default TTL**: 5 minutes (configurable per endpoint)
 - **Cache keys**: Use consistent naming: `{service}:{entity}:{id}`
 
@@ -90,7 +90,7 @@ your-repo/
 }
 ```
 
-**To Disable Caching**: Request via work item → terprint-config team adds override.
+**To Disable Caching**: Request via work item â†’ terprint-config team adds override.
 
 **Cache Implementation Pattern (Python):**
 ```python
@@ -116,7 +116,7 @@ async def get_data(key: str):
 ### DIRECTIVE 7: ALL SERVICE CALLS MUST GO THROUGH APIM
 
 - **NO direct service-to-service calls** - ALL API calls route through APIM
-- **APIM Gateway**: `https://apim-terprint-dev.azure-api.net`
+- **APIM Gateway**: `https://api.acidni.net`
 - **Benefits**: Central auth, rate limiting, caching, monitoring, circuit breaking
 - **Authentication**: Use subscription keys or OAuth tokens
 
@@ -153,18 +153,18 @@ Every Terprint service has pre-assigned ports to avoid conflicts when running mu
 
 | App | Repo Name | Default Port | Port Range | Window Title |
 |-----|-----------|--------------|------------|--------------|
-| Communications | `func-terprint-communications` | **7071** | 7071-7075 | 🔔 Communications |
-| Batch Creator | `terprint-batches` | **7076** | 7076-7080 | 📦 Batch Creator |
-| COA Processor | `terprint-batch-processor` | **7081** | 7081-7085 | 🔧 COA Processor |
-| Menu Downloader | `func-terprint-menudownloader` | **7086** | 7086-7090 | 📥 Menu Downloader |
-| AI Chat | `func-terprint-ai-chat` | **7086** | 7086-7090 | 💬 AI Chat |
-| AI Recommender | `func-terprint-ai-recommender` | **7091** | 7091-7095 | 🎯 AI Recommender |
-| AI Deals | `func-terprint-ai-deals` | **7096** | 7096-7100 | 💰 AI Deals |
-| AI Health | `func-terprint-ai-health` | **7101** | 7101-7105 | 🏥 AI Health |
-| Marketplace Webhook | `acidni-publisher-portal-webhook` | **7106** | 7106-7110 | 🏪 Marketplace |
-| Infographics | `func-terprint-infographics` | **7111** | 7111-7115 | 🎨 Infographics |
-| Metering | `func-terprint-metering` | **7116** | 7116-7120 | 📊 Metering |
-| Data API | `func-terprint-data-api` | **7121** | 7121-7125 | 📡 Data API |
+| Communications | `func-terprint-communications` | **7071** | 7071-7075 | ðŸ”” Communications |
+| Batch Creator | `terprint-batches` | **7076** | 7076-7080 | ðŸ“¦ Batch Creator |
+| COA Processor | `terprint-batch-processor` | **7081** | 7081-7085 | ðŸ”§ COA Processor |
+| Menu Downloader | `func-terprint-menudownloader` | **7086** | 7086-7090 | ðŸ“¥ Menu Downloader |
+| AI Chat | `func-terprint-ai-chat` | **7086** | 7086-7090 | ðŸ’¬ AI Chat |
+| AI Recommender | `func-terprint-ai-recommender` | **7091** | 7091-7095 | ðŸŽ¯ AI Recommender |
+| AI Deals | `func-terprint-ai-deals` | **7096** | 7096-7100 | ðŸ’° AI Deals |
+| AI Health | `func-terprint-ai-health` | **7101** | 7101-7105 | ðŸ¥ AI Health |
+| Marketplace Webhook | `acidni-publisher-portal-webhook` | **7106** | 7106-7110 | ðŸª Marketplace |
+| Infographics | `func-terprint-infographics` | **7111** | 7111-7115 | ðŸŽ¨ Infographics |
+| Metering | `func-terprint-metering` | **7116** | 7116-7120 | ðŸ“Š Metering |
+| Data API | `func-terprint-data-api` | **7121** | 7121-7125 | ðŸ“¡ Data API |
 
 **Why Port Ranges?**
 - Each app gets 5 ports (e.g., 7071-7075) for debugging scenarios
@@ -174,11 +174,11 @@ Every Terprint service has pre-assigned ports to avoid conflicts when running mu
 **Starting an App Locally:**
 ```powershell
 # ALWAYS set window title + use assigned port
-$Host.UI.RawUI.WindowTitle = "🔔 Communications (7071)"
+$Host.UI.RawUI.WindowTitle = "ðŸ”” Communications (7071)"
 func host start --port 7071
 
 # AI Chat on its assigned port
-$Host.UI.RawUI.WindowTitle = "💬 AI Chat (7086)"
+$Host.UI.RawUI.WindowTitle = "ðŸ’¬ AI Chat (7086)"
 func host start --port 7086
 ```
 
@@ -214,7 +214,7 @@ To avoid terminals fighting each other and to maximize local performance, use th
   - `data-development`: `communications`, `batch-processor`, `menudownloader`, `data-api`
   - `full`: all 8 core services
 - **Groups** (ordered startup):
-  - `core-services` → `ai-services` → `data-services`
+  - `core-services` â†’ `ai-services` â†’ `data-services`
 - **Behavior**:
   - Starts each service in its **own PowerShell window**
   - Sets a clear **window title** per app (see below)

@@ -79,7 +79,7 @@ async def trigger_green_dragon_pipeline():
     
     try:
         today = datetime.now().strftime("%Y-%m-%d")
-        batch_creator_url = "https://ca-terprint-batches.kindmoss-c6723cbe.eastus2.azurecontainerapps.io/api/trigger"
+        batch_creator_url = "https://ca-terprint-batches.greenbay-731aa80e.eastus2.azurecontainerapps.io/api/trigger"
         
         logger.info(f"Calling: {batch_creator_url}")
         logger.info(f"Payload: date={today}")
@@ -111,7 +111,7 @@ async def trigger_green_dragon_pipeline():
     
     try:
         today = datetime.now().strftime("%Y-%m-%d")
-        batch_processor_url = "https://ca-terprint-batchprocessor.kindmoss-c6723cbe.eastus2.azurecontainerapps.io/api/run-batch-processor"
+        batch_processor_url = "https://ca-terprint-batchprocessor.greenbay-731aa80e.eastus2.azurecontainerapps.io/api/run-batch-processor"
         
         logger.info(f"Calling: {batch_processor_url}")
         logger.info(f"Payload: date={today}")

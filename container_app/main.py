@@ -135,19 +135,19 @@ else:
 # Batch Creator configuration (Stage 2.5 - creates consolidated batch files)
 BATCH_CREATOR_URL = os.environ.get(
     "BATCH_CREATOR_URL",
-    "https://ca-terprint-batches.kindmoss-c6723cbe.eastus2.azurecontainerapps.io/api/create-batches"
+    "https://ca-terprint-batches.greenbay-731aa80e.eastus2.azurecontainerapps.io/api/create-batches"
 )
 
 # Batch processor configuration (Stage 3 - processes COAs from batch files)
 if TERPRINT_CONFIG_AVAILABLE and batch_processor_config:
     _bp_endpoint = batch_processor_config.get('endpoint', {})
     BATCH_PROCESSOR_URL = _bp_endpoint.get('url', 
-        "https://ca-terprint-batchprocessor.kindmoss-c6723cbe.eastus2.azurecontainerapps.io/api/run-batch-processor")
+        "https://ca-terprint-batchprocessor.greenbay-731aa80e.eastus2.azurecontainerapps.io/api/run-batch-processor")
     BATCH_PROCESSOR_KEY = _bp_endpoint.get('code', '') or os.environ.get("BATCH_PROCESSOR_KEY", "")
 else:
     BATCH_PROCESSOR_URL = os.environ.get(
         "BATCH_PROCESSOR_URL",
-        "https://ca-terprint-batchprocessor.kindmoss-c6723cbe.eastus2.azurecontainerapps.io/api/run-batch-processor"
+        "https://ca-terprint-batchprocessor.greenbay-731aa80e.eastus2.azurecontainerapps.io/api/run-batch-processor"
     )
     BATCH_PROCESSOR_KEY = os.environ.get("BATCH_PROCESSOR_KEY", "")
 
@@ -396,7 +396,7 @@ async def scheduled_download_job():
     logger.info(f"Scheduled menu download triggered at {app_state['last_run']}")
 
     try:
-        # ===== STAGE 1: Menu Download (sync → thread) =====
+        # ===== STAGE 1: Menu Download (sync â†’ thread) =====
         download_start = time.time()
         notify_stage_start('download', {'trigger': 'scheduled', 'run_number': app_state['scheduled_runs']})
         
@@ -413,7 +413,7 @@ async def scheduled_download_job():
 
         logger.info(f"Scheduled download completed. Success: {success}")
 
-        # ===== STAGE 2: COA Processor (sync → thread) =====
+        # ===== STAGE 2: COA Processor (sync â†’ thread) =====
         logger.info("Triggering Batch Processor for COA extraction...")
         coa_start = time.time()
         notify_stage_start('coa_process', {'date': datetime.now().strftime('%Y-%m-%d')})
@@ -433,7 +433,7 @@ async def scheduled_download_job():
         notify_stage_complete('coa_process', coa_success, batch_processor_result, coa_duration)
         pipeline_results['coa_process_result'] = batch_processor_result
 
-        # ===== STAGE 3: Stock Index Build (sync → thread) =====
+        # ===== STAGE 3: Stock Index Build (sync â†’ thread) =====
         logger.info("Building stock index from consolidated batches...")
         index_start = time.time()
         notify_stage_start('stock_index')
@@ -504,14 +504,14 @@ async def lifespan(app: FastAPI):
             replace_existing=True
         )
         scheduler.start()
-        logger.info("âœ… SCHEDULER MODE: Menu downloads will run every 2 hours from 8am-10pm EST")
-        logger.info("ðŸ“‹ No downloads at startup - waiting for scheduled times")
+        logger.info("Ã¢Å“â€¦ SCHEDULER MODE: Menu downloads will run every 2 hours from 8am-10pm EST")
+        logger.info("Ã°Å¸â€œâ€¹ No downloads at startup - waiting for scheduled times")
         
     else:  # api-only mode (default)
         logger.info("Starting Terprint Menu Downloader in API-ONLY mode...")
-        logger.info("âœ… API-ONLY MODE: Stock checking and manual endpoints available")
-        logger.info("ðŸ“‹ No scheduled downloads - use separate scheduler container for automation")
-        logger.info("ðŸ”— Manual downloads available via POST /run endpoint")
+        logger.info("Ã¢Å“â€¦ API-ONLY MODE: Stock checking and manual endpoints available")
+        logger.info("Ã°Å¸â€œâ€¹ No scheduled downloads - use separate scheduler container for automation")
+        logger.info("Ã°Å¸â€â€” Manual downloads available via POST /run endpoint")
     
     yield
     
@@ -536,7 +536,7 @@ app = FastAPI(
 # ============================================================================
 # Configure CORS to allow requests from:
 # 1. Local development (localhost:3000, localhost:8080, etc.)
-# 2. APIM gateway (apim-terprint-dev.azure-api.net)
+# 2. APIM gateway (api.acidni.net)
 # 3. Terprint web app (terprint.acidni.net)
 # 4. Container app direct access (for testing)
 
@@ -551,13 +551,13 @@ app.add_middleware(
         "http://127.0.0.1:5173",
         "http://127.0.0.1:8080",
         # Production/APIM
-        "https://apim-terprint-dev.azure-api.net",
+        "https://api.acidni.net",
         "https://apim-terprint.azure-api.net",
         # Web app
         "https://terprint.acidni.net",
         "https://terprint-web.azurewebsites.net",
         # Container app (for testing)
-        "https://ca-terprint-menudownloader.kindmoss-c6723cbe.eastus2.azurecontainerapps.io",
+        "https://ca-terprint-menudownloader.greenbay-731aa80e.eastus2.azurecontainerapps.io",
     ],
     allow_credentials=True,
     allow_methods=["*"],  # Allow all HTTP methods
@@ -634,7 +634,7 @@ async def manual_run(request: RunRequest, background_tasks: BackgroundTasks):
     if app_state["is_running"]:
         raise HTTPException(status_code=409, detail="Download already in progress")
     
-    logger.warning("ðŸš¨ MANUAL DOWNLOAD TRIGGERED - This overrides the normal schedule!")
+    logger.warning("Ã°Å¸Å¡Â¨ MANUAL DOWNLOAD TRIGGERED - This overrides the normal schedule!")
     
     app_state["is_running"] = True
     app_state["last_run"] = datetime.utcnow().isoformat()
@@ -651,7 +651,7 @@ async def manual_run(request: RunRequest, background_tasks: BackgroundTasks):
         app_state["last_run_status"] = "success" if success else "partial"
         app_state["last_run_result"] = result.get('summary', {})
         
-        # Pipeline: Download → Batch Creator → Stock Index
+        # Pipeline: Download â†’ Batch Creator â†’ Stock Index
         batch_creator_result = None
         if not request.skip_batch_processor:
             batch_creator_result = await asyncio.to_thread(trigger_batch_creator, trigger_coa=True)

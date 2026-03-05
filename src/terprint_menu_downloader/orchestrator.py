@@ -1,4 +1,4 @@
-"""
+﻿"""
 Dispensary Data Orchestrator
 Automatically downloads data from multiple dispensaries and uploads to Azure Event House
 
@@ -409,7 +409,7 @@ class DispensaryOrchestrator:
             # Load Trulieve stores from local menus/storeid_location_list.csv (172 stores)
             # and category IDs from menus/menu_config.json
             trulieve_store_ids = None
-            trulieve_category_ids = ["MjA4", "MjM3", "MjA5"]  # Whole Flower (208), Vape Carts (237), Vaporizers (209) — Edibles excluded
+            trulieve_category_ids = ["MjA4", "MjM3", "MjA5"]  # Whole Flower (208), Vape Carts (237), Vaporizers (209) â€” Edibles excluded
             
             # Path to the menus folder (sibling to orchestrator.py)
             menus_dir = os.path.join(os.path.dirname(__file__), "menus")
@@ -1656,7 +1656,7 @@ class DispensaryOrchestrator:
                 return
             
             # Build the rebuild endpoint URL
-            apim_gateway = os.environ.get('APIM_GATEWAY_URL', 'https://apim-terprint-dev.azure-api.net')
+            apim_gateway = os.environ.get('APIM_GATEWAY_URL', 'https://api.acidni.net')
             rebuild_url = f"{apim_gateway}/menus/api/stock/build-index"
             
             logger.info(f"[STOCK] Triggering stock index rebuild at: {rebuild_url}")
@@ -2067,7 +2067,7 @@ def print_config_and_confirm(orchestrator, args, in_memory_flag, upload_to_azure
                 
                 # Show categories if applicable (Trulieve)
                 if dispensary_id == 'trulieve' and hasattr(downloader, 'category_ids') and downloader.category_ids:
-                    sys.stdout.write(f" × {len(downloader.category_ids)} categories = {store_count * len(downloader.category_ids)} total requests\n")
+                    sys.stdout.write(f" Ã— {len(downloader.category_ids)} categories = {store_count * len(downloader.category_ids)} total requests\n")
                     sys.stdout.write(f"    Categories: {', '.join(downloader.category_ids)}\n")
                 else:
                     sys.stdout.write("\n")
@@ -2243,7 +2243,7 @@ def main():
         print("\n[MODULE AVAILABILITY]")
         print(f"  Modular Downloaders: {'[YES] Available' if MODULAR_DOWNLOADERS_AVAILABLE else '[NO] Not Available'}")
         print(f"  Job Tracking:        {'[YES] Available' if JOB_TRACKING_AVAILABLE else '[NO] Not Available'}")
-        print(f"  Azure Data Lake:     {'✓ Available' if orchestrator.azure_manager else '✗ Not Available'}")
+        print(f"  Azure Data Lake:     {'âœ“ Available' if orchestrator.azure_manager else 'âœ— Not Available'}")
         
         print("\n" + "=" * 70 + "\n")
         return

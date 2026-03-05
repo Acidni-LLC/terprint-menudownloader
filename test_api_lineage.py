@@ -1,8 +1,8 @@
-import requests
+﻿import requests
 
 # Query the recommender API for a strain we know has genetics
 strain_name = "lemon-cherry-x-cap-junky"
-api_url = f"https://apim-terprint-dev.azure-api.net/recommend/api/strains/{strain_name}"
+api_url = f"https://api.acidni.net/recommend/api/strains/{strain_name}"
 
 # You would need the APIM subscription key here
 # For now, let's just check the genetics storage directly since we don't have the key handy
