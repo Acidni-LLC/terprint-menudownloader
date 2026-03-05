@@ -287,6 +287,270 @@ async def search_stock(
     }
 
 
+# ===========================================================================
+# Browse Endpoint — Server-Side Filtering for Table Views
+# ===========================================================================
+
+@router.get("/browse")
+async def browse_stock(
+    # Filters
+    dispensary: Optional[str] = Query(None, description="Filter by dispensary slug (e.g., 'trulieve')"),
+    store: Optional[str] = Query(None, description="Filter by store name or ID"),
+    strain: Optional[str] = Query(None, description="Filter by strain name (supports partial match)"),
+    product_type: Optional[str] = Query(None, description="Filter by category (Flower, Concentrates, etc.)"),
+    product_sub_type: Optional[str] = Query(None, description="Filter by subcategory if applicable"),
+    min_price: Optional[float] = Query(None, description="Minimum price filter"),
+    max_price: Optional[float] = Query(None, description="Maximum price filter"),
+    in_stock_hours: Optional[float] = Query(None, description="Only items in stock within N hours"),
+    # Sorting
+    sort_by: str = Query("time_in_stock", description="Sort field: time_in_stock, price, product_name, dispensary, store"),
+    sort_order: str = Query("asc", description="Sort order: asc or desc"),
+    # Pagination
+    limit: int = Query(50, description="Max results per page", le=500),
+    offset: int = Query(0, description="Offset for pagination"),
+):
+    """
+    Browse all stock items with server-side filtering, sorting, and pagination.
+    
+    Returns a flat schema optimized for table display with deep links to:
+    - Product page at dispensary
+    - Strain detail in Terprint AI Teams
+    - Batch detail in Terprint AI Teams  
+    - Terprint Portal strain page
+    - Terprint Web strain page
+    """
+    index = get_stock_index()
+    indexer = get_indexer()
+    
+    # Get all items from all dispensaries
+    all_items: List[dict] = []
+    by_dispensary = index.get("by_dispensary", {})
+    for disp_items in by_dispensary.values():
+        all_items.extend(disp_items)
+    
+    # If no by_dispensary, fall back to by_strain
+    if not all_items:
+        by_strain = index.get("by_strain", {})
+        for strain_items in by_strain.values():
+            all_items.extend(strain_items)
+    
+    # Apply filters
+    filtered = all_items
+    
+    if dispensary:
+        filtered = [i for i in filtered if i.get("dispensary", "").lower() == dispensary.lower()]
+    
+    if store:
+        store_lower = store.lower()
+        filtered = [
+            i for i in filtered 
+            if store_lower in (i.get("store", {}).get("store_name", "") or "").lower()
+            or store_lower in (i.get("store", {}).get("store_id", "") or "").lower()
+            or store_lower in (i.get("store", {}).get("city", "") or "").lower()
+        ]
+    
+    if strain:
+        strain_norm = indexer.normalize_strain_name(strain)
+        filtered = [
+            i for i in filtered
+            if strain_norm in i.get("strain_slug", "")
+            or strain_norm in indexer.normalize_strain_name(i.get("strain", ""))
+            or strain.lower() in (i.get("product_name", "") or "").lower()
+        ]
+    
+    if product_type:
+        filtered = [i for i in filtered if i.get("category", "").lower() == product_type.lower()]
+    
+    if product_sub_type:
+        # Check in product_name for sub-type keywords
+        sub_lower = product_sub_type.lower()
+        filtered = [
+            i for i in filtered
+            if sub_lower in (i.get("product_name", "") or "").lower()
+            or sub_lower in (i.get("category", "") or "").lower()
+        ]
+    
+    if min_price is not None:
+        filtered = [
+            i for i in filtered
+            if (i.get("pricing", {}).get("price") or 0) >= min_price
+        ]
+    
+    if max_price is not None:
+        filtered = [
+            i for i in filtered
+            if (i.get("pricing", {}).get("price") or float("inf")) <= max_price
+        ]
+    
+    if in_stock_hours is not None:
+        filtered = [
+            i for i in filtered
+            if (i.get("availability", {}).get("freshness_hours") or float("inf")) <= in_stock_hours
+        ]
+    
+    total_filtered = len(filtered)
+    
+    # Sort
+    def get_sort_key(item: dict):
+        if sort_by == "price":
+            return item.get("pricing", {}).get("price") or 0
+        elif sort_by == "product_name":
+            return (item.get("product_name") or "").lower()
+        elif sort_by == "dispensary":
+            return (item.get("dispensary_name") or item.get("dispensary") or "").lower()
+        elif sort_by == "store":
+            return (item.get("store", {}).get("store_name") or "").lower()
+        elif sort_by == "strain":
+            return (item.get("strain") or "").lower()
+        else:  # time_in_stock
+            return item.get("availability", {}).get("freshness_hours") or float("inf")
+    
+    reverse_sort = sort_order.lower() == "desc"
+    filtered.sort(key=get_sort_key, reverse=reverse_sort)
+    
+    # Paginate
+    paginated = filtered[offset:offset + limit]
+    
+    # Transform to flat table schema with deep links
+    def to_table_row(item: dict) -> dict:
+        pricing = item.get("pricing", {}) or {}
+        availability = item.get("availability", {}) or {}
+        store_info = item.get("store", {}) or {}
+        links = item.get("links", {}) or {}
+        
+        strain_slug = item.get("strain_slug", "")
+        batch_id = item.get("batch_id", "")
+        disp = item.get("dispensary", "")
+        
+        # Build deep links
+        # Teams app links (relative paths for the tab)
+        teams_strain_url = f"/strain/{strain_slug}" if strain_slug else None
+        teams_batch_url = f"/batch/{batch_id}" if batch_id else None
+        
+        # Terprint Web links
+        web_base = "https://terprint.acidni.net"
+        web_strain_url = f"{web_base}/strains/{strain_slug}" if strain_slug else None
+        web_batch_url = f"{web_base}/batches/{batch_id}" if batch_id else None
+        
+        # Terprint Portal links
+        portal_base = "https://ca-terprint-portal.greenbay-731aa80e.eastus2.azurecontainerapps.io"
+        portal_strain_url = f"{portal_base}/stock?strain={strain_slug}" if strain_slug else None
+        
+        # Extract weight from product name or pricing
+        weight_grams = pricing.get("weight_grams")
+        size_uom = f"{weight_grams}g" if weight_grams else _extract_size_from_name(item.get("product_name", ""))
+        
+        return {
+            "id": item.get("id", ""),
+            "dispensary": item.get("dispensary_name") or item.get("dispensary", ""),
+            "dispensary_slug": disp,
+            "store": store_info.get("store_name") or store_info.get("city") or "",
+            "store_city": store_info.get("city", ""),
+            "product_name": item.get("product_name", ""),
+            "strain": item.get("strain", ""),
+            "strain_slug": strain_slug,
+            "product_type": item.get("category", ""),
+            "product_sub_type": _extract_sub_type(item.get("product_name", ""), item.get("category", "")),
+            "size_uom": size_uom,
+            "price": pricing.get("price"),
+            "price_per_gram": pricing.get("price_per_gram"),
+            "time_in_stock_hours": availability.get("freshness_hours"),
+            "last_seen": availability.get("last_seen", ""),
+            "batch_id": batch_id,
+            # Deep links
+            "product_url": links.get("product_url") or links.get("url"),
+            "teams_strain_url": teams_strain_url,
+            "teams_batch_url": teams_batch_url,
+            "web_strain_url": web_strain_url,
+            "web_batch_url": web_batch_url,
+            "portal_strain_url": portal_strain_url,
+        }
+    
+    rows = [to_table_row(item) for item in paginated]
+    
+    # Get filter options (unique values for dropdowns)
+    all_dispensaries = sorted({i.get("dispensary_name") or i.get("dispensary", "") for i in all_items if i.get("dispensary")})
+    all_categories = sorted({i.get("category", "") for i in all_items if i.get("category")})
+    all_stores = sorted({i.get("store", {}).get("store_name", "") for i in all_items if i.get("store", {}).get("store_name")})
+    
+    return {
+        "items": rows,
+        "total": total_filtered,
+        "total_all": len(all_items),
+        "limit": limit,
+        "offset": offset,
+        "has_more": (offset + limit) < total_filtered,
+        "filters_applied": {
+            "dispensary": dispensary,
+            "store": store,
+            "strain": strain,
+            "product_type": product_type,
+            "product_sub_type": product_sub_type,
+            "min_price": min_price,
+            "max_price": max_price,
+            "in_stock_hours": in_stock_hours,
+        },
+        "sort": {"by": sort_by, "order": sort_order},
+        "filter_options": {
+            "dispensaries": all_dispensaries,
+            "categories": all_categories,
+            "stores": all_stores[:50],  # Limit store list
+        },
+    }
+
+
+def _extract_size_from_name(product_name: str) -> str:
+    """Extract size/weight from product name."""
+    if not product_name:
+        return ""
+    # Common patterns: "3.5g", "1/8", "1oz", "28g", etc.
+    import re
+    patterns = [
+        r'(\d+\.?\d*)\s*g\b',  # 3.5g, 28g
+        r'(\d+\.?\d*)\s*oz\b',  # 1oz
+        r'(1/8|1/4|1/2)\b',  # fractions
+        r'(\d+)\s*pack\b',  # pack count
+        r'(\d+)\s*ct\b',  # count
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, product_name, re.IGNORECASE)
+        if match:
+            return match.group(0)
+    return ""
+
+
+def _extract_sub_type(product_name: str, category: str) -> str:
+    """Extract sub-type from product name."""
+    if not product_name:
+        return ""
+    name_lower = product_name.lower()
+    
+    # Common sub-types by category
+    sub_types = {
+        "flower": ["whole flower", "ground", "minis", "smalls", "shake", "pre-roll", "pre-ground", "popcorn"],
+        "concentrates": ["live rosin", "live resin", "shatter", "wax", "budder", "crumble", "diamonds", "sauce", "badder", "batter", "hash", "rosin", "distillate"],
+        "vapes": ["cart", "cartridge", "disposable", "pod", "510"],
+        "edibles": ["gummies", "chocolate", "candy", "capsule", "tincture", "rso"],
+    }
+    
+    cat_lower = category.lower() if category else ""
+    
+    # Check category-specific sub-types first
+    for cat, types in sub_types.items():
+        if cat in cat_lower or cat in name_lower:
+            for sub in types:
+                if sub in name_lower:
+                    return sub.title()
+    
+    # General search
+    for types in sub_types.values():
+        for sub in types:
+            if sub in name_lower:
+                return sub.title()
+    
+    return ""
+
+
 @router.get("/locations/{dispensary}")
 async def get_dispensary_locations(
     dispensary: str,
