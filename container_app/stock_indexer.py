@@ -234,13 +234,16 @@ class StockIndexerV2:
         # Pattern: {dispensary}[-_]...{city-slug}[-_]{YYYYMMDD}[-_]{HHMMSS}
         clean = normalized
         # Remove common prefixes like "curaleaf-products-store-curaleaf-"
+        # Normalize dispensary name to match (underscores → hyphens) since
+        # normalized already replaced all underscores with hyphens.
+        disp_norm = dispensary.replace("_", "-")
         for prefix in (
-            f"{dispensary}-products-store-{dispensary}-",
-            f"{dispensary}-products-store-",
-            f"{dispensary}-menu-{dispensary}-",
-            f"{dispensary}-menu-",
-            f"{dispensary}-store-",
-            f"{dispensary}-",
+            f"{disp_norm}-products-store-{disp_norm}-",
+            f"{disp_norm}-products-store-",
+            f"{disp_norm}-menu-{disp_norm}-",
+            f"{disp_norm}-menu-",
+            f"{disp_norm}-store-",
+            f"{disp_norm}-",
         ):
             if clean.startswith(prefix):
                 clean = clean[len(prefix):]
@@ -878,6 +881,16 @@ class StockIndexerV2:
                 }
                 if batch_id and batch_id != "unknown":
                     item.links["batch_detail"] = f"https://terprint.acidni.net/batches/{batch_id}"
+
+                # Skip entries with generic/bogus strain names (e.g., Sweed POS
+                # page headings captured by HTML fallback when a product 404s)
+                _BOGUS_STRAIN_NAMES = {
+                    "all products", "menu", "home", "shop", "products",
+                    "category", "categories", "unknown",
+                }
+                if strain_slug in _BOGUS_STRAIN_NAMES or strain.lower() in _BOGUS_STRAIN_NAMES:
+                    logger.debug(f"Skipping bogus strain name '{strain}' from {blob_name}")
+                    continue
 
                 items.append(item)
 

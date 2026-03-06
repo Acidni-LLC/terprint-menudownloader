@@ -171,8 +171,16 @@ def scrape_product_detail(
         # Fallback: plain HTML parsing (CSS classes OUIWQpt/zRYKXNN)
         html_data = _extract_from_html(html)
         if html_data:
-            product.update(html_data)
-            product["detail_source"] = "html_fallback"
+            # Filter out generic page headings captured when the product page
+            # 404s or redirects to the category listing (e.g. "All Products").
+            _BOGUS_NAMES = {"all products", "menu", "home", "shop", "products"}
+            html_name = (html_data.get("name") or "").strip().lower()
+            if html_name in _BOGUS_NAMES:
+                product["detail_source"] = "none"
+                product["detail_error"] = f"html_fallback_bogus_name:{html_data.get('name')}"
+            else:
+                product.update(html_data)
+                product["detail_source"] = "html_fallback"
         else:
             product["detail_source"] = "none"
 
