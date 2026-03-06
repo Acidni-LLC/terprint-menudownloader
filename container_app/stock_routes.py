@@ -479,6 +479,7 @@ async def browse_stock(
             "time_in_stock_hours": availability.get("freshness_hours"),
             "last_seen": availability.get("last_seen", ""),
             "batch_id": batch_id,
+            "batch_name": item.get("product_name", "") or "",
             # Deep links
             "product_url": links.get("product_url") or links.get("url"),
             "teams_strain_url": teams_strain_url,
