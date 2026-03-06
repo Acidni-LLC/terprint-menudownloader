@@ -89,8 +89,12 @@ class PricingInfo:
 class AvailabilityInfo:
     """Stock availability and freshness."""
     in_stock: bool = True
+    first_seen: str = ""
     last_seen: str = ""
+    went_out_of_stock_at: str | None = None
     freshness_hours: float | None = None
+    days_in_stock: float | None = None
+    times_restocked: int = 0
     confidence: str = "medium"
 
 
@@ -848,6 +852,7 @@ class StockIndexerV2:
                     pricing=PricingInfo(price=price, weight_grams=weight, price_per_gram=ppg),
                     availability=AvailabilityInfo(
                         in_stock=True,
+                        first_seen=now_iso,
                         last_seen=now_iso,
                         confidence="medium",
                     ),
@@ -1331,6 +1336,18 @@ class StockIndexerV2:
         ts_blob = container.get_blob_client(f"{prefix}/last_updated.txt")
         ts_blob.upload_blob(datetime.now(timezone.utc).isoformat(), overwrite=True)
 
+        # --- Availability History Tracking ---
+        try:
+            tracker = StockAvailabilityTracker(container, prefix)
+            tracker_result = tracker.update(index.get("items", []))
+            logger.info(
+                f"Availability tracker: {tracker_result.get('new_arrivals', 0)} new, "
+                f"{tracker_result.get('went_out_of_stock', 0)} disappeared, "
+                f"{tracker_result.get('still_in_stock', 0)} still here"
+            )
+        except Exception as e:
+            logger.warning(f"Availability tracker failed (non-fatal): {e}")
+
         logger.info(f"Saved {len(saved_paths)} index files to blob storage")
         return f"{prefix}/current.json"
 
@@ -1392,6 +1409,466 @@ class StockIndexerV2:
         dlng = math.radians(lng2 - lng1)
         a = math.sin(dlat / 2) ** 2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlng / 2) ** 2
         return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+# =============================================================================
+# Stock Availability Tracker — Lifecycle History
+# =============================================================================
+
+class StockAvailabilityTracker:
+    """
+    Tracks stock lifecycle events: appeared, disappeared, restocked.
+
+    Runs as part of every stock index build. Diffs current items against
+    previous state to detect:
+      - New arrivals (first_seen_at = now)
+      - Items gone out of stock (went_out_of_stock_at = now)
+      - Restocks (appeared again after disappearing)
+
+    Produces:
+      - stock-index/availability-history.json  (full lifecycle state)
+      - stock-index/hot-products.json          (derived analytics)
+    """
+
+    HISTORY_BLOB = "availability-history.json"
+    HOT_PRODUCTS_BLOB = "hot-products.json"
+    # Keep history entries for items out of stock up to this many days
+    MAX_OUT_OF_STOCK_DAYS = 90
+    # Max history events per item (to prevent unbounded growth)
+    MAX_HISTORY_EVENTS = 50
+
+    def __init__(self, blob_container, prefix: str = "stock-index"):
+        self._container = blob_container
+        self._prefix = prefix
+
+    # -----------------------------------------------------------------
+    # Blob I/O
+    # -----------------------------------------------------------------
+
+    def _load_history(self) -> dict:
+        """Load previous availability history from blob storage."""
+        try:
+            blob = self._container.get_blob_client(
+                f"{self._prefix}/{self.HISTORY_BLOB}"
+            )
+            content = blob.download_blob().readall()
+            return json.loads(content)
+        except Exception:
+            logger.info("No previous availability history found — starting fresh")
+            return {"version": "1.0.0", "tracking_since": None, "items": {}}
+
+    def _save_history(self, history: dict) -> None:
+        """Save availability history to blob storage."""
+        blob = self._container.get_blob_client(
+            f"{self._prefix}/{self.HISTORY_BLOB}"
+        )
+        blob.upload_blob(
+            json.dumps(history, indent=2, default=str), overwrite=True
+        )
+
+    def _save_hot_products(self, analytics: dict) -> None:
+        """Save hot-products analytics to blob storage."""
+        blob = self._container.get_blob_client(
+            f"{self._prefix}/{self.HOT_PRODUCTS_BLOB}"
+        )
+        blob.upload_blob(
+            json.dumps(analytics, indent=2, default=str), overwrite=True
+        )
+
+    def get_history(self) -> dict | None:
+        """Public accessor — load availability history."""
+        try:
+            return self._load_history()
+        except Exception:
+            return None
+
+    def get_hot_products(self) -> dict | None:
+        """Public accessor — load hot-products analytics."""
+        try:
+            blob = self._container.get_blob_client(
+                f"{self._prefix}/{self.HOT_PRODUCTS_BLOB}"
+            )
+            content = blob.download_blob().readall()
+            return json.loads(content)
+        except Exception:
+            return None
+
+    # -----------------------------------------------------------------
+    # Core Diff Algorithm
+    # -----------------------------------------------------------------
+
+    def update(self, current_items_dicts: list[dict]) -> dict:
+        """
+        Diff current stock items against previous state and update history.
+
+        Args:
+            current_items_dicts: List of stock item dicts from the current build.
+
+        Returns:
+            Summary dict with counts of new, disappeared, still-here items.
+        """
+        now = datetime.now(timezone.utc)
+        now_iso = now.isoformat()
+
+        previous = self._load_history()
+        prev_items: dict = previous.get("items", {})
+        tracking_since = previous.get("tracking_since") or now_iso
+
+        # Build current keyed set: key = dispensary:strain_slug:store_id
+        current_keyed: dict[str, dict] = {}
+        for item in current_items_dicts:
+            store = item.get("store", {})
+            key = (
+                f"{item.get('dispensary', '')}:"
+                f"{item.get('strain_slug', '')}:"
+                f"{store.get('store_id', '')}"
+            )
+            # Keep the item with the most data (first occurrence is fine since
+            # items are already deduped by the index builder)
+            if key not in current_keyed:
+                current_keyed[key] = item
+
+        current_keys = set(current_keyed.keys())
+        previous_keys = set(prev_items.keys())
+
+        appeared_keys = current_keys - previous_keys
+        disappeared_keys = previous_keys - current_keys
+        still_here_keys = current_keys & previous_keys
+
+        # --- Process NEW arrivals ---
+        for key in appeared_keys:
+            item = current_keyed[key]
+            prev_items[key] = {
+                "strain": item.get("strain", ""),
+                "strain_slug": item.get("strain_slug", ""),
+                "dispensary": item.get("dispensary", ""),
+                "dispensary_name": item.get("dispensary_name", ""),
+                "store_id": item.get("store", {}).get("store_id", ""),
+                "store_name": item.get("store", {}).get("store_name", ""),
+                "category": item.get("category", ""),
+                "product_name": item.get("product_name", ""),
+                "first_seen_at": now_iso,
+                "last_seen_at": now_iso,
+                "went_out_of_stock_at": None,
+                "in_stock": True,
+                "times_restocked": 0,
+                "history": [{"event": "appeared", "at": now_iso}],
+            }
+
+        # --- Process items STILL in stock ---
+        for key in still_here_keys:
+            entry = prev_items[key]
+            entry["last_seen_at"] = now_iso
+            entry["in_stock"] = True
+            entry["went_out_of_stock_at"] = None
+            # Update product info from current build (may have new price/name)
+            item = current_keyed[key]
+            entry["product_name"] = item.get("product_name", entry.get("product_name", ""))
+            entry["category"] = item.get("category", entry.get("category", ""))
+
+        # --- Process items that DISAPPEARED ---
+        for key in disappeared_keys:
+            entry = prev_items[key]
+            if entry.get("in_stock", True):
+                # Transition: in_stock → out_of_stock
+                entry["in_stock"] = False
+                entry["went_out_of_stock_at"] = now_iso
+                history = entry.get("history", [])
+                history.append({"event": "disappeared", "at": now_iso})
+                # Cap history length
+                if len(history) > self.MAX_HISTORY_EVENTS:
+                    history = history[-self.MAX_HISTORY_EVENTS:]
+                entry["history"] = history
+
+        # --- Detect RESTOCKS (was out of stock, now back) ---
+        # These appear in appeared_keys BUT may have a previous entry that was
+        # marked out-of-stock.  We already handled appeared_keys above as new,
+        # but we need to check if there was a *previous* entry with same key
+        # that was out-of-stock.
+        # Actually, if the key is in appeared_keys it is NOT in previous_keys,
+        # so restocks must be detected differently.
+        # A restock happens when an item *was* in prev_items with in_stock=False
+        # and now appears in current_keyed.  Let's check: since appeared_keys
+        # = current - previous, items that were *previously tracked but removed*
+        # won't be in previous_keys anymore unless they were kept.
+        # They ARE kept because we don't purge immediately — we just set
+        # in_stock=False.  So restocks show up in still_here_keys (they're in
+        # both prev and current) where prev entry has in_stock=False.
+        restocked_count = 0
+        for key in still_here_keys:
+            entry = prev_items[key]
+            # If prev state was out of stock but now it's back
+            if not entry.get("_was_in_stock", True):
+                entry["times_restocked"] = entry.get("times_restocked", 0) + 1
+                entry["went_out_of_stock_at"] = None
+                history = entry.get("history", [])
+                history.append({"event": "restocked", "at": now_iso})
+                if len(history) > self.MAX_HISTORY_EVENTS:
+                    history = history[-self.MAX_HISTORY_EVENTS:]
+                entry["history"] = history
+                restocked_count += 1
+            # Stash current in_stock state for next run's restock detection
+            entry["_was_in_stock"] = True
+
+        for key in disappeared_keys:
+            entry = prev_items[key]
+            entry["_was_in_stock"] = False
+
+        # --- Compute days_in_stock ---
+        for key, entry in prev_items.items():
+            first = entry.get("first_seen_at")
+            if first and entry.get("in_stock"):
+                try:
+                    first_dt = datetime.fromisoformat(
+                        first.replace("Z", "+00:00")
+                    )
+                    if first_dt.tzinfo is None:
+                        first_dt = first_dt.replace(tzinfo=timezone.utc)
+                    entry["days_in_stock"] = round(
+                        (now - first_dt).total_seconds() / 86400, 1
+                    )
+                except Exception:
+                    entry["days_in_stock"] = None
+            elif not entry.get("in_stock"):
+                # Calculate how long it WAS in stock before disappearing
+                first = entry.get("first_seen_at")
+                out_at = entry.get("went_out_of_stock_at")
+                if first and out_at:
+                    try:
+                        first_dt = datetime.fromisoformat(
+                            first.replace("Z", "+00:00")
+                        )
+                        out_dt = datetime.fromisoformat(
+                            out_at.replace("Z", "+00:00")
+                        )
+                        if first_dt.tzinfo is None:
+                            first_dt = first_dt.replace(tzinfo=timezone.utc)
+                        if out_dt.tzinfo is None:
+                            out_dt = out_dt.replace(tzinfo=timezone.utc)
+                        entry["days_in_stock"] = round(
+                            (out_dt - first_dt).total_seconds() / 86400, 1
+                        )
+                    except Exception:
+                        pass
+
+        # --- Purge very old out-of-stock entries ---
+        cutoff = now - timedelta(days=self.MAX_OUT_OF_STOCK_DAYS)
+        purge_keys = []
+        for key, entry in prev_items.items():
+            if not entry.get("in_stock"):
+                out_at = entry.get("went_out_of_stock_at")
+                if out_at:
+                    try:
+                        out_dt = datetime.fromisoformat(
+                            out_at.replace("Z", "+00:00")
+                        )
+                        if out_dt.tzinfo is None:
+                            out_dt = out_dt.replace(tzinfo=timezone.utc)
+                        if out_dt < cutoff:
+                            purge_keys.append(key)
+                    except Exception:
+                        pass
+        for key in purge_keys:
+            del prev_items[key]
+
+        # --- Build updated history blob ---
+        in_stock_count = sum(
+            1 for e in prev_items.values() if e.get("in_stock")
+        )
+        out_of_stock_count = sum(
+            1 for e in prev_items.values() if not e.get("in_stock")
+        )
+
+        history_output = {
+            "version": "1.0.0",
+            "updated_at": now_iso,
+            "tracking_since": tracking_since,
+            "total_tracked": len(prev_items),
+            "currently_in_stock": in_stock_count,
+            "out_of_stock": out_of_stock_count,
+            "purged_old_entries": len(purge_keys),
+            "items": prev_items,
+        }
+
+        self._save_history(history_output)
+        logger.info(
+            f"Availability history saved: {len(prev_items)} tracked, "
+            f"{in_stock_count} in stock, {out_of_stock_count} out"
+        )
+
+        # --- Build hot-products analytics ---
+        analytics = self._compute_analytics(prev_items, now)
+        self._save_hot_products(analytics)
+        logger.info(
+            f"Hot products saved: {len(analytics.get('fastest_sellers', []))} hot, "
+            f"{len(analytics.get('new_arrivals', []))} new, "
+            f"{len(analytics.get('recently_sold_out', []))} sold out"
+        )
+
+        return {
+            "new_arrivals": len(appeared_keys),
+            "went_out_of_stock": len(disappeared_keys),
+            "still_in_stock": len(still_here_keys),
+            "restocked": restocked_count,
+            "purged": len(purge_keys),
+            "total_tracked": len(prev_items),
+        }
+
+    # -----------------------------------------------------------------
+    # Analytics Computation
+    # -----------------------------------------------------------------
+
+    def _compute_analytics(self, items: dict, now: datetime) -> dict:
+        """Compute hot-products analytics from availability history."""
+        new_arrivals = []
+        fastest_sellers = []
+        long_stayers = []
+        recently_sold_out = []
+        gaining_stores: dict[str, dict] = {}
+        losing_stores: dict[str, dict] = {}
+
+        for key, entry in items.items():
+            strain = entry.get("strain", "")
+            strain_slug = entry.get("strain_slug", "")
+            dispensary = entry.get("dispensary", "")
+            dispensary_name = entry.get("dispensary_name", "")
+            category = entry.get("category", "")
+            in_stock = entry.get("in_stock", False)
+            first_seen = entry.get("first_seen_at")
+            days = entry.get("days_in_stock")
+            times_restocked = entry.get("times_restocked", 0)
+            store_name = entry.get("store_name", "")
+
+            # --- New arrivals: first seen in last 72 hours ---
+            if in_stock and first_seen:
+                try:
+                    fs_dt = datetime.fromisoformat(
+                        first_seen.replace("Z", "+00:00")
+                    )
+                    if fs_dt.tzinfo is None:
+                        fs_dt = fs_dt.replace(tzinfo=timezone.utc)
+                    hours_ago = (now - fs_dt).total_seconds() / 3600
+                    if hours_ago <= 72:
+                        new_arrivals.append({
+                            "strain": strain,
+                            "strain_slug": strain_slug,
+                            "dispensary": dispensary,
+                            "dispensary_name": dispensary_name,
+                            "store_name": store_name,
+                            "category": category,
+                            "first_seen_at": first_seen,
+                            "hours_ago": round(hours_ago, 1),
+                        })
+                except Exception:
+                    pass
+
+            # --- Recently sold out: disappeared in last 48 hours ---
+            if not in_stock:
+                out_at = entry.get("went_out_of_stock_at")
+                if out_at:
+                    try:
+                        out_dt = datetime.fromisoformat(
+                            out_at.replace("Z", "+00:00")
+                        )
+                        if out_dt.tzinfo is None:
+                            out_dt = out_dt.replace(tzinfo=timezone.utc)
+                        hours_since = (now - out_dt).total_seconds() / 3600
+                        if hours_since <= 48:
+                            recently_sold_out.append({
+                                "strain": strain,
+                                "strain_slug": strain_slug,
+                                "dispensary": dispensary,
+                                "dispensary_name": dispensary_name,
+                                "store_name": store_name,
+                                "category": category,
+                                "went_out_of_stock_at": out_at,
+                                "was_in_stock_days": days,
+                                "hours_since_sold_out": round(hours_since, 1),
+                            })
+                    except Exception:
+                        pass
+
+            # --- Long stayers: in stock > 14 days ---
+            if in_stock and days is not None and days > 14:
+                long_stayers.append({
+                    "strain": strain,
+                    "strain_slug": strain_slug,
+                    "dispensary": dispensary,
+                    "dispensary_name": dispensary_name,
+                    "store_name": store_name,
+                    "category": category,
+                    "days_in_stock": days,
+                    "first_seen_at": first_seen,
+                })
+
+            # --- Fast sellers: items that restock frequently OR spend
+            #     very few days in stock ---
+            if times_restocked >= 1 or (
+                not in_stock and days is not None and days < 5
+            ):
+                # Compute hotness score
+                avg_days = days if days else 999
+                restock_factor = times_restocked * 30
+                speed_factor = (1 / max(avg_days, 0.1)) * 40
+                recency_bonus = 20 if times_restocked > 0 else 0
+                hotness = round(restock_factor + speed_factor + recency_bonus, 1)
+
+                fastest_sellers.append({
+                    "strain": strain,
+                    "strain_slug": strain_slug,
+                    "dispensary": dispensary,
+                    "dispensary_name": dispensary_name,
+                    "category": category,
+                    "avg_days_in_stock": days,
+                    "times_restocked": times_restocked,
+                    "hotness_score": hotness,
+                })
+
+        # --- Aggregate store counts per strain for trending ---
+        # Group current in-stock items by strain_slug
+        strain_store_counts: dict[str, set] = defaultdict(set)
+        for key, entry in items.items():
+            if entry.get("in_stock"):
+                slug = entry.get("strain_slug", "")
+                store_id = entry.get("store_id", "")
+                if slug and store_id:
+                    strain_store_counts[slug].add(store_id)
+
+        # Sort and limit results
+        new_arrivals.sort(key=lambda x: x.get("hours_ago", 999))
+        new_arrivals = new_arrivals[:100]
+
+        fastest_sellers.sort(
+            key=lambda x: x.get("hotness_score", 0), reverse=True
+        )
+        fastest_sellers = fastest_sellers[:50]
+
+        long_stayers.sort(
+            key=lambda x: x.get("days_in_stock", 0), reverse=True
+        )
+        long_stayers = long_stayers[:50]
+
+        recently_sold_out.sort(
+            key=lambda x: x.get("hours_since_sold_out", 999)
+        )
+        recently_sold_out = recently_sold_out[:50]
+
+        return {
+            "version": "1.0.0",
+            "updated_at": now.isoformat(),
+            "period_note": "New arrivals=72h, sold out=48h, long stayers=14d+",
+            "fastest_sellers": fastest_sellers,
+            "new_arrivals": new_arrivals,
+            "long_stayers": long_stayers,
+            "recently_sold_out": recently_sold_out,
+            "strain_store_counts": {
+                slug: len(stores)
+                for slug, stores in sorted(
+                    strain_store_counts.items(),
+                    key=lambda x: -len(x[1]),
+                )[:30]
+            },
+        }
 
 
 # =============================================================================

@@ -29,6 +29,17 @@ except Exception as e:
     STOCK_INDEXER_AVAILABLE = False
     logging.error(f"Unexpected error importing StockIndexer: {e}", exc_info=True)
 
+# Import stock availability tracker
+try:
+    from .stock_indexer import StockAvailabilityTracker
+    AVAILABILITY_TRACKER_AVAILABLE = True
+except ImportError:
+    try:
+        from stock_indexer import StockAvailabilityTracker
+        AVAILABILITY_TRACKER_AVAILABLE = True
+    except ImportError:
+        AVAILABILITY_TRACKER_AVAILABLE = False
+
 # Import stock alerts
 try:
     from .stock_alerts import create_alert, get_alerts_for_email, delete_alert
@@ -464,6 +475,10 @@ async def browse_stock(
             "web_strain_url": web_strain_url,
             "web_batch_url": web_batch_url,
             "portal_strain_url": portal_strain_url,
+            # Store location for map view
+            "store_lat": store_info.get("latitude"),
+            "store_lng": store_info.get("longitude"),
+            "store_address": store_info.get("address", ""),
         }
     
     rows = [to_table_row(item) for item in paginated]
@@ -647,6 +662,214 @@ async def get_nearest_stock(
 
 
 # ===========================================================================
+# Availability History & Hot Products Endpoints
+# ===========================================================================
+
+def _get_tracker() -> "StockAvailabilityTracker":
+    """Get a StockAvailabilityTracker instance using the stock indexer's blob container."""
+    if not AVAILABILITY_TRACKER_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Availability tracker not available")
+    indexer = get_indexer()
+    container = indexer._get_blob_container()
+    if not container:
+        raise HTTPException(status_code=503, detail="Blob storage not available")
+    return StockAvailabilityTracker(container, indexer.INDEX_PREFIX)
+
+
+@router.get("/hot-products")
+async def get_hot_products(
+    limit: int = Query(20, description="Max results per category", le=100),
+    category: Optional[str] = Query(None, description="Filter by product category"),
+    dispensary: Optional[str] = Query(None, description="Filter by dispensary slug"),
+):
+    """
+    Get trending/hot products — fast sellers, frequently restocked items.
+
+    Hotness score formula:
+        (restock_count * 30) + (1/avg_days_in_stock * 40) + recency_bonus(20)
+
+    Higher score = hotter product (sells out fast, restocks often).
+    """
+    tracker = _get_tracker()
+    analytics = tracker.get_hot_products()
+    if not analytics:
+        raise HTTPException(
+            status_code=503,
+            detail="Hot products data not yet available. Run POST /api/stock/build-index first.",
+        )
+
+    def _filter(items: list) -> list:
+        filtered = items
+        if category:
+            filtered = [i for i in filtered if i.get("category", "").lower() == category.lower()]
+        if dispensary:
+            filtered = [i for i in filtered if i.get("dispensary", "").lower() == dispensary.lower()]
+        return filtered[:limit]
+
+    return {
+        "updated_at": analytics.get("updated_at"),
+        "fastest_sellers": _filter(analytics.get("fastest_sellers", [])),
+        "new_arrivals": _filter(analytics.get("new_arrivals", [])),
+        "long_stayers": _filter(analytics.get("long_stayers", [])),
+        "recently_sold_out": _filter(analytics.get("recently_sold_out", [])),
+        "strain_store_counts": analytics.get("strain_store_counts", {}),
+    }
+
+
+@router.get("/new-arrivals")
+async def get_new_arrivals(
+    hours: int = Query(72, description="Show items first seen within this many hours", le=168),
+    dispensary: Optional[str] = Query(None, description="Filter by dispensary slug"),
+    category: Optional[str] = Query(None, description="Filter by product category"),
+    limit: int = Query(50, description="Max results", le=200),
+):
+    """
+    Get products that appeared for the first time recently.
+
+    These are brand-new drops — products that were never seen before
+    in the stock index, or that appeared for the first time at a store.
+    """
+    tracker = _get_tracker()
+    analytics = tracker.get_hot_products()
+    if not analytics:
+        raise HTTPException(
+            status_code=503,
+            detail="New arrivals data not yet available. Run POST /api/stock/build-index first.",
+        )
+
+    arrivals = analytics.get("new_arrivals", [])
+
+    # Filter by hours threshold
+    arrivals = [a for a in arrivals if a.get("hours_ago", 999) <= hours]
+
+    if dispensary:
+        arrivals = [a for a in arrivals if a.get("dispensary", "").lower() == dispensary.lower()]
+    if category:
+        arrivals = [a for a in arrivals if a.get("category", "").lower() == category.lower()]
+
+    arrivals = arrivals[:limit]
+
+    return {
+        "updated_at": analytics.get("updated_at"),
+        "hours_window": hours,
+        "new_arrivals": arrivals,
+        "total": len(arrivals),
+    }
+
+
+@router.get("/recently-sold-out")
+async def get_recently_sold_out(
+    hours: int = Query(48, description="Show items sold out within this many hours", le=168),
+    dispensary: Optional[str] = Query(None, description="Filter by dispensary slug"),
+    category: Optional[str] = Query(None, description="Filter by product category"),
+    limit: int = Query(50, description="Max results", le=200),
+):
+    """
+    Get products that recently went out of stock.
+
+    Useful for identifying high-demand products and setting restock alerts.
+    Shows how long the product was available before selling out.
+    """
+    tracker = _get_tracker()
+    analytics = tracker.get_hot_products()
+    if not analytics:
+        raise HTTPException(
+            status_code=503,
+            detail="Sold-out data not yet available. Run POST /api/stock/build-index first.",
+        )
+
+    sold_out = analytics.get("recently_sold_out", [])
+
+    sold_out = [s for s in sold_out if s.get("hours_since_sold_out", 999) <= hours]
+
+    if dispensary:
+        sold_out = [s for s in sold_out if s.get("dispensary", "").lower() == dispensary.lower()]
+    if category:
+        sold_out = [s for s in sold_out if s.get("category", "").lower() == category.lower()]
+
+    sold_out = sold_out[:limit]
+
+    return {
+        "updated_at": analytics.get("updated_at"),
+        "hours_window": hours,
+        "recently_sold_out": sold_out,
+        "total": len(sold_out),
+    }
+
+
+@router.get("/availability-history/{strain_slug}")
+async def get_strain_availability_history(
+    strain_slug: str,
+    dispensary: Optional[str] = Query(None, description="Filter by dispensary slug"),
+):
+    """
+    Get full availability lifecycle history for a specific strain.
+
+    Shows when the strain appeared at each store, how long it stayed,
+    restock events, and current status. Useful for predicting restock
+    patterns and understanding product velocity.
+    """
+    tracker = _get_tracker()
+    history = tracker.get_history()
+    if not history:
+        raise HTTPException(
+            status_code=503,
+            detail="Availability history not yet available. Run POST /api/stock/build-index first.",
+        )
+
+    items = history.get("items", {})
+    indexer = get_indexer()
+    target_slug = indexer.normalize_strain_name(strain_slug)
+
+    matching = []
+    for key, entry in items.items():
+        entry_slug = entry.get("strain_slug", "")
+        if entry_slug == target_slug or target_slug in entry_slug:
+            if dispensary and entry.get("dispensary", "").lower() != dispensary.lower():
+                continue
+            matching.append({
+                "key": key,
+                **entry,
+            })
+
+    if not matching:
+        return {
+            "strain_slug": target_slug,
+            "found": False,
+            "entries": [],
+            "total": 0,
+            "message": f"No availability history for strain '{strain_slug}'",
+        }
+
+    # Summary stats
+    in_stock_entries = [e for e in matching if e.get("in_stock")]
+    out_of_stock_entries = [e for e in matching if not e.get("in_stock")]
+    total_restocks = sum(e.get("times_restocked", 0) for e in matching)
+    days_values = [e["days_in_stock"] for e in matching if e.get("days_in_stock") is not None]
+    avg_days = round(sum(days_values) / len(days_values), 1) if days_values else None
+
+    dispensaries_available = sorted({e.get("dispensary", "") for e in in_stock_entries})
+    stores_available = sorted({e.get("store_name", "") for e in in_stock_entries if e.get("store_name")})
+
+    return {
+        "strain_slug": target_slug,
+        "strain": matching[0].get("strain", target_slug) if matching else target_slug,
+        "found": True,
+        "summary": {
+            "currently_in_stock": len(in_stock_entries),
+            "out_of_stock": len(out_of_stock_entries),
+            "total_restocks": total_restocks,
+            "avg_days_in_stock": avg_days,
+            "dispensaries_available": dispensaries_available,
+            "stores_available": stores_available,
+        },
+        "entries": matching,
+        "total": len(matching),
+        "tracking_since": history.get("tracking_since"),
+    }
+
+
+# ===========================================================================
 # Alert Endpoints — Strain Watchlist
 # ===========================================================================
 
@@ -765,10 +988,28 @@ async def build_stock_index():
         path = indexer.save_index(index)
 
         metadata = index.get("metadata", {})
+
+        # Availability tracker stats (populated by save_index)
+        tracker_info = {}
+        if AVAILABILITY_TRACKER_AVAILABLE:
+            try:
+                tracker = _get_tracker()
+                hot = tracker.get_hot_products()
+                if hot:
+                    tracker_info = {
+                        "new_arrivals": len(hot.get("new_arrivals", [])),
+                        "fastest_sellers": len(hot.get("fastest_sellers", [])),
+                        "recently_sold_out": len(hot.get("recently_sold_out", [])),
+                        "long_stayers": len(hot.get("long_stayers", [])),
+                    }
+            except Exception:
+                pass
+
         return {
             "success": True,
             "index_path": path,
             "metadata": metadata,
+            "availability_tracking": tracker_info,
             "message": (
                 f"Stock index v2 built: {metadata.get('total_items', 0)} items, "
                 f"{metadata.get('unique_strains', 0)} strains"
