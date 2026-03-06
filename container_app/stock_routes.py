@@ -319,6 +319,7 @@ async def browse_stock(
     dispensary: Optional[str] = Query(None, description="Filter by dispensary slug (e.g., 'trulieve')"),
     store: Optional[str] = Query(None, description="Filter by store name or ID"),
     strain: Optional[str] = Query(None, description="Filter by strain name (supports partial match)"),
+    strains: Optional[str] = Query(None, description="Comma-separated list of exact strain names to filter (for favorites)"),
     product_type: Optional[str] = Query(None, description="Filter by category (Flower, Concentrates, etc.)"),
     product_sub_type: Optional[str] = Query(None, description="Filter by subcategory if applicable"),
     min_price: Optional[float] = Query(None, description="Minimum price filter"),
@@ -379,6 +380,19 @@ async def browse_stock(
             or strain_norm in indexer.normalize_strain_name(i.get("strain", ""))
             or strain.lower() in (i.get("product_name", "") or "").lower()
         ]
+    
+    # Favorites filter: exact match against comma-separated strain names
+    if strains:
+        strain_list = [s.strip().lower() for s in strains.split(",") if s.strip()]
+        if strain_list:
+            # Build normalized set for O(1) lookup
+            strain_set = set(strain_list)
+            strain_slug_set = {indexer.normalize_strain_name(s) for s in strain_list}
+            filtered = [
+                i for i in filtered
+                if (i.get("strain", "") or "").lower() in strain_set
+                or i.get("strain_slug", "") in strain_slug_set
+            ]
     
     if product_type:
         filtered = [i for i in filtered if i.get("category", "").lower() == product_type.lower()]
@@ -511,6 +525,7 @@ async def browse_stock(
             "dispensary": dispensary,
             "store": store,
             "strain": strain,
+            "strains": strains,
             "product_type": product_type,
             "product_sub_type": product_sub_type,
             "min_price": min_price,
