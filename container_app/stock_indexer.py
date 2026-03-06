@@ -138,6 +138,9 @@ DISPENSARY_NAMES: dict[str, str] = {
 # All dispensaries we track
 EXPECTED_DISPENSARIES = list(DISPENSARY_NAMES.keys())
 
+# Keys to exclude from terpene profiles (these are aggregates, not individual terpenes)
+_TERPENE_SKIP_KEYS = {"total", "total_terpenes", "sum", "total_percent"}
+
 
 class StockIndexerV2:
     """
@@ -773,12 +776,14 @@ class StockIndexerV2:
                     batch_id = str(product.get("batch_num") or product.get("id") or "unknown")
 
                     # Flowery: terpenes are a flat dict {myrcene: 0.824, ...}
+                    # Filter out "total" key — it's the sum, not an individual terpene
                     terps = product.get("terpenes")
                     if isinstance(terps, dict):
                         terpene_profile = {
                             k: _safe_float(v)
                             for k, v in terps.items()
                             if _safe_float(v) is not None and _safe_float(v) > 0
+                            and k.lower() not in _TERPENE_SKIP_KEYS
                         }
 
                 # ---------------------------------------------------------
@@ -824,7 +829,11 @@ class StockIndexerV2:
                 if not terpene_profile:
                     menu_terpenes = product.get("terpenes")
                     if isinstance(menu_terpenes, dict):
-                        terpene_profile = {k: _safe_float(v) for k, v in menu_terpenes.items() if _safe_float(v) is not None}
+                        terpene_profile = {
+                            k: _safe_float(v) for k, v in menu_terpenes.items()
+                            if _safe_float(v) is not None
+                            and k.lower() not in _TERPENE_SKIP_KEYS
+                        }
 
                 if not strain_type:
                     strain_type = product.get("strain_type") or product.get("strainType") or None
