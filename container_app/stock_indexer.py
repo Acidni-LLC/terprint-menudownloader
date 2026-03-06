@@ -1345,6 +1345,32 @@ class StockIndexerV2:
                 f"{tracker_result.get('went_out_of_stock', 0)} disappeared, "
                 f"{tracker_result.get('still_in_stock', 0)} still here"
             )
+
+            # --- Persistent Stock Ledger (Cosmos DB) ---
+            try:
+                appeared = tracker_result.get("_appeared_items", {})
+                disappeared = tracker_result.get("_disappeared_items", {})
+                restocked = tracker_result.get("_restocked_items", {})
+                if appeared or disappeared or restocked:
+                    build_id = f"stock-build-{index['metadata']['build_date']}"
+                    ledger = StockLedgerWriter()
+                    ledger_result = ledger.write_events(
+                        appeared=appeared,
+                        disappeared=disappeared,
+                        restocked=restocked,
+                        build_id=build_id,
+                    )
+                    logger.info(
+                        f"Stock ledger: {ledger_result.get('written', 0)} events persisted "
+                        f"(a={ledger_result.get('appeared', 0)}, "
+                        f"d={ledger_result.get('disappeared', 0)}, "
+                        f"r={ledger_result.get('restocked', 0)})"
+                    )
+                else:
+                    logger.info("Stock ledger: no changes to persist")
+            except Exception as e:
+                logger.warning(f"Stock ledger write failed (non-fatal): {e}")
+
         except Exception as e:
             logger.warning(f"Availability tracker failed (non-fatal): {e}")
 
@@ -1705,6 +1731,16 @@ class StockAvailabilityTracker:
             f"{len(analytics.get('recently_sold_out', []))} sold out"
         )
 
+        # --- Collect restocked items for ledger ---
+        restocked_items = {}
+        for key in still_here_keys:
+            entry = prev_items[key]
+            if entry.get("times_restocked", 0) > 0:
+                # Check if this is a NEW restock from this run
+                hist = entry.get("history", [])
+                if hist and hist[-1].get("event") == "restocked" and hist[-1].get("at") == now_iso:
+                    restocked_items[key] = current_keyed.get(key, entry)
+
         return {
             "new_arrivals": len(appeared_keys),
             "went_out_of_stock": len(disappeared_keys),
@@ -1712,6 +1748,10 @@ class StockAvailabilityTracker:
             "restocked": restocked_count,
             "purged": len(purge_keys),
             "total_tracked": len(prev_items),
+            # Diff data for persistent ledger
+            "_appeared_items": {k: current_keyed[k] for k in appeared_keys},
+            "_disappeared_items": {k: prev_items[k] for k in disappeared_keys if k in prev_items},
+            "_restocked_items": restocked_items,
         }
 
     # -----------------------------------------------------------------
@@ -1869,6 +1909,515 @@ class StockAvailabilityTracker:
                 )[:30]
             },
         }
+
+
+# =============================================================================
+# Persistent Stock Ledger — Cosmos DB Event Log
+# =============================================================================
+
+class StockLedgerWriter:
+    """
+    Writes immutable stock lifecycle events to Cosmos DB for permanent history.
+
+    Every time the StockAvailabilityTracker computes a diff (appeared,
+    disappeared, restocked), the ledger writer persists those events as
+    individual Cosmos DB documents. Unlike the blob-based availability-history
+    (which purges after 90 days and caps at 50 events per item), the ledger
+    is a permanent, queryable record.
+
+    Cosmos DB container: TerprintAI / stock-ledger
+    Partition key: /strain_slug
+
+    Enables:
+      - "When was Blue Dream last in stock at Trulieve Tampa?"
+      - "Show me all stock events for Gorilla Glue #4"
+      - "How often does MUV restock Wedding Cake?"
+      - Price history over time for a strain
+    """
+
+    COSMOS_ACCOUNT = "https://cosmos-terprint-dev.documents.azure.com:443/"
+    DATABASE_NAME = "TerprintAI"
+    CONTAINER_NAME = "stock-ledger"
+
+    def __init__(self):
+        self._container = None
+
+    def _get_container(self):
+        """Get or create Cosmos DB container client using managed identity."""
+        if self._container is not None:
+            return self._container
+        try:
+            from azure.cosmos import CosmosClient
+            from azure.identity import DefaultAzureCredential
+
+            credential = DefaultAzureCredential()
+            client = CosmosClient(self.COSMOS_ACCOUNT, credential=credential)
+            db = client.get_database_client(self.DATABASE_NAME)
+            self._container = db.get_container_client(self.CONTAINER_NAME)
+            logger.info("Stock ledger Cosmos DB connection established")
+            return self._container
+        except Exception as e:
+            logger.error(f"Failed to connect to stock ledger Cosmos DB: {e}")
+            return None
+
+    def write_events(
+        self,
+        appeared: dict[str, dict],
+        disappeared: dict[str, dict],
+        restocked: dict[str, dict],
+        build_id: str,
+    ) -> dict:
+        """
+        Write stock lifecycle events to Cosmos DB.
+
+        Args:
+            appeared: Dict of key -> item data for new arrivals
+            disappeared: Dict of key -> item data for items that went OOS
+            restocked: Dict of key -> item data for items that came back
+            build_id: Unique identifier for this index build
+
+        Returns:
+            Summary dict with counts of events written
+        """
+        container = self._get_container()
+        if container is None:
+            logger.warning("Stock ledger unavailable — skipping event write")
+            return {"written": 0, "errors": 0, "skipped": True}
+
+        now = datetime.now(timezone.utc)
+        now_iso = now.isoformat()
+        written = 0
+        errors = 0
+
+        # --- Write APPEARED events ---
+        for key, item in appeared.items():
+            try:
+                doc = self._build_event_doc(
+                    event="appeared",
+                    key=key,
+                    item=item,
+                    timestamp=now_iso,
+                    build_id=build_id,
+                )
+                container.upsert_item(doc)
+                written += 1
+            except Exception as e:
+                errors += 1
+                logger.debug(f"Ledger write failed for appeared {key}: {e}")
+
+        # --- Write DISAPPEARED events ---
+        for key, item in disappeared.items():
+            try:
+                doc = self._build_event_doc(
+                    event="disappeared",
+                    key=key,
+                    item=item,
+                    timestamp=now_iso,
+                    build_id=build_id,
+                )
+                container.upsert_item(doc)
+                written += 1
+            except Exception as e:
+                errors += 1
+                logger.debug(f"Ledger write failed for disappeared {key}: {e}")
+
+        # --- Write RESTOCKED events ---
+        for key, item in restocked.items():
+            try:
+                doc = self._build_event_doc(
+                    event="restocked",
+                    key=key,
+                    item=item,
+                    timestamp=now_iso,
+                    build_id=build_id,
+                )
+                container.upsert_item(doc)
+                written += 1
+            except Exception as e:
+                errors += 1
+                logger.debug(f"Ledger write failed for restocked {key}: {e}")
+
+        logger.info(
+            f"Stock ledger: {written} events written, {errors} errors "
+            f"(appeared={len(appeared)}, disappeared={len(disappeared)}, "
+            f"restocked={len(restocked)})"
+        )
+
+        return {
+            "written": written,
+            "errors": errors,
+            "appeared": len(appeared),
+            "disappeared": len(disappeared),
+            "restocked": len(restocked),
+            "build_id": build_id,
+        }
+
+    def _build_event_doc(
+        self,
+        event: str,
+        key: str,
+        item: dict,
+        timestamp: str,
+        build_id: str,
+    ) -> dict:
+        """Build a Cosmos DB document for a single stock event."""
+        # Generate deterministic ID: event type + key + timestamp
+        raw_id = f"{event}:{key}:{timestamp}"
+        doc_id = hashlib.sha256(raw_id.encode()).hexdigest()[:24]
+
+        # Extract fields from item (supports both current-index items and
+        # tracker entries which have slightly different shapes)
+        strain = item.get("strain", "")
+        strain_slug = item.get("strain_slug", "")
+        dispensary = item.get("dispensary", "")
+        dispensary_name = item.get("dispensary_name", "")
+        category = item.get("category", "")
+        product_name = item.get("product_name", "")
+
+        # Store info — may be nested dict (from index) or flat (from tracker)
+        store = item.get("store", {})
+        store_id = store.get("store_id", "") if isinstance(store, dict) else item.get("store_id", "")
+        store_name = store.get("store_name", "") if isinstance(store, dict) else item.get("store_name", "")
+
+        # Pricing — from index items
+        pricing = item.get("pricing", {})
+        price = pricing.get("price") if isinstance(pricing, dict) else item.get("price")
+        weight_grams = pricing.get("weight_grams") if isinstance(pricing, dict) else item.get("weight_grams")
+
+        # Cannabinoids — from index items
+        cannabinoids = item.get("cannabinoids", {})
+        thc_percent = cannabinoids.get("thc_percent") if isinstance(cannabinoids, dict) else item.get("thc_percent")
+
+        # Terpenes — from index items
+        terpenes = item.get("terpenes", {})
+        terpene_total = terpenes.get("total_percent") if isinstance(terpenes, dict) else None
+        top_terpenes = terpenes.get("top_3", []) if isinstance(terpenes, dict) else []
+
+        # Batch
+        batch_id = item.get("batch_id", "")
+
+        return {
+            "id": doc_id,
+            "type": "stock_event",
+            "event": event,
+            "timestamp": timestamp,
+            "strain_slug": strain_slug,
+            "strain": strain,
+            "dispensary": dispensary,
+            "dispensary_name": dispensary_name,
+            "store_id": store_id,
+            "store_name": store_name,
+            "product_name": product_name,
+            "category": category,
+            "batch_id": batch_id,
+            "price": _safe_float(price),
+            "weight_grams": _safe_float(weight_grams),
+            "thc_percent": _safe_float(thc_percent),
+            "terpene_total_percent": _safe_float(terpene_total),
+            "top_terpenes": top_terpenes,
+            "build_id": build_id,
+            "item_key": key,
+        }
+
+    def query_strain_history(
+        self,
+        strain_slug: str,
+        dispensary: str | None = None,
+        store_id: str | None = None,
+        event_type: str | None = None,
+        limit: int = 100,
+    ) -> list[dict]:
+        """
+        Query the full event history for a specific strain.
+
+        Args:
+            strain_slug: Strain identifier (partition key)
+            dispensary: Optional dispensary filter
+            store_id: Optional store filter
+            event_type: Optional event type filter (appeared/disappeared/restocked)
+            limit: Max results
+
+        Returns:
+            List of event documents, newest first
+        """
+        container = self._get_container()
+        if container is None:
+            return []
+
+        conditions = ["c.strain_slug = @strain_slug"]
+        params = [{"name": "@strain_slug", "value": strain_slug}]
+
+        if dispensary:
+            conditions.append("c.dispensary = @dispensary")
+            params.append({"name": "@dispensary", "value": dispensary})
+        if store_id:
+            conditions.append("c.store_id = @store_id")
+            params.append({"name": "@store_id", "value": store_id})
+        if event_type:
+            conditions.append("c.event = @event_type")
+            params.append({"name": "@event_type", "value": event_type})
+
+        query = (
+            f"SELECT * FROM c WHERE {' AND '.join(conditions)} "
+            f"ORDER BY c.timestamp DESC OFFSET 0 LIMIT {limit}"
+        )
+
+        try:
+            results = list(
+                container.query_items(
+                    query=query,
+                    parameters=params,
+                    partition_key=strain_slug,
+                )
+            )
+            return results
+        except Exception as e:
+            logger.error(f"Ledger query failed for {strain_slug}: {e}")
+            return []
+
+    def query_store_history(
+        self,
+        store_id: str,
+        event_type: str | None = None,
+        limit: int = 100,
+    ) -> list[dict]:
+        """
+        Query all stock events at a specific store (cross-partition).
+
+        Args:
+            store_id: Store identifier
+            event_type: Optional event filter
+            limit: Max results
+
+        Returns:
+            List of event documents, newest first
+        """
+        container = self._get_container()
+        if container is None:
+            return []
+
+        conditions = ["c.store_id = @store_id"]
+        params = [{"name": "@store_id", "value": store_id}]
+
+        if event_type:
+            conditions.append("c.event = @event_type")
+            params.append({"name": "@event_type", "value": event_type})
+
+        query = (
+            f"SELECT * FROM c WHERE {' AND '.join(conditions)} "
+            f"ORDER BY c.timestamp DESC OFFSET 0 LIMIT {limit}"
+        )
+
+        try:
+            results = list(
+                container.query_items(
+                    query=query,
+                    parameters=params,
+                    enable_cross_partition_query=True,
+                )
+            )
+            return results
+        except Exception as e:
+            logger.error(f"Ledger query failed for store {store_id}: {e}")
+            return []
+
+    def query_recent_events(
+        self,
+        event_type: str | None = None,
+        hours: int = 72,
+        dispensary: str | None = None,
+        limit: int = 100,
+    ) -> list[dict]:
+        """
+        Query recent stock events across all strains (cross-partition).
+
+        Args:
+            event_type: Filter by event type (appeared/disappeared/restocked)
+            hours: Look back this many hours
+            dispensary: Optional dispensary filter
+            limit: Max results
+
+        Returns:
+            List of event documents, newest first
+        """
+        container = self._get_container()
+        if container is None:
+            return []
+
+        cutoff = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
+        conditions = ["c.timestamp >= @cutoff"]
+        params = [{"name": "@cutoff", "value": cutoff}]
+
+        if event_type:
+            conditions.append("c.event = @event_type")
+            params.append({"name": "@event_type", "value": event_type})
+        if dispensary:
+            conditions.append("c.dispensary = @dispensary")
+            params.append({"name": "@dispensary", "value": dispensary})
+
+        query = (
+            f"SELECT * FROM c WHERE {' AND '.join(conditions)} "
+            f"ORDER BY c.timestamp DESC OFFSET 0 LIMIT {limit}"
+        )
+
+        try:
+            results = list(
+                container.query_items(
+                    query=query,
+                    parameters=params,
+                    enable_cross_partition_query=True,
+                )
+            )
+            return results
+        except Exception as e:
+            logger.error(f"Ledger recent events query failed: {e}")
+            return []
+
+    def get_strain_timeline(
+        self,
+        strain_slug: str,
+        dispensary: str | None = None,
+        store_id: str | None = None,
+    ) -> list[dict]:
+        """
+        Build a condensed timeline showing in-stock/out-of-stock periods.
+
+        Returns a list of period dicts:
+        [
+            {"store_id": "...", "store_name": "...", "dispensary": "...",
+             "in_stock_from": "...", "out_of_stock_at": "...", "days_available": 5.2,
+             "price": 43.0, "thc_percent": 24.5}
+        ]
+        """
+        events = self.query_strain_history(
+            strain_slug=strain_slug,
+            dispensary=dispensary,
+            store_id=store_id,
+            limit=500,
+        )
+        if not events:
+            return []
+
+        # Group by store_id, then build periods
+        by_store: dict[str, list] = defaultdict(list)
+        for evt in events:
+            sid = evt.get("store_id", "unknown")
+            by_store[sid].append(evt)
+
+        periods = []
+        for sid, store_events in by_store.items():
+            # Sort oldest to newest for period computation
+            store_events.sort(key=lambda e: e.get("timestamp", ""))
+
+            current_period = None
+            for evt in store_events:
+                event_type = evt.get("event")
+                ts = evt.get("timestamp", "")
+
+                if event_type in ("appeared", "restocked"):
+                    if current_period and current_period.get("out_of_stock_at") is None:
+                        # Already in an open period — update price/thc
+                        current_period["price"] = evt.get("price") or current_period.get("price")
+                        current_period["thc_percent"] = evt.get("thc_percent") or current_period.get("thc_percent")
+                        continue
+                    current_period = {
+                        "store_id": sid,
+                        "store_name": evt.get("store_name", ""),
+                        "dispensary": evt.get("dispensary", ""),
+                        "dispensary_name": evt.get("dispensary_name", ""),
+                        "strain": evt.get("strain", ""),
+                        "product_name": evt.get("product_name", ""),
+                        "category": evt.get("category", ""),
+                        "in_stock_from": ts,
+                        "out_of_stock_at": None,
+                        "days_available": None,
+                        "price": evt.get("price"),
+                        "thc_percent": evt.get("thc_percent"),
+                    }
+                    periods.append(current_period)
+
+                elif event_type == "disappeared":
+                    if current_period and current_period.get("out_of_stock_at") is None:
+                        current_period["out_of_stock_at"] = ts
+                        # Compute duration
+                        try:
+                            start = datetime.fromisoformat(
+                                current_period["in_stock_from"].replace("Z", "+00:00")
+                            )
+                            end = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                            current_period["days_available"] = round(
+                                (end - start).total_seconds() / 86400, 1
+                            )
+                        except Exception:
+                            pass
+                    else:
+                        # Disappeared without a matching appeared — orphan event
+                        periods.append({
+                            "store_id": sid,
+                            "store_name": evt.get("store_name", ""),
+                            "dispensary": evt.get("dispensary", ""),
+                            "dispensary_name": evt.get("dispensary_name", ""),
+                            "strain": evt.get("strain", ""),
+                            "product_name": evt.get("product_name", ""),
+                            "category": evt.get("category", ""),
+                            "in_stock_from": None,
+                            "out_of_stock_at": ts,
+                            "days_available": None,
+                            "price": evt.get("price"),
+                            "thc_percent": evt.get("thc_percent"),
+                        })
+
+        # Sort newest first
+        periods.sort(
+            key=lambda p: p.get("in_stock_from") or p.get("out_of_stock_at") or "",
+            reverse=True,
+        )
+
+        return periods
+
+    def get_ledger_stats(self) -> dict:
+        """Get aggregate statistics from the ledger."""
+        container = self._get_container()
+        if container is None:
+            return {}
+
+        try:
+            # Total events
+            total_query = "SELECT VALUE COUNT(1) FROM c"
+            total = list(container.query_items(
+                query=total_query,
+                enable_cross_partition_query=True,
+            ))
+            total_events = total[0] if total else 0
+
+            # Events by type
+            type_query = (
+                "SELECT c.event, COUNT(1) as count FROM c "
+                "GROUP BY c.event"
+            )
+            by_type = list(container.query_items(
+                query=type_query,
+                enable_cross_partition_query=True,
+            ))
+
+            # Unique strains tracked
+            strain_query = (
+                "SELECT VALUE COUNT(1) FROM "
+                "(SELECT DISTINCT c.strain_slug FROM c)"
+            )
+            strain_count = list(container.query_items(
+                query=strain_query,
+                enable_cross_partition_query=True,
+            ))
+
+            return {
+                "total_events": total_events,
+                "by_event_type": {r["event"]: r["count"] for r in by_type},
+                "unique_strains_tracked": strain_count[0] if strain_count else 0,
+            }
+        except Exception as e:
+            logger.error(f"Ledger stats query failed: {e}")
+            return {"error": str(e)}
 
 
 # =============================================================================

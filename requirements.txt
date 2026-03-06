@@ -3,6 +3,7 @@ azure-functions>=1.18.0
 azure-storage-blob>=12.19.0
 azure-identity>=1.15.0
 azure-core>=1.29.0
+azure-cosmos>=4.5.0
 
 # Web framework
 fastapi>=0.109.0

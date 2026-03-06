@@ -40,6 +40,17 @@ except ImportError:
     except ImportError:
         AVAILABILITY_TRACKER_AVAILABLE = False
 
+# Import stock ledger writer
+try:
+    from .stock_indexer import StockLedgerWriter
+    STOCK_LEDGER_AVAILABLE = True
+except ImportError:
+    try:
+        from stock_indexer import StockLedgerWriter
+        STOCK_LEDGER_AVAILABLE = True
+    except ImportError:
+        STOCK_LEDGER_AVAILABLE = False
+
 # Import stock alerts
 try:
     from .stock_alerts import create_alert, get_alerts_for_email, delete_alert
@@ -1064,3 +1075,180 @@ async def bulk_stock_check(request: BulkStockRequest):
         "not_found": sum(1 for r in results if not r["found"]),
         "results": results,
     }
+
+
+# =============================================================================
+# Stock Ledger Routes — Persistent History (Cosmos DB)
+# =============================================================================
+
+def _get_ledger() -> "StockLedgerWriter":
+    """Get a StockLedgerWriter instance."""
+    if not STOCK_LEDGER_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Stock ledger not available")
+    return StockLedgerWriter()
+
+
+@router.get("/ledger/strain/{strain_slug}")
+async def get_strain_ledger(
+    strain_slug: str,
+    dispensary: Optional[str] = Query(None, description="Filter by dispensary slug"),
+    store_id: Optional[str] = Query(None, description="Filter by store ID"),
+    event: Optional[str] = Query(None, description="Filter by event type: appeared, disappeared, restocked"),
+    limit: int = Query(100, description="Max results", le=500),
+):
+    """
+    Get the full persistent event history for a specific strain.
+
+    Unlike /availability-history which only keeps 90 days and 50 events,
+    this endpoint returns ALL recorded stock events from the permanent
+    Cosmos DB ledger — every time the strain appeared, disappeared, or
+    was restocked at any store.
+
+    Use this to answer: "When was Blue Dream last in stock at Trulieve Tampa?"
+    """
+    ledger = _get_ledger()
+    indexer = get_indexer()
+    normalized_slug = indexer.normalize_strain_name(strain_slug)
+
+    events = ledger.query_strain_history(
+        strain_slug=normalized_slug,
+        dispensary=dispensary,
+        store_id=store_id,
+        event_type=event,
+        limit=limit,
+    )
+
+    return {
+        "strain_slug": normalized_slug,
+        "total_events": len(events),
+        "filters": {
+            "dispensary": dispensary,
+            "store_id": store_id,
+            "event": event,
+        },
+        "events": events,
+    }
+
+
+@router.get("/ledger/strain/{strain_slug}/timeline")
+async def get_strain_timeline(
+    strain_slug: str,
+    dispensary: Optional[str] = Query(None, description="Filter by dispensary slug"),
+    store_id: Optional[str] = Query(None, description="Filter by store ID"),
+):
+    """
+    Get a condensed timeline of in-stock/out-of-stock periods for a strain.
+
+    Shows when the strain was available at each store, how long it stayed,
+    and the price/THC at each appearance. Useful for visualizing
+    availability patterns over time.
+    """
+    ledger = _get_ledger()
+    indexer = get_indexer()
+    normalized_slug = indexer.normalize_strain_name(strain_slug)
+
+    timeline = ledger.get_strain_timeline(
+        strain_slug=normalized_slug,
+        dispensary=dispensary,
+        store_id=store_id,
+    )
+
+    # Compute summary stats
+    total_periods = len(timeline)
+    currently_in_stock = sum(1 for p in timeline if p.get("out_of_stock_at") is None)
+    avg_days = None
+    completed_periods = [p for p in timeline if p.get("days_available") is not None]
+    if completed_periods:
+        avg_days = round(
+            sum(p["days_available"] for p in completed_periods) / len(completed_periods),
+            1,
+        )
+
+    return {
+        "strain_slug": normalized_slug,
+        "total_periods": total_periods,
+        "currently_in_stock": currently_in_stock,
+        "avg_days_available": avg_days,
+        "timeline": timeline,
+    }
+
+
+@router.get("/ledger/store/{store_id}")
+async def get_store_ledger(
+    store_id: str,
+    event: Optional[str] = Query(None, description="Filter by event type"),
+    limit: int = Query(100, description="Max results", le=500),
+):
+    """
+    Get all stock events at a specific store.
+
+    Shows what products have appeared, disappeared, and been restocked
+    at a particular dispensary location. Useful for understanding what
+    your local store has carried over time.
+    """
+    ledger = _get_ledger()
+
+    events = ledger.query_store_history(
+        store_id=store_id,
+        event_type=event,
+        limit=limit,
+    )
+
+    return {
+        "store_id": store_id,
+        "total_events": len(events),
+        "events": events,
+    }
+
+
+@router.get("/ledger/recent")
+async def get_recent_ledger_events(
+    event: Optional[str] = Query(None, description="Filter: appeared, disappeared, restocked"),
+    hours: int = Query(72, description="Look back this many hours", le=168),
+    dispensary: Optional[str] = Query(None, description="Filter by dispensary slug"),
+    limit: int = Query(100, description="Max results", le=500),
+):
+    """
+    Get recent stock events across all strains.
+
+    Shows the latest stock movements — new drops, sold-out items,
+    and restocks — across the entire platform.
+    """
+    ledger = _get_ledger()
+
+    events = ledger.query_recent_events(
+        event_type=event,
+        hours=hours,
+        dispensary=dispensary,
+        limit=limit,
+    )
+
+    return {
+        "hours_window": hours,
+        "total_events": len(events),
+        "filters": {
+            "event": event,
+            "dispensary": dispensary,
+        },
+        "events": events,
+    }
+
+
+@router.get("/ledger/stats")
+async def get_ledger_stats():
+    """
+    Get aggregate statistics from the persistent stock ledger.
+
+    Shows total events recorded, breakdown by type, and count of
+    unique strains tracked over the lifetime of the ledger.
+    """
+    ledger = _get_ledger()
+    stats = ledger.get_ledger_stats()
+
+    if not stats or "error" in stats:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Ledger stats unavailable: {stats.get('error', 'unknown')}",
+        )
+
+    return stats
