@@ -441,6 +441,29 @@ def _normalize_sw_product(data: Dict) -> Dict[str, Any]:
         imgs = batch.get("images", [])
         if imgs:
             result["batch_images"] = imgs
+        # Extract batch creation date if available
+        for date_key in ("createdDate", "createdAt", "created_at", "date",
+                         "harvestDate", "packageDate", "plantDate"):
+            batch_date = batch.get(date_key)
+            if batch_date and isinstance(batch_date, str):
+                result["batch_date"] = batch_date
+                break
+
+    # Lab test date — check all common date fields in labTests and variant
+    for date_key in ("testedDate", "testDate", "labTestDate", "analysisDate",
+                     "dateAnalyzed", "date_tested", "date_analyzed",
+                     "resultDate", "dateOfAnalysis"):
+        date_val = lab.get(date_key)
+        if date_val and isinstance(date_val, str):
+            result["tested_date"] = date_val
+            break
+
+    # Variant creation date
+    for date_key in ("createdAt", "created_at", "createdDate", "updatedAt"):
+        date_val = variant.get(date_key)
+        if date_val and isinstance(date_val, str):
+            result["created_at"] = date_val
+            break
 
     return result
 
