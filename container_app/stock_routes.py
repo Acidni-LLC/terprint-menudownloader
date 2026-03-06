@@ -453,6 +453,9 @@ async def browse_stock(
         availability = item.get("availability", {}) or {}
         store_info = item.get("store", {}) or {}
         links = item.get("links", {}) or {}
+        terpenes = item.get("terpenes", {}) or {}
+        terpene_profile = terpenes.get("profile", {}) or {}
+        terpene_top3 = terpenes.get("top_3", []) or []
         
         strain_slug = item.get("strain_slug", "")
         batch_id = item.get("batch_id", "")
@@ -501,6 +504,11 @@ async def browse_stock(
             "web_strain_url": web_strain_url,
             "web_batch_url": web_batch_url,
             "portal_strain_url": portal_strain_url,
+            # Terpene data
+            "top_terpenes": [
+                {"name": t, "percentage": terpene_profile.get(t)}
+                for t in terpene_top3
+            ] if terpene_top3 else [],
             # Store location for map view
             "store_lat": store_info.get("latitude"),
             "store_lng": store_info.get("longitude"),

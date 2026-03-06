@@ -131,6 +131,8 @@ DISPENSARY_NAMES: dict[str, str] = {
     "curaleaf": "Curaleaf",
     "sunnyside": "Sunnyside",
     "sunburn": "Sunburn",
+    "green_dragon": "Green Dragon",
+    "sanctuary": "Sanctuary Medicinals",
 }
 
 # All dispensaries we track
