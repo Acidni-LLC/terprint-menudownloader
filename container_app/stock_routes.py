@@ -175,7 +175,7 @@ def _item_lng(item: dict) -> Optional[float]:
 # ===========================================================================
 
 @router.get("/status")
-async def get_status():
+def get_status():
     """Get Stock API status and index metadata."""
     try:
         index = get_stock_index()
@@ -198,7 +198,7 @@ async def get_status():
 
 
 @router.get("/strains")
-async def list_strains(
+def list_strains(
     q: Optional[str] = Query(None, description="Optional search filter"),
     dispensary: Optional[str] = Query(None, description="Filter by dispensary"),
     limit: int = Query(200, description="Max results", le=1000),
@@ -244,7 +244,7 @@ async def list_strains(
 
 
 @router.get("/summary")
-async def get_summary():
+def get_summary():
     """Get lightweight stock index summary for dashboards (TTL-cached for 5 minutes)."""
     global _SUMMARY_CACHE, _SUMMARY_CACHE_EXPIRY
     now = time.monotonic()
@@ -262,7 +262,7 @@ async def get_summary():
 
 
 @router.get("/search")
-async def search_stock(
+def search_stock(
     strain: str = Query(..., description="Strain name to search for"),
     dispensary: Optional[str] = Query(None, description="Filter by dispensary"),
     category: Optional[str] = Query(None, description="Filter by category"),
@@ -365,7 +365,7 @@ async def search_stock(
 # ===========================================================================
 
 @router.get("/browse")
-async def browse_stock(
+def browse_stock(
     # Filters
     dispensary: Optional[str] = Query(None, description="Filter by dispensary slug (e.g., 'trulieve')"),
     store: Optional[str] = Query(None, description="Filter by store name or ID"),
@@ -661,7 +661,7 @@ def _extract_sub_type(product_name: str, category: str) -> str:
 
 
 @router.get("/locations/{dispensary}")
-async def get_dispensary_locations(
+def get_dispensary_locations(
     dispensary: str,
     lat: Optional[float] = Query(None, description="User latitude for distance sorting"),
     lng: Optional[float] = Query(None, description="User longitude for distance sorting"),
@@ -703,7 +703,7 @@ async def get_dispensary_locations(
 
 
 @router.get("/nearest")
-async def get_nearest_stock(
+def get_nearest_stock(
     strain: str = Query(..., description="Strain name to search for"),
     lat: float = Query(..., description="User latitude"),
     lng: float = Query(..., description="User longitude"),
@@ -771,7 +771,7 @@ def _get_tracker() -> "StockAvailabilityTracker":
 
 
 @router.get("/hot-products")
-async def get_hot_products(
+def get_hot_products(
     limit: int = Query(20, description="Max results per category", le=100),
     category: Optional[str] = Query(None, description="Filter by product category"),
     dispensary: Optional[str] = Query(None, description="Filter by dispensary slug"),
@@ -811,7 +811,7 @@ async def get_hot_products(
 
 
 @router.get("/new-arrivals")
-async def get_new_arrivals(
+def get_new_arrivals(
     hours: int = Query(72, description="Show items first seen within this many hours", le=168),
     dispensary: Optional[str] = Query(None, description="Filter by dispensary slug"),
     category: Optional[str] = Query(None, description="Filter by product category"),
@@ -852,7 +852,7 @@ async def get_new_arrivals(
 
 
 @router.get("/recently-sold-out")
-async def get_recently_sold_out(
+def get_recently_sold_out(
     hours: int = Query(48, description="Show items sold out within this many hours", le=168),
     dispensary: Optional[str] = Query(None, description="Filter by dispensary slug"),
     category: Optional[str] = Query(None, description="Filter by product category"),
@@ -892,7 +892,7 @@ async def get_recently_sold_out(
 
 
 @router.get("/availability-history/{strain_slug}")
-async def get_strain_availability_history(
+def get_strain_availability_history(
     strain_slug: str,
     dispensary: Optional[str] = Query(None, description="Filter by dispensary slug"),
 ):
@@ -968,7 +968,7 @@ async def get_strain_availability_history(
 # ===========================================================================
 
 @router.post("/alerts")
-async def create_strain_alert(request: AlertCreateRequest):
+def create_strain_alert(request: AlertCreateRequest):
     """Subscribe to email alerts when a strain comes in stock."""
     if not STOCK_ALERTS_AVAILABLE:
         raise HTTPException(status_code=503, detail="Alert service not available")
@@ -995,7 +995,7 @@ async def create_strain_alert(request: AlertCreateRequest):
 
 
 @router.get("/alerts/{email}")
-async def get_user_alerts(email: str):
+def get_user_alerts(email: str):
     """Get all active alerts for an email address."""
     if not STOCK_ALERTS_AVAILABLE:
         raise HTTPException(status_code=503, detail="Alert service not available")
@@ -1009,7 +1009,7 @@ async def get_user_alerts(email: str):
 
 
 @router.delete("/alerts/{alert_id}")
-async def remove_alert(alert_id: str):
+def remove_alert(alert_id: str):
     """Deactivate a strain alert."""
     if not STOCK_ALERTS_AVAILABLE:
         raise HTTPException(status_code=503, detail="Alert service not available")
@@ -1101,7 +1101,7 @@ def get_batches_without_terpenes(
 # ===========================================================================
 
 @router.get("/{dispensary}")
-async def get_dispensary_stock(
+def get_dispensary_stock(
     dispensary: str,
     category: Optional[str] = Query(None, description="Filter by category"),
     limit: int = Query(100, description="Max results to return", le=500),
@@ -1135,7 +1135,7 @@ async def get_dispensary_stock(
 
 
 @router.get("/{dispensary}/{batch_id}")
-async def get_batch_stock(dispensary: str, batch_id: str):
+def get_batch_stock(dispensary: str, batch_id: str):
     """Get stock information for a specific batch at a dispensary."""
     index = get_stock_index()
 
@@ -1149,7 +1149,7 @@ async def get_batch_stock(dispensary: str, batch_id: str):
 
 
 @router.post("/build-index")
-async def build_stock_index():
+def build_stock_index():
     """Rebuild the stock index from menu files + SQL enrichment."""
     logger.info("POST /build-index triggered")
     try:
@@ -1191,19 +1191,19 @@ async def build_stock_index():
 
 
 @router.post("/run")
-async def manual_menu_download():
+def manual_menu_download():
     """Trigger manual menu download (alias)."""
     return {"message": "Use POST /run endpoint for manual downloads", "redirect": "/run"}
 
 
 @router.post("/match-batches")
-async def match_batches():
+def match_batches():
     """Match batches to current inventory (not yet implemented)."""
     raise HTTPException(status_code=501, detail="Batch matching not yet implemented")
 
 
 @router.post("/bulk-check")
-async def bulk_stock_check(request: BulkStockRequest):
+def bulk_stock_check(request: BulkStockRequest):
     """Check stock for multiple batches at once."""
     index = get_stock_index()
 
@@ -1248,7 +1248,7 @@ def _get_ledger() -> "StockLedgerWriter":
 
 
 @router.get("/ledger/strain/{strain_slug}")
-async def get_strain_ledger(
+def get_strain_ledger(
     strain_slug: str,
     dispensary: Optional[str] = Query(None, description="Filter by dispensary slug"),
     store_id: Optional[str] = Query(None, description="Filter by store ID"),
@@ -1290,7 +1290,7 @@ async def get_strain_ledger(
 
 
 @router.get("/ledger/strain/{strain_slug}/timeline")
-async def get_strain_timeline(
+def get_strain_timeline(
     strain_slug: str,
     dispensary: Optional[str] = Query(None, description="Filter by dispensary slug"),
     store_id: Optional[str] = Query(None, description="Filter by store ID"),
@@ -1333,7 +1333,7 @@ async def get_strain_timeline(
 
 
 @router.get("/ledger/store/{store_id}")
-async def get_store_ledger(
+def get_store_ledger(
     store_id: str,
     event: Optional[str] = Query(None, description="Filter by event type"),
     limit: int = Query(100, description="Max results", le=500),
@@ -1361,7 +1361,7 @@ async def get_store_ledger(
 
 
 @router.get("/ledger/recent")
-async def get_recent_ledger_events(
+def get_recent_ledger_events(
     event: Optional[str] = Query(None, description="Filter: appeared, disappeared, restocked"),
     hours: int = Query(72, description="Look back this many hours", le=168),
     dispensary: Optional[str] = Query(None, description="Filter by dispensary slug"),
@@ -1394,7 +1394,7 @@ async def get_recent_ledger_events(
 
 
 @router.get("/ledger/stats")
-async def get_ledger_stats():
+def get_ledger_stats():
     """
     Get aggregate statistics from the persistent stock ledger.
 
