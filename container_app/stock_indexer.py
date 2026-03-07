@@ -824,7 +824,16 @@ class StockIndexerV2:
                 if cbd is None:
                     cbd = _safe_float(product.get("cbd") or product.get("cbdPercent") or product.get("cbd_percent") or product.get("total_cbd"))
                 if price is None:
+                    # Try scalar price fields first
                     price = _safe_float(product.get("price") or product.get("unit_price") or product.get("sale_price"))
+                    # Fallback: prices array format (Sanctuary, Sweed POS)
+                    # Format: {"prices": [{"price": 15.6, "in_stock": true}]}
+                    if price is None:
+                        prices_arr = product.get("prices")
+                        if isinstance(prices_arr, list) and prices_arr:
+                            first_price = prices_arr[0]
+                            if isinstance(first_price, dict):
+                                price = _safe_float(first_price.get("price"))
                 if weight is None:
                     weight = _safe_float(product.get("weight") or product.get("weightGrams") or product.get("weight_grams") or product.get("unit_weight"))
 
