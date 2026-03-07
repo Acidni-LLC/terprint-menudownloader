@@ -95,7 +95,7 @@ jobs:
     if: github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
     environment: 
       name: dev
-      url: https://${{ env.CONTAINER_APP_NAME }}.greenbay-731aa80e.eastus2.azurecontainerapps.io
+      url: https://api.acidni.net/menus/health
       
     steps:
       - name: Azure CLI Login
@@ -116,22 +116,42 @@ jobs:
 
       - name: Health Check
         run: |
-          # Wait for deployment to complete
-          sleep 30
-          
-          # Check health endpoint
-          RESPONSE=$(curl -s -o /tmp/health.json -w "%{http_code}" "https://${{ env.CONTAINER_APP_NAME }}.greenbay-731aa80e.eastus2.azurecontainerapps.io/health")
-          
-          echo "HTTP Status: $RESPONSE"
-          if [ -f /tmp/health.json ]; then
-            echo "Response:"
-            cat /tmp/health.json
-          fi
-          
-          # Expect 200 OK
-          if [ "$RESPONSE" != "200" ]; then
-            echo "Health check failed with status $RESPONSE"
+          # Fetch APIM subscription key from Key Vault (requires Azure login above)
+          APIM_KEY=$(az keyvault secret show \
+            --vault-name kv-terprint-dev \
+            --name apim-subscription-key \
+            --query value -o tsv 2>/dev/null || echo "")
+
+          if [ -n "$APIM_KEY" ]; then
+            HEALTH_URL="https://api.acidni.net/menus/health"
+            echo "Health check via APIM: $HEALTH_URL"
+            for i in $(seq 1 12); do
+              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+                -H "Ocp-Apim-Subscription-Key: $APIM_KEY" \
+                "$HEALTH_URL" 2>/dev/null || true)
+              if [ "$HTTP_CODE" = "200" ]; then
+                echo "Health check passed via APIM (HTTP $HTTP_CODE)"
+                exit 0
+              fi
+              echo "Attempt $i/12 - HTTP $HTTP_CODE - waiting 5s..."
+              sleep 5
+            done
+            echo "::warning::Health check did not return 200 after 12 attempts via APIM"
             exit 1
+          else
+            echo "::warning::APIM key unavailable — verifying Container App revision status instead"
+            STATUS=$(az containerapp revision list \
+              --name ${{ env.CONTAINER_APP_NAME }} \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --query "[?properties.active].{health:properties.healthState}" -o tsv | head -1)
+            echo "Active revision health state: $STATUS"
+            if [ "$STATUS" = "Healthy" ]; then
+              echo "Container App revision is Healthy"
+              exit 0
+            else
+              echo "::warning::Container App health state: $STATUS"
+              exit 1
+            fi
           fi
 
       - name: Check terprint-tests repo exists
@@ -186,20 +206,40 @@ jobs:
 
       - name: Production Health Check
         run: |
-          # Wait for deployment to complete
-          sleep 60
-          
-          # Check health endpoint
-          RESPONSE=$(curl -s -o /tmp/health.json -w "%{http_code}" "https://ca-terprint-menudownloader-prod.greenbay-731aa80e.eastus2.azurecontainerapps.io/health")
-          
-          echo "HTTP Status: $RESPONSE"
-          if [ -f /tmp/health.json ]; then
-            echo "Response:"
-            cat /tmp/health.json
-          fi
-          
-          # Expect 200 OK
-          if [ "$RESPONSE" != "200" ]; then
-            echo "Production health check failed with status $RESPONSE"
+          # Fetch APIM subscription key from Key Vault (requires Azure login above)
+          APIM_KEY=$(az keyvault secret show \
+            --vault-name kv-terprint-dev \
+            --name apim-subscription-key \
+            --query value -o tsv 2>/dev/null || echo "")
+
+          if [ -n "$APIM_KEY" ]; then
+            HEALTH_URL="https://api.acidni.net/menus/health"
+            echo "Production health check via APIM: $HEALTH_URL"
+            for i in $(seq 1 12); do
+              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+                -H "Ocp-Apim-Subscription-Key: $APIM_KEY" \
+                "$HEALTH_URL" 2>/dev/null || true)
+              if [ "$HTTP_CODE" = "200" ]; then
+                echo "Production health check passed via APIM (HTTP $HTTP_CODE)"
+                exit 0
+              fi
+              echo "Attempt $i/12 - HTTP $HTTP_CODE - waiting 5s..."
+              sleep 5
+            done
+            echo "::warning::Production health check did not return 200 after 12 attempts"
             exit 1
+          else
+            echo "::warning::APIM key unavailable — verifying Container App revision status instead"
+            STATUS=$(az containerapp revision list \
+              --name ca-terprint-menudownloader-prod \
+              --resource-group rg-prod-terprint-ca \
+              --query "[?properties.active].{health:properties.healthState}" -o tsv | head -1)
+            echo "Active revision health state: $STATUS"
+            if [ "$STATUS" = "Healthy" ]; then
+              echo "Container App revision is Healthy"
+              exit 0
+            else
+              echo "::warning::Container App health state: $STATUS"
+              exit 1
+            fi
           fi
