@@ -1004,22 +1004,24 @@ async def remove_alert(alert_id: str):
 
 @router.get("/batches/no-terpenes")
 def get_batches_without_terpenes(
-    dispensary: Optional[str] = Query(None, description="Filter by dispensary slug"),
-    status: Optional[str] = Query(None, description="Filter by terpene_data_status: pending, unavailable, retry"),
+    dispensary: Optional[str] = Query(None, description="Filter by dispensary name"),
     limit: int = Query(100, description="Max results", le=500),
 ):
     """List batches that have no terpene data — for retry scheduling and monitoring.
 
-    Returns batches from SQL where terpene_data_status is NOT 'available'.
+    Returns batches from SQL where TerpenesTotal is NULL or 0.
     Useful for identifying products that need re-scraping or COA lookup.
     """
     try:
         import pymssql
 
-        sql_password = os.environ.get("SQL_PASSWORD", "sql1234%")
+        sql_password = os.environ.get("SQL_PASSWORD")
+        if not sql_password:
+            raise HTTPException(status_code=503, detail="SQL_PASSWORD not configured")
+
         conn = pymssql.connect(
             server="acidni-sql.database.windows.net",
-            user="adm",
+            user=os.environ.get("SQL_USERNAME", "adm"),
             password=sql_password,
             database="terprint",
             port=1433,
@@ -1027,32 +1029,24 @@ def get_batches_without_terpenes(
         )
         cursor = conn.cursor(as_dict=True)
 
-        where_clauses = ["b.terpene_data_status != 'available'"]
+        where_clauses = ["(b.TerpenesTotal IS NULL OR b.TerpenesTotal = 0)"]
         params: list = []
 
         if dispensary:
-            where_clauses.append("LOWER(g.Name) = %s")
+            where_clauses.append("LOWER(b.Dispensary) = %s")
             params.append(dispensary.lower())
-
-        if status:
-            where_clauses.append("b.terpene_data_status = %s")
-            params.append(status)
 
         where_sql = " AND ".join(where_clauses)
 
         cursor.execute(
             f"""SELECT TOP {int(limit)}
-                    b.BatchId, b.Name, b.Date, b.StoreName,
-                    b.totalTerpenes, b.totalCannabinoids,
-                    b.terpene_data_status, b.terpene_attempts, b.terpene_retry_after,
-                    b.ProductType, b.StrainClassification,
-                    g.Name AS Dispensary,
-                    s.StrainName
+                    b.BatchId, b.ProductName, b.Dispensary, b.StoreName,
+                    b.TerpenesTotal, b.Category,
+                    b.Strain, b.StrainClassification,
+                    b.LastSeen, b.ProcessedDate
                 FROM Batch b
-                LEFT JOIN Grower g ON b.GrowerID = g.GrowerID
-                LEFT JOIN Strain s ON b.StrainID = s.StrainID
                 WHERE {where_sql}
-                ORDER BY b.terpene_data_status, b.created DESC""",
+                ORDER BY b.LastSeen DESC""",
             tuple(params),
         )
         rows = cursor.fetchall()
@@ -1068,9 +1062,11 @@ def get_batches_without_terpenes(
         return {
             "batches": rows,
             "total": len(rows),
-            "filters": {"dispensary": dispensary, "status": status},
+            "filters": {"dispensary": dispensary},
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to query batches without terpenes: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
