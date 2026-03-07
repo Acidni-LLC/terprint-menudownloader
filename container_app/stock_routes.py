@@ -996,10 +996,11 @@ async def get_batches_without_terpenes(
     try:
         import pymssql
 
+        sql_password = os.environ.get("SQL_PASSWORD", "sql1234%")
         conn = pymssql.connect(
             server="acidni-sql.database.windows.net",
             user="adm",
-            password=os.environ.get("SQL_PASSWORD", ""),
+            password=sql_password,
             database="terprint",
             tds_version="7.3",
         )
