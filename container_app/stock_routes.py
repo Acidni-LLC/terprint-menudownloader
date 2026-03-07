@@ -1029,7 +1029,7 @@ def get_batches_without_terpenes(
         )
         cursor = conn.cursor(as_dict=True)
 
-        where_clauses = ["(b.totalTerpenes IS NULL OR b.totalTerpenes = 0)"]
+        where_clauses = ["(b.totalTerpenes IS NULL OR b.totalTerpenes = '' OR TRY_CAST(b.totalTerpenes AS FLOAT) = 0)"]
         params: list = []
 
         if dispensary:
