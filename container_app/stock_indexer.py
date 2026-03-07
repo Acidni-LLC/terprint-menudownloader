@@ -376,10 +376,43 @@ class StockIndexerV2:
             timeout=30,
         )
 
+    # Map batchJSON client names → stock index dispensary slugs
+    _CLIENT_TO_DISPENSARY = {
+        "trulieve": "trulieve",
+        "sunburn": "trulieve",       # Sunburn is a Trulieve sub-brand
+        "the flowery": "the-flowery",
+        "flowery": "the-flowery",
+        "green dragon": "green-dragon",
+        "cookies": "cookies",
+        "sanctuary": "sanctuary",
+        "curaleaf": "curaleaf",
+        "muv": "muv",
+        "surterra": "surterra",
+    }
+
+    def _client_to_dispensary(self, client: str) -> str:
+        """Map a batchJSON 'client' field to a stock index dispensary slug."""
+        if not client:
+            return ""
+        cl = client.lower().strip()
+        for prefix, slug in self._CLIENT_TO_DISPENSARY.items():
+            if cl.startswith(prefix):
+                return slug
+        return cl.split(" - ")[0].split(" *")[0].strip().replace(" ", "-")
+
     def _load_sql_enrichment(self, max_age_days: int = 7) -> dict[str, dict]:
         """
         Load enrichment data from SQL Batch table.
-        Returns dict keyed by (dispensary, strain_normalized) → enrichment data.
+
+        The Batch table stores COA data in batchJSON (a JSON blob) with fields:
+          - cultivar: strain name
+          - client: dispensary name (e.g. "Trulieve - Midway Flower")
+          - terpenes: [{name, result_percent, result_mg_per_g}, ...]
+          - total_terpenes_percent: float
+          - total_active_thc_percent, total_active_cbd_percent, etc.
+        Top-level columns: BatchId, Name, batchJSON, totalTerpenes, StoreName
+
+        Returns dict keyed by strain_slug → parsed enrichment data.
         """
         enrichment: dict[str, dict] = {}
         try:
@@ -388,35 +421,69 @@ class StockIndexerV2:
 
             query = """
             SELECT
-                BatchId, ProductName, Strain, Dispensary, Category,
-                ThcPercent, CbdPercent, CbgPercent, ThcaPercent, CbdaPercent,
-                Terpenes, TerpenesTotal,
-                Price, WeightGrams,
-                StoreLocation, StoreName, Latitude, Longitude, Address,
-                LastSeen, ProcessedDate
+                BatchId, Name, StoreName, totalTerpenes, totalCannabinoids,
+                batchJSON, created
             FROM Batch
-            WHERE InStock = 1
-                AND LastSeen >= DATEADD(day, %s, GETDATE())
-            ORDER BY LastSeen DESC
+            WHERE created >= DATEADD(day, %s, GETDATE())
+            ORDER BY created DESC
             """
 
             cursor.execute(query, (-max_age_days,))
             rows = cursor.fetchall()
-            logger.info(f"SQL enrichment: {len(rows)} in-stock rows from database")
+            logger.info(f"SQL enrichment: {len(rows)} rows from Batch table")
 
             for row in rows:
-                strain = row.get("Strain", "")
-                dispensary = (row.get("Dispensary") or "").lower()
-                normalized = self.normalize_strain_name(strain)
-                key = f"{dispensary}:{normalized}"
+                try:
+                    batch_json_raw = row.get("batchJSON")
+                    if not batch_json_raw:
+                        continue
+                    bj = json.loads(batch_json_raw) if isinstance(batch_json_raw, str) else batch_json_raw
 
-                # Keep first (most recent) row per key
-                if key not in enrichment:
-                    enrichment[key] = row
+                    strain = bj.get("cultivar", "")
+                    client = bj.get("client", "")
+                    if not strain:
+                        continue
+
+                    dispensary = self._client_to_dispensary(client)
+                    normalized = self.normalize_strain_name(strain)
+                    key = f"{dispensary}:{normalized}"
+
+                    # Keep first (most recent) row per key
+                    if key in enrichment:
+                        continue
+
+                    # Parse terpene array → dict {name: percent}
+                    terpene_profile: dict[str, float] = {}
+                    terpene_list = bj.get("terpenes", [])
+                    if isinstance(terpene_list, list):
+                        for t in terpene_list:
+                            if isinstance(t, dict):
+                                tname = t.get("name", "")
+                                tpct = _safe_float(t.get("result_percent"))
+                                if tname and tpct is not None and tpct > 0:
+                                    terpene_profile[tname] = tpct
+
+                    # Build a normalized row for _apply_sql_enrichment
+                    enrichment[key] = {
+                        "BatchId": row.get("BatchId"),
+                        "Strain": strain,
+                        "Dispensary": dispensary,
+                        "ThcPercent": _safe_float(bj.get("total_active_thc_percent")),
+                        "CbdPercent": _safe_float(bj.get("total_active_cbd_percent")),
+                        "CbgPercent": _safe_float(bj.get("total_cbg_percent")),
+                        "TerpenesTotal": _safe_float(bj.get("total_terpenes_percent") or row.get("totalTerpenes")),
+                        "TerpeneProfile": terpene_profile,
+                        "StoreName": row.get("StoreName") or "",
+                        "Created": row.get("created"),
+                    }
+                except (json.JSONDecodeError, TypeError, KeyError) as e:
+                    logger.debug(f"Skipping batch row {row.get('BatchId')}: {e}")
+                    continue
 
             cursor.close()
             conn.close()
-            logger.info(f"SQL enrichment loaded: {len(enrichment)} unique items")
+            logger.info(f"SQL enrichment loaded: {len(enrichment)} unique strain items, "
+                        f"{sum(1 for v in enrichment.values() if v.get('TerpeneProfile'))} with terpenes")
         except Exception as e:
             logger.warning(f"SQL enrichment failed (will use menu data only): {e}")
 
@@ -425,57 +492,41 @@ class StockIndexerV2:
     def _apply_sql_enrichment(self, item: StockItemV2, sql_row: dict) -> None:
         """Apply SQL batch data to a stock item."""
         item.source = "database+menu"
-        item.batch_id = sql_row.get("BatchId") or item.batch_id
+        batch_id = sql_row.get("BatchId")
+        if batch_id:
+            item.batch_id = str(batch_id)
 
         # Cannabinoids
-        item.cannabinoids.thc_percent = _safe_float(sql_row.get("ThcPercent")) or item.cannabinoids.thc_percent
-        item.cannabinoids.cbd_percent = _safe_float(sql_row.get("CbdPercent")) or item.cannabinoids.cbd_percent
-        item.cannabinoids.cbg_percent = _safe_float(sql_row.get("CbgPercent"))
-        item.cannabinoids.thca_percent = _safe_float(sql_row.get("ThcaPercent"))
-        item.cannabinoids.cbda_percent = _safe_float(sql_row.get("CbdaPercent"))
+        thc = _safe_float(sql_row.get("ThcPercent"))
+        cbd = _safe_float(sql_row.get("CbdPercent"))
+        cbg = _safe_float(sql_row.get("CbgPercent"))
+        if thc is not None:
+            item.cannabinoids.thc_percent = thc
+        if cbd is not None:
+            item.cannabinoids.cbd_percent = cbd
+        if cbg is not None:
+            item.cannabinoids.cbg_percent = cbg
 
-        # Terpenes
-        terpenes_raw = sql_row.get("Terpenes")
-        if terpenes_raw:
-            try:
-                profile = json.loads(terpenes_raw) if isinstance(terpenes_raw, str) else terpenes_raw
-                if isinstance(profile, dict):
-                    item.terpenes.profile = profile
-                    sorted_terps = sorted(profile.items(), key=lambda x: x[1], reverse=True)
-                    item.terpenes.top_3 = [t[0] for t in sorted_terps[:3]]
-                    item.terpenes.total_percent = _safe_float(sql_row.get("TerpenesTotal"))
-            except (json.JSONDecodeError, TypeError):
-                pass
+        # Terpenes — from pre-parsed profile dict
+        terpene_profile = sql_row.get("TerpeneProfile", {})
+        if terpene_profile:
+            # Filter out aggregate keys
+            clean_profile = {
+                k: v for k, v in terpene_profile.items()
+                if k.lower() not in _TERPENE_SKIP_KEYS
+            }
+            if clean_profile:
+                item.terpenes.profile = clean_profile
+                sorted_terps = sorted(clean_profile.items(), key=lambda x: x[1], reverse=True)
+                item.terpenes.top_3 = [t[0] for t in sorted_terps[:3]]
+                item.terpenes.total_percent = _safe_float(sql_row.get("TerpenesTotal"))
 
-        # Pricing (prefer SQL if available)
-        sql_price = _safe_float(sql_row.get("Price"))
-        sql_weight = _safe_float(sql_row.get("WeightGrams"))
-        if sql_price:
-            item.pricing.price = sql_price
-        if sql_weight:
-            item.pricing.weight_grams = sql_weight
+        # Pricing — don't override menu prices (SQL Batch table doesn't have pricing)
         if item.pricing.price and item.pricing.weight_grams and item.pricing.weight_grams > 0:
             item.pricing.price_per_gram = round(item.pricing.price / item.pricing.weight_grams, 2)
 
-        # Store location from SQL (may have better data)
-        sql_store = sql_row.get("StoreLocation")
-        if sql_store:
-            resolved = self._resolve_store(item.dispensary, sql_store)
-            # Only override if SQL has coordinates and current doesn't
-            if resolved.latitude and not item.store.latitude:
-                item.store = resolved
-
-        # Availability
-        last_seen = sql_row.get("LastSeen")
-        if last_seen:
-            try:
-                if hasattr(last_seen, "isoformat"):
-                    item.availability.last_seen = last_seen.isoformat()
-                else:
-                    item.availability.last_seen = str(last_seen)
-                item.availability.confidence = "high"
-            except Exception:
-                pass
+        # Availability confidence boost from COA match
+        item.availability.confidence = "high"
 
     # =========================================================================
     # Menu File Processing
@@ -1064,20 +1115,21 @@ class StockIndexerV2:
                 dispensary = (row.get("Dispensary") or "").lower()
                 strain = row.get("Strain", "Unknown")
                 strain_slug = self.normalize_strain_name(strain)
-                store_loc = row.get("StoreLocation", "")
-                store = self._resolve_store(dispensary, store_loc)
+                store_name = row.get("StoreName", "")
+                store = self._resolve_store(dispensary, store_name)
 
-                item_id = hashlib.md5(f"{key}:{row.get('BatchId', '')}".encode()).hexdigest()[:12]
+                batch_id = row.get("BatchId", "")
+                item_id = hashlib.md5(f"{key}:{batch_id}".encode()).hexdigest()[:12]
 
                 item = StockItemV2(
                     id=item_id,
                     strain=strain,
                     strain_slug=strain_slug,
-                    product_name=row.get("ProductName") or strain,
+                    product_name=strain,
                     dispensary=dispensary,
                     dispensary_name=DISPENSARY_NAMES.get(dispensary, dispensary.title()),
-                    category=self._normalize_category(row.get("Category") or "unknown"),
-                    batch_id=row.get("BatchId", ""),
+                    category="unknown",
+                    batch_id=str(batch_id),
                     store=store,
                     source="database",
                 )
