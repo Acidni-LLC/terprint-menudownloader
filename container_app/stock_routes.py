@@ -1022,7 +1022,8 @@ async def get_batches_without_terpenes(
             user="adm",
             password=sql_password,
             database="terprint",
-            tds_version="7.3",
+            port=1433,
+            timeout=30,
         )
         cursor = conn.cursor(as_dict=True)
 
