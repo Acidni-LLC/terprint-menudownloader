@@ -24,7 +24,7 @@ import os
 import json
 import re
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 from contextlib import asynccontextmanager
 
@@ -35,6 +35,7 @@ from pydantic import BaseModel
 import requests
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.date import DateTrigger
 
 # Import stock routes
 try:
@@ -544,7 +545,18 @@ async def lifespan(app: FastAPI):
                 logger.warning(f"Startup index build issue: {index_result.get('error')}")
         except Exception as startup_err:
             logger.error(f"Startup index build failed (non-fatal): {startup_err}")
-        
+
+        # Schedule an immediate download 60s after startup so fresh data is
+        # available quickly even if the next cron window is hours away.
+        scheduler.add_job(
+            scheduled_download_job,
+            DateTrigger(run_date=datetime.utcnow() + timedelta(seconds=60)),
+            id='startup_download',
+            name='Startup Menu Download (one-time)',
+            replace_existing=True
+        )
+        logger.info("📥 Startup download scheduled in 60s for fresh menu data")
+
     else:  # api-only mode (default)
         logger.info("Starting Terprint Menu Downloader in API-ONLY mode...")
         logger.info("Ã¢Å“â€¦ API-ONLY MODE: Stock checking and manual endpoints available")
