@@ -1047,7 +1047,7 @@ def get_batches_without_terpenes(
                     b.terpene_data_status, b.terpene_attempts, b.terpene_retry_after,
                     b.ProductType, b.StrainClassification,
                     g.Name AS Dispensary,
-                    s.Name AS StrainName
+                    s.StrainName
                 FROM Batch b
                 LEFT JOIN Grower g ON b.GrowerID = g.GrowerID
                 LEFT JOIN Strain s ON b.StrainID = s.StrainID
