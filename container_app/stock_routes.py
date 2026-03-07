@@ -8,6 +8,7 @@ genetics, strain alerts.
 Copyright (c) 2026 Acidni LLC
 """
 import logging
+import os
 from datetime import datetime, timezone
 from typing import Optional, List
 from fastapi import APIRouter, HTTPException, Query
@@ -225,6 +226,7 @@ async def search_stock(
     lat: Optional[float] = Query(None, description="User latitude for distance sorting"),
     lng: Optional[float] = Query(None, description="User longitude for distance sorting"),
     max_distance: Optional[float] = Query(None, description="Max distance in miles", le=100),
+    has_terpenes: Optional[bool] = Query(None, description="Filter by terpene data availability (true=with terpenes, false=without)"),
     limit: int = Query(50, description="Max results to return", le=200),
 ):
     """Search for products by strain name with fuzzy/substring matching."""
@@ -274,6 +276,12 @@ async def search_stock(
 
     if category:
         filtered = [i for i in filtered if i.get("category", "").lower() == category.lower()]
+
+    if has_terpenes is not None:
+        if has_terpenes:
+            filtered = [i for i in filtered if i.get("terpenes", {}).get("profile")]
+        else:
+            filtered = [i for i in filtered if not i.get("terpenes", {}).get("profile")]
 
     # Distance calculation
     if lat is not None and lng is not None:
@@ -325,6 +333,7 @@ async def browse_stock(
     min_price: Optional[float] = Query(None, description="Minimum price filter"),
     max_price: Optional[float] = Query(None, description="Maximum price filter"),
     in_stock_hours: Optional[float] = Query(None, description="Only items in stock within N hours"),
+    has_terpenes: Optional[bool] = Query(None, description="Filter by terpene data availability. True=only with terpenes, False=only without, None=all"),
     # Sorting
     sort_by: str = Query("time_in_stock", description="Sort field: time_in_stock, price, product_name, dispensary, store"),
     sort_order: str = Query("asc", description="Sort order: asc or desc"),
@@ -424,6 +433,12 @@ async def browse_stock(
             if (i.get("availability", {}).get("freshness_hours") or float("inf")) <= in_stock_hours
         ]
     
+    if has_terpenes is not None:
+        if has_terpenes:
+            filtered = [i for i in filtered if (i.get("terpenes", {}) or {}).get("profile")]
+        else:
+            filtered = [i for i in filtered if not (i.get("terpenes", {}) or {}).get("profile")]
+    
     total_filtered = len(filtered)
     
     # Sort
@@ -505,6 +520,7 @@ async def browse_stock(
             "web_batch_url": web_batch_url,
             "portal_strain_url": portal_strain_url,
             # Terpene data
+            "has_terpenes": bool(terpene_profile),
             "top_terpenes": [
                 {"name": t, "percentage": terpene_profile.get(t)}
                 for t in terpene_top3
@@ -539,6 +555,7 @@ async def browse_stock(
             "min_price": min_price,
             "max_price": max_price,
             "in_stock_hours": in_stock_hours,
+            "has_terpenes": has_terpenes,
         },
         "sort": {"by": sort_by, "order": sort_order},
         "filter_options": {
@@ -959,6 +976,82 @@ async def remove_alert(alert_id: str):
     if not success:
         raise HTTPException(status_code=404, detail=f"Alert {alert_id} not found")
     return {"success": True, "message": f"Alert {alert_id} deactivated"}
+
+
+# ===========================================================================
+# Terpene Data Status — batches missing terpene profiles
+# ===========================================================================
+
+@router.get("/batches/no-terpenes")
+async def get_batches_without_terpenes(
+    dispensary: Optional[str] = Query(None, description="Filter by dispensary slug"),
+    status: Optional[str] = Query(None, description="Filter by terpene_data_status: pending, unavailable, retry"),
+    limit: int = Query(100, description="Max results", le=500),
+):
+    """List batches that have no terpene data — for retry scheduling and monitoring.
+
+    Returns batches from SQL where terpene_data_status is NOT 'available'.
+    Useful for identifying products that need re-scraping or COA lookup.
+    """
+    try:
+        import pymssql
+
+        conn = pymssql.connect(
+            server="acidni-sql.database.windows.net",
+            user="adm",
+            password=os.environ.get("SQL_PASSWORD", ""),
+            database="terprint",
+            tds_version="7.3",
+        )
+        cursor = conn.cursor(as_dict=True)
+
+        where_clauses = ["b.terpene_data_status != 'available'"]
+        params: list = []
+
+        if dispensary:
+            where_clauses.append("LOWER(g.Name) = %s")
+            params.append(dispensary.lower())
+
+        if status:
+            where_clauses.append("b.terpene_data_status = %s")
+            params.append(status)
+
+        where_sql = " AND ".join(where_clauses)
+
+        cursor.execute(
+            f"""SELECT TOP {int(limit)}
+                    b.BatchId, b.Name, b.Date, b.StoreName,
+                    b.totalTerpenes, b.totalCannabinoids,
+                    b.terpene_data_status, b.terpene_attempts, b.terpene_retry_after,
+                    b.ProductType, b.StrainClassification,
+                    g.Name AS Dispensary,
+                    s.Name AS StrainName
+                FROM Batch b
+                LEFT JOIN Grower g ON b.GrowerID = g.GrowerID
+                LEFT JOIN Strain s ON b.StrainID = s.StrainID
+                WHERE {where_sql}
+                ORDER BY b.terpene_data_status, b.created DESC""",
+            tuple(params),
+        )
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        # Serialise datetimes
+        for row in rows:
+            for k, v in row.items():
+                if hasattr(v, "isoformat"):
+                    row[k] = v.isoformat()
+
+        return {
+            "batches": rows,
+            "total": len(rows),
+            "filters": {"dispensary": dispensary, "status": status},
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to query batches without terpenes: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ===========================================================================
