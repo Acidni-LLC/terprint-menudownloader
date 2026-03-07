@@ -1096,146 +1096,6 @@ def get_batches_without_terpenes(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ===========================================================================
-# Catch-all dispensary routes (MUST be last - matches any path segment)
-# ===========================================================================
-
-@router.get("/{dispensary}")
-def get_dispensary_stock(
-    dispensary: str,
-    category: Optional[str] = Query(None, description="Filter by category"),
-    limit: int = Query(100, description="Max results to return", le=500),
-):
-    """Get all stock for a specific dispensary."""
-    index = get_stock_index()
-
-    dispensary_lower = dispensary.lower()
-    dispensary_items = index.get("by_dispensary", {}).get(dispensary_lower, [])
-
-    if not dispensary_items:
-        return {
-            "dispensary": dispensary,
-            "found": False,
-            "total": 0,
-            "items": [],
-            "message": f"No inventory found for dispensary '{dispensary}'",
-        }
-
-    filtered = dispensary_items
-    if category:
-        filtered = [i for i in filtered if i.get("category", "").lower() == category.lower()]
-
-    return {
-        "dispensary": dispensary,
-        "found": True,
-        "total": len(filtered[:limit]),
-        "total_unfiltered": len(dispensary_items),
-        "items": filtered[:limit],
-    }
-
-
-@router.get("/{dispensary}/{batch_id}")
-def get_batch_stock(dispensary: str, batch_id: str):
-    """Get stock information for a specific batch at a dispensary."""
-    index = get_stock_index()
-
-    dispensary_items = index.get("by_dispensary", {}).get(dispensary.lower(), [])
-
-    for item in dispensary_items:
-        if item.get("batch_id") == batch_id:
-            return {"found": True, "batch": item, "dispensary": dispensary, "batch_id": batch_id}
-
-    raise HTTPException(status_code=404, detail=f"Batch {batch_id} not found at {dispensary}")
-
-
-@router.post("/build-index")
-def build_stock_index():
-    """Rebuild the stock index from menu files + SQL enrichment."""
-    logger.info("POST /build-index triggered")
-    try:
-        indexer = get_indexer()
-        index = indexer.build_index()
-        path = indexer.save_index(index)
-
-        metadata = index.get("metadata", {})
-
-        # Availability tracker stats (populated by save_index)
-        tracker_info = {}
-        if AVAILABILITY_TRACKER_AVAILABLE:
-            try:
-                tracker = _get_tracker()
-                hot = tracker.get_hot_products()
-                if hot:
-                    tracker_info = {
-                        "new_arrivals": len(hot.get("new_arrivals", [])),
-                        "fastest_sellers": len(hot.get("fastest_sellers", [])),
-                        "recently_sold_out": len(hot.get("recently_sold_out", [])),
-                        "long_stayers": len(hot.get("long_stayers", [])),
-                    }
-            except Exception:
-                pass
-
-        return {
-            "success": True,
-            "index_path": path,
-            "metadata": metadata,
-            "availability_tracking": tracker_info,
-            "message": (
-                f"Stock index v2 built: {metadata.get('total_items', 0)} items, "
-                f"{metadata.get('unique_strains', 0)} strains"
-            ),
-        }
-    except Exception as e:
-        logger.error(f"Failed to build stock index: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to build stock index: {e}")
-
-
-@router.post("/run")
-def manual_menu_download():
-    """Trigger manual menu download (alias)."""
-    return {"message": "Use POST /run endpoint for manual downloads", "redirect": "/run"}
-
-
-@router.post("/match-batches")
-def match_batches():
-    """Match batches to current inventory (not yet implemented)."""
-    raise HTTPException(status_code=501, detail="Batch matching not yet implemented")
-
-
-@router.post("/bulk-check")
-def bulk_stock_check(request: BulkStockRequest):
-    """Check stock for multiple batches at once."""
-    index = get_stock_index()
-
-    if not request.batch_ids:
-        raise HTTPException(status_code=400, detail="batch_ids array cannot be empty")
-
-    results = []
-    for batch_id in request.batch_ids:
-        found_item = None
-        for dispensary_items in index.get("by_dispensary", {}).values():
-            for item in dispensary_items:
-                if item.get("batch_id") == batch_id:
-                    found_item = item
-                    break
-            if found_item:
-                break
-
-        results.append({
-            "batch_id": batch_id,
-            "found": found_item is not None,
-            "dispensary": found_item.get("dispensary") if found_item else None,
-            "item": found_item,
-        })
-
-    return {
-        "requested": len(request.batch_ids),
-        "found": sum(1 for r in results if r["found"]),
-        "not_found": sum(1 for r in results if not r["found"]),
-        "results": results,
-    }
-
-
 # =============================================================================
 # Stock Ledger Routes — Persistent History (Cosmos DB)
 # =============================================================================
@@ -1411,3 +1271,143 @@ def get_ledger_stats():
         )
 
     return stats
+
+
+# ===========================================================================
+# Catch-all dispensary routes (MUST be last - matches any path segment)
+# ===========================================================================
+
+@router.get("/{dispensary}")
+def get_dispensary_stock(
+    dispensary: str,
+    category: Optional[str] = Query(None, description="Filter by category"),
+    limit: int = Query(100, description="Max results to return", le=500),
+):
+    """Get all stock for a specific dispensary."""
+    index = get_stock_index()
+
+    dispensary_lower = dispensary.lower()
+    dispensary_items = index.get("by_dispensary", {}).get(dispensary_lower, [])
+
+    if not dispensary_items:
+        return {
+            "dispensary": dispensary,
+            "found": False,
+            "total": 0,
+            "items": [],
+            "message": f"No inventory found for dispensary '{dispensary}'",
+        }
+
+    filtered = dispensary_items
+    if category:
+        filtered = [i for i in filtered if i.get("category", "").lower() == category.lower()]
+
+    return {
+        "dispensary": dispensary,
+        "found": True,
+        "total": len(filtered[:limit]),
+        "total_unfiltered": len(dispensary_items),
+        "items": filtered[:limit],
+    }
+
+
+@router.get("/{dispensary}/{batch_id}")
+def get_batch_stock(dispensary: str, batch_id: str):
+    """Get stock information for a specific batch at a dispensary."""
+    index = get_stock_index()
+
+    dispensary_items = index.get("by_dispensary", {}).get(dispensary.lower(), [])
+
+    for item in dispensary_items:
+        if item.get("batch_id") == batch_id:
+            return {"found": True, "batch": item, "dispensary": dispensary, "batch_id": batch_id}
+
+    raise HTTPException(status_code=404, detail=f"Batch {batch_id} not found at {dispensary}")
+
+
+@router.post("/build-index")
+def build_stock_index():
+    """Rebuild the stock index from menu files + SQL enrichment."""
+    logger.info("POST /build-index triggered")
+    try:
+        indexer = get_indexer()
+        index = indexer.build_index()
+        path = indexer.save_index(index)
+
+        metadata = index.get("metadata", {})
+
+        # Availability tracker stats (populated by save_index)
+        tracker_info = {}
+        if AVAILABILITY_TRACKER_AVAILABLE:
+            try:
+                tracker = _get_tracker()
+                hot = tracker.get_hot_products()
+                if hot:
+                    tracker_info = {
+                        "new_arrivals": len(hot.get("new_arrivals", [])),
+                        "fastest_sellers": len(hot.get("fastest_sellers", [])),
+                        "recently_sold_out": len(hot.get("recently_sold_out", [])),
+                        "long_stayers": len(hot.get("long_stayers", [])),
+                    }
+            except Exception:
+                pass
+
+        return {
+            "success": True,
+            "index_path": path,
+            "metadata": metadata,
+            "availability_tracking": tracker_info,
+            "message": (
+                f"Stock index v2 built: {metadata.get('total_items', 0)} items, "
+                f"{metadata.get('unique_strains', 0)} strains"
+            ),
+        }
+    except Exception as e:
+        logger.error(f"Failed to build stock index: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to build stock index: {e}")
+
+
+@router.post("/run")
+def manual_menu_download():
+    """Trigger manual menu download (alias)."""
+    return {"message": "Use POST /run endpoint for manual downloads", "redirect": "/run"}
+
+
+@router.post("/match-batches")
+def match_batches():
+    """Match batches to current inventory (not yet implemented)."""
+    raise HTTPException(status_code=501, detail="Batch matching not yet implemented")
+
+
+@router.post("/bulk-check")
+def bulk_stock_check(request: BulkStockRequest):
+    """Check stock for multiple batches at once."""
+    index = get_stock_index()
+
+    if not request.batch_ids:
+        raise HTTPException(status_code=400, detail="batch_ids array cannot be empty")
+
+    results = []
+    for batch_id in request.batch_ids:
+        found_item = None
+        for dispensary_items in index.get("by_dispensary", {}).values():
+            for item in dispensary_items:
+                if item.get("batch_id") == batch_id:
+                    found_item = item
+                    break
+            if found_item:
+                break
+
+        results.append({
+            "batch_id": batch_id,
+            "found": found_item is not None,
+            "dispensary": found_item.get("dispensary") if found_item else None,
+            "item": found_item,
+        })
+
+    return {
+        "requested": len(request.batch_ids),
+        "found": sum(1 for r in results if r["found"]),
+        "not_found": sum(1 for r in results if not r["found"]),
+        "results": results,
+    }
