@@ -91,21 +91,44 @@ def get_indexer() -> "StockIndexer":
 
 
 def get_stock_index() -> dict:
-    """Load current stock index from storage (TTL-cached for 5 minutes)."""
+    """Load current stock index from storage (TTL-cached for 5 minutes).
+
+    On cache miss, downloads from blob storage with one retry.  If the
+    download fails but a stale cached copy exists, the stale copy is
+    returned to avoid a hard 503 on transient blob storage failures.
+    """
     global _INDEX_CACHE, _INDEX_CACHE_EXPIRY
     now = time.monotonic()
     if _INDEX_CACHE is not None and now < _INDEX_CACHE_EXPIRY:
         return _INDEX_CACHE
+
     indexer = get_indexer()
-    index = indexer.get_index()
-    if index is None:
-        raise HTTPException(
-            status_code=503,
-            detail="Stock index not available. Run POST /api/stock/build-index to create it.",
-        )
-    _INDEX_CACHE = index
-    _INDEX_CACHE_EXPIRY = now + _INDEX_TTL
-    return _INDEX_CACHE
+
+    # Retry once on failure (covers transient credential / network errors)
+    index = None
+    for attempt in range(2):
+        index = indexer.get_index()
+        if index is not None:
+            break
+        if attempt == 0:
+            logger.warning("Stock index download failed, retrying...")
+            time.sleep(1)
+
+    if index is not None:
+        _INDEX_CACHE = index
+        _INDEX_CACHE_EXPIRY = now + _INDEX_TTL
+        return _INDEX_CACHE
+
+    # If download failed but we have a stale cache, return it
+    if _INDEX_CACHE is not None:
+        logger.warning("Returning stale stock index cache after download failure")
+        _INDEX_CACHE_EXPIRY = now + 30.0  # Re-check in 30s
+        return _INDEX_CACHE
+
+    raise HTTPException(
+        status_code=503,
+        detail="Stock index not available. Run POST /api/stock/build-index to create it.",
+    )
 
 
 # ===========================================================================

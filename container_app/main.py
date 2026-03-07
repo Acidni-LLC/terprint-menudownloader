@@ -559,9 +559,24 @@ async def lifespan(app: FastAPI):
 
     else:  # api-only mode (default)
         logger.info("Starting Terprint Menu Downloader in API-ONLY mode...")
-        logger.info("Ã¢Å“â€¦ API-ONLY MODE: Stock checking and manual endpoints available")
-        logger.info("Ã°Å¸â€œâ€¹ No scheduled downloads - use separate scheduler container for automation")
-        logger.info("Ã°Å¸â€â€” Manual downloads available via POST /run endpoint")
+        logger.info("API-ONLY MODE: Stock checking and manual endpoints available")
+        logger.info("No scheduled downloads - use separate scheduler container for automation")
+        logger.info("Manual downloads available via POST /run endpoint")
+
+        # Pre-warm stock index cache to prevent 503 on first request (AB#1047)
+        if STOCK_ROUTES_AVAILABLE:
+            try:
+                import asyncio
+                from stock_routes import get_stock_index
+            except ImportError:
+                from .stock_routes import get_stock_index
+            try:
+                logger.info("Pre-warming stock index cache from blob storage...")
+                index = await asyncio.to_thread(get_stock_index)
+                total = index.get("metadata", {}).get("total_items", "?")
+                logger.info(f"Stock index cache warmed: {total} items")
+            except Exception as warm_err:
+                logger.warning(f"Stock index pre-warm failed (non-fatal): {warm_err}")
     
     yield
     
