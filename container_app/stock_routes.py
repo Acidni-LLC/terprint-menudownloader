@@ -9,6 +9,7 @@ Copyright (c) 2026 Acidni LLC
 """
 import logging
 import os
+import time
 from datetime import datetime, timezone
 from typing import Optional, List
 from fastapi import APIRouter, HTTPException, Query
@@ -71,6 +72,13 @@ router = APIRouter(prefix="/api/stock", tags=["stock"])
 # Global stock indexer instance
 _stock_indexer: Optional["StockIndexer"] = None
 
+# In-memory TTL cache for the stock index blob (avoids Azure Storage download per request)
+_INDEX_CACHE: Optional[dict] = None
+_INDEX_CACHE_EXPIRY: float = 0.0
+_SUMMARY_CACHE: Optional[dict] = None
+_SUMMARY_CACHE_EXPIRY: float = 0.0
+_INDEX_TTL = 300.0  # 5 minutes — index is rebuilt a few times per day
+
 
 def get_indexer() -> "StockIndexer":
     """Get or create stock indexer singleton."""
@@ -83,7 +91,11 @@ def get_indexer() -> "StockIndexer":
 
 
 def get_stock_index() -> dict:
-    """Load current stock index from storage."""
+    """Load current stock index from storage (TTL-cached for 5 minutes)."""
+    global _INDEX_CACHE, _INDEX_CACHE_EXPIRY
+    now = time.monotonic()
+    if _INDEX_CACHE is not None and now < _INDEX_CACHE_EXPIRY:
+        return _INDEX_CACHE
     indexer = get_indexer()
     index = indexer.get_index()
     if index is None:
@@ -91,7 +103,9 @@ def get_stock_index() -> dict:
             status_code=503,
             detail="Stock index not available. Run POST /api/stock/build-index to create it.",
         )
-    return index
+    _INDEX_CACHE = index
+    _INDEX_CACHE_EXPIRY = now + _INDEX_TTL
+    return _INDEX_CACHE
 
 
 # ===========================================================================
@@ -208,14 +222,20 @@ async def list_strains(
 
 @router.get("/summary")
 async def get_summary():
-    """Get lightweight stock index summary for dashboards."""
+    """Get lightweight stock index summary for dashboards (TTL-cached for 5 minutes)."""
+    global _SUMMARY_CACHE, _SUMMARY_CACHE_EXPIRY
+    now = time.monotonic()
+    if _SUMMARY_CACHE is not None and now < _SUMMARY_CACHE_EXPIRY:
+        return _SUMMARY_CACHE
     indexer = get_indexer()
     summary = indexer.get_summary()
     if summary is None:
         # Fall back to full index metadata
         index = get_stock_index()
         summary = index.get("summary", index.get("metadata", {}))
-    return summary
+    _SUMMARY_CACHE = summary
+    _SUMMARY_CACHE_EXPIRY = now + _INDEX_TTL
+    return _SUMMARY_CACHE
 
 
 @router.get("/search")
