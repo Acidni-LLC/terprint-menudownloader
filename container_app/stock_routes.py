@@ -1009,7 +1009,7 @@ def get_batches_without_terpenes(
 ):
     """List batches that have no terpene data — for retry scheduling and monitoring.
 
-    Returns batches from SQL where TerpenesTotal is NULL or 0.
+    Returns batches from SQL where totalTerpenes is NULL or 0.
     Useful for identifying products that need re-scraping or COA lookup.
     """
     try:
@@ -1029,24 +1029,26 @@ def get_batches_without_terpenes(
         )
         cursor = conn.cursor(as_dict=True)
 
-        where_clauses = ["(b.TerpenesTotal IS NULL OR b.TerpenesTotal = 0)"]
+        where_clauses = ["(b.totalTerpenes IS NULL OR b.totalTerpenes = 0)"]
         params: list = []
 
         if dispensary:
-            where_clauses.append("LOWER(b.Dispensary) = %s")
+            where_clauses.append("LOWER(g.Name) = %s")
             params.append(dispensary.lower())
 
         where_sql = " AND ".join(where_clauses)
 
         cursor.execute(
             f"""SELECT TOP {int(limit)}
-                    b.BatchId, b.ProductName, b.Dispensary, b.StoreName,
-                    b.TerpenesTotal, b.Category,
-                    b.Strain, b.StrainClassification,
-                    b.LastSeen, b.ProcessedDate
+                    b.BatchId, b.Name, g.Name AS Dispensary, b.StoreName,
+                    b.totalTerpenes, b.ProductType,
+                    s.StrainName AS Strain, b.StrainClassification,
+                    b.Date, b.created
                 FROM Batch b
+                LEFT JOIN Grower g ON b.GrowerID = g.GrowerId
+                LEFT JOIN Strain s ON b.StrainID = s.StrainID
                 WHERE {where_sql}
-                ORDER BY b.LastSeen DESC""",
+                ORDER BY b.Date DESC""",
             tuple(params),
         )
         rows = cursor.fetchall()
