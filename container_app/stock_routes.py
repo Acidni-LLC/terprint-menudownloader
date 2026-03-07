@@ -1003,7 +1003,7 @@ async def remove_alert(alert_id: str):
 # ===========================================================================
 
 @router.get("/batches/no-terpenes")
-async def get_batches_without_terpenes(
+def get_batches_without_terpenes(
     dispensary: Optional[str] = Query(None, description="Filter by dispensary slug"),
     status: Optional[str] = Query(None, description="Filter by terpene_data_status: pending, unavailable, retry"),
     limit: int = Query(100, description="Max results", le=500),
