@@ -407,7 +407,6 @@ async def browse_stock(
             i for i in filtered
             if strain_norm in i.get("strain_slug", "")
             or strain_norm in indexer.normalize_strain_name(i.get("strain", ""))
-            or strain.lower() in (i.get("product_name", "") or "").lower()
         ]
     
     # Favorites filter: exact match against comma-separated strain names

@@ -531,8 +531,19 @@ async def lifespan(app: FastAPI):
             replace_existing=True
         )
         scheduler.start()
-        logger.info("Ã¢Å“â€¦ SCHEDULER MODE: Menu downloads will run every 2 hours from 8am-10pm EST")
-        logger.info("Ã°Å¸â€œâ€¹ No downloads at startup - waiting for scheduled times")
+        logger.info("✅ SCHEDULER MODE: Menu downloads will run every 2 hours from 8am-10pm EST")
+        
+        # Rebuild stock index at startup from existing menu files
+        # This ensures the index is fresh even after container restarts
+        try:
+            logger.info("Building stock index from existing menu data at startup...")
+            index_result = build_stock_index_from_menus()
+            if index_result.get("success"):
+                logger.info(f"Startup index build complete: {index_result.get('total_items', 0)} items")
+            else:
+                logger.warning(f"Startup index build issue: {index_result.get('error')}")
+        except Exception as startup_err:
+            logger.error(f"Startup index build failed (non-fatal): {startup_err}")
         
     else:  # api-only mode (default)
         logger.info("Starting Terprint Menu Downloader in API-ONLY mode...")
