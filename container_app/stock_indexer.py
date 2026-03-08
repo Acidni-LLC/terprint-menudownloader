@@ -585,12 +585,20 @@ class StockIndexerV2:
                     return stripped
         return slug
 
+    # Curaleaf brand/product-line prefixes that mask the actual strain name.
+    # e.g. "ace-acapulco-gold-cartridge" → strain is "acapulco-gold"
+    _BRAND_PREFIXES = [
+        "ace-", "essentials-", "cap-", "baya-", "ocifer-",
+        "relieve-", "novarine-", "daybreak-", "floral-", "singapore-",
+    ]
+
     @staticmethod
     def _normalize_for_matching(slug: str) -> str:
         """Aggressively normalize a strain slug for cross-dispensary matching.
 
         Applies all transformations for maximum overlap:
         - Cookies: strip everything after '---' (product type/size)
+        - Curaleaf: strip brand prefixes ('ace-', 'essentials-', etc.)
         - Curaleaf/GreenDragon: strip product-type & lineage suffixes
         - Sanctuary: remove '-and-' connectors ('apples-and-bananas' → 'apples-bananas')
         - Strip trailing variant numbers ('-2', '-3')
@@ -598,6 +606,14 @@ class StockIndexerV2:
         # Cookies uses '---' to separate strain from product form/size
         if "---" in slug:
             slug = slug.split("---")[0]
+
+        # Strip Curaleaf brand/product-line prefixes
+        for prefix in StockIndexerV2._BRAND_PREFIXES:
+            if slug.startswith(prefix):
+                stripped = slug[len(prefix):]
+                if stripped:
+                    slug = stripped
+                    break
 
         # Strip product-type and strain-type suffixes
         for suffix in StockIndexerV2._PRODUCT_SUFFIXES:
