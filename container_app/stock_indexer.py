@@ -528,6 +528,41 @@ class StockIndexerV2:
 
         return enrichment
 
+    # Product-type and strain-type suffixes to strip for fuzzy cross-dispensary matching.
+    # Curaleaf appends product form; Green Dragon appends indica/sativa/hybrid.
+    _PRODUCT_SUFFIXES = [
+        # Multi-word first (longest match wins)
+        "-live-rosin-jam", "-live-rosin-badder", "-live-rosin-sauce",
+        "-live-resin-sauce", "-live-resin-badder",
+        "-pre-roll-pack", "-pre-ground-flower",
+        "-live-rosin", "-live-resin", "-live-budder",
+        "-whole-flower", "-ground-flower", "-mini-flower",
+        "-nano-bites", "-nano-bite",
+        "-pre-roll", "-pre-rolls",
+        "-cartridge", "-cart",
+        "-crumble", "-shatter", "-wax", "-budder", "-badder",
+        "-distillate", "-rosin", "-resin",
+        "-rso", "-tincture", "-capsule", "-capsules",
+        "-edible", "-gummy", "-gummies",
+        "-topical", "-cream", "-balm",
+        "-flower", "-concentrate",
+        # Strain-type suffixes (Green Dragon)
+        "-hybrid", "-indica", "-sativa",
+    ]
+
+    def _strip_product_suffix(self, slug: str) -> str:
+        """Strip product-type and strain-type suffixes from a strain slug.
+
+        Curaleaf embeds product form: 'banana-belt-whole-flower' → 'banana-belt'
+        Green Dragon appends lineage: 'apples-bananas-hybrid' → 'apples-bananas'
+        """
+        for suffix in self._PRODUCT_SUFFIXES:
+            if slug.endswith(suffix):
+                stripped = slug[: -len(suffix)]
+                if stripped:  # Don't return empty string
+                    return stripped
+        return slug
+
     def _apply_sql_enrichment(self, item: StockItemV2, sql_row: dict) -> None:
         """Apply SQL batch data to a stock item."""
         item.source = "database+menu"
@@ -1162,8 +1197,22 @@ class StockIndexerV2:
                     self._apply_sql_enrichment(item, fallback)
                     cross_disp_count += 1
 
+        # Step 3c: Fuzzy cross-dispensary matching
+        # Strip common product-type suffixes from strain slugs for broader matching
+        # e.g. "banana-belt-whole-flower" → "banana-belt", "apples-bananas-hybrid" → "apples-bananas"
+        fuzzy_count = 0
+        for item in all_items:
+            if item.terpenes.profile:
+                continue
+            base_slug = self._strip_product_suffix(item.strain_slug)
+            if base_slug != item.strain_slug:
+                fallback = strain_only_data.get(base_slug)
+                if fallback and fallback.get("TerpeneProfile"):
+                    self._apply_sql_enrichment(item, fallback)
+                    fuzzy_count += 1
+
         logger.info(f"SQL enrichment applied to {enriched_count}/{len(all_items)} items "
-                    f"(+{cross_disp_count} cross-dispensary matches)")
+                    f"(+{cross_disp_count} cross-dispensary, +{fuzzy_count} fuzzy matches)")
 
         # Also add SQL-only items not found in menus (recently in stock in DB but not in latest menu)
         menu_keys = {f"{item.dispensary}:{item.strain_slug}" for item in all_items}
