@@ -99,11 +99,10 @@ class StockIndexer:
     SQL_SERVER = "acidni-sql.database.windows.net"
     SQL_DATABASE = "terprint"
     SQL_USER = "adm"
-    SQL_PASSWORD = "sql1234%"  # Default - override with environment variable
     
     def __init__(self):
-        # Load SQL password from environment (override default)
-        self.sql_password = os.environ.get('SQL_PASSWORD', self.SQL_PASSWORD)
+        # Load SQL password from environment
+        self.sql_password = os.environ.get('SQL_PASSWORD', '')
         
         # Blob storage configuration for saving index
         self.INDEX_PREFIX = "stock-index"  # Blob prefix for storing indexes

@@ -157,10 +157,11 @@ class StockIndexerV2:
     SQL_SERVER = "acidni-sql.database.windows.net"
     SQL_DATABASE = "terprint"
     SQL_USER = "adm"
-    SQL_PASSWORD = "sql1234%"
 
     def __init__(self):
-        self.sql_password = os.environ.get("SQL_PASSWORD", self.SQL_PASSWORD)
+        self.sql_password = os.environ.get("SQL_PASSWORD", "")
+        if not self.sql_password:
+            logger.warning("SQL_PASSWORD environment variable not set — SQL enrichment will be skipped")
         self.INDEX_PREFIX = "stock-index"
         self.locations = self._load_locations()
         self._container = None
