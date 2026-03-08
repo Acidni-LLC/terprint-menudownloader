@@ -401,7 +401,7 @@ class StockIndexerV2:
                 return slug
         return cl.split(" - ")[0].split(" *")[0].strip().replace(" ", "-")
 
-    def _load_sql_enrichment(self, max_age_days: int = 7) -> dict[str, dict]:
+    def _load_sql_enrichment(self, max_age_days: int = 90) -> dict[str, dict]:
         """
         Load enrichment data from SQL Batch table.
 
@@ -1063,7 +1063,7 @@ class StockIndexerV2:
     # Index Building — Main Entry Point
     # =========================================================================
 
-    def build_index(self, max_age_days: int = 7) -> dict:
+    def build_index(self, max_age_days: int = 90) -> dict:
         """
         Build the full v2 stock index.
 

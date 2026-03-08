@@ -320,11 +320,12 @@ def build_stock_index_from_menus() -> dict:
         return {"success": False, "error": "Stock indexer not available"}
 
     try:
-        logger.info("Building stock index v2 from menu data + SQL + genetics...")
+        max_age = int(os.environ.get("STOCK_ENRICHMENT_MAX_AGE_DAYS", "90"))
+        logger.info(f"Building stock index v2 from menu data + SQL ({max_age}d window) + genetics...")
         indexer = StockIndexer()
 
         # v2: build_index() scans ALL dispensary menus, enriches with SQL + genetics
-        index = indexer.build_index()
+        index = indexer.build_index(max_age_days=max_age)
 
         if index and index.get("metadata", {}).get("total_items", 0) > 0:
             path = indexer.save_index(index)
