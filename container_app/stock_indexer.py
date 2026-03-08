@@ -401,19 +401,50 @@ class StockIndexerV2:
                 return slug
         return cl.split(" - ")[0].split(" *")[0].strip().replace(" ", "-")
 
+    # Map link domains / StoreName patterns → dispensary slugs for non-Trulieve records
+    _LINK_DOMAIN_TO_DISPENSARY: dict[str, str] = {
+        "cookiesflorida": "cookies",
+        "cookies": "cookies",
+        "curaleaf": "curaleaf",
+        "greendragon": "green_dragon",
+        "muv": "muv",
+        "sunnyside": "sunnyside",
+        "sanctuary": "sanctuary",
+        "flowery": "flowery",
+    }
+
+    def _infer_dispensary_from_batch(self, bj: dict, store_name: str) -> str:
+        """Infer dispensary slug from batchJSON link or StoreName when client is absent."""
+        # Try link URL first (Cookies records have cookiesflorida.co links)
+        link = bj.get("link", "")
+        if link:
+            link_lower = link.lower()
+            for domain, slug in self._LINK_DOMAIN_TO_DISPENSARY.items():
+                if domain in link_lower:
+                    return slug
+        # Try StoreName (Green Dragon records use StoreName)
+        if store_name:
+            sn = store_name.lower().strip()
+            for prefix, slug in self._CLIENT_TO_DISPENSARY.items():
+                if prefix in sn:
+                    return slug
+            # Direct slug guess from StoreName
+            for domain, slug in self._LINK_DOMAIN_TO_DISPENSARY.items():
+                if domain in sn.replace(" ", ""):
+                    return slug
+        return ""
+
     def _load_sql_enrichment(self, max_age_days: int = 90) -> dict[str, dict]:
         """
         Load enrichment data from SQL Batch table.
 
-        The Batch table stores COA data in batchJSON (a JSON blob) with fields:
-          - cultivar: strain name
-          - client: dispensary name (e.g. "Trulieve - Midway Flower")
-          - terpenes: [{name, result_percent, result_mg_per_g}, ...]
-          - total_terpenes_percent: float
-          - total_active_thc_percent, total_active_cbd_percent, etc.
+        Handles multiple batchJSON schema variants:
+          - Trulieve: cultivar, client, terpenes[].result_percent
+          - Cookies:  name, link (cookiesflorida.co), terpenes[].value
+          - Green Dragon/Curaleaf: strain_name, StoreName, no terpenes
         Top-level columns: BatchId, Name, batchJSON, totalTerpenes, StoreName
 
-        Returns dict keyed by strain_slug → parsed enrichment data.
+        Returns dict keyed by "dispensary:strain_slug" → parsed enrichment data.
         """
         enrichment: dict[str, dict] = {}
         try:
@@ -440,12 +471,15 @@ class StockIndexerV2:
                         continue
                     bj = json.loads(batch_json_raw) if isinstance(batch_json_raw, str) else batch_json_raw
 
-                    strain = bj.get("cultivar", "")
-                    client = bj.get("client", "")
+                    # Multi-schema strain extraction: cultivar (Trulieve) → name (Cookies) → strain_name (Green Dragon)
+                    strain = bj.get("cultivar") or bj.get("name") or bj.get("strain_name", "")
                     if not strain:
                         continue
 
+                    client = bj.get("client", "")
                     dispensary = self._client_to_dispensary(client)
+                    if not dispensary:
+                        dispensary = self._infer_dispensary_from_batch(bj, row.get("StoreName", ""))
                     normalized = self.normalize_strain_name(strain)
                     key = f"{dispensary}:{normalized}"
 
@@ -454,23 +488,27 @@ class StockIndexerV2:
                         continue
 
                     # Parse terpene array → dict {name: percent}
+                    # Supports Trulieve format (result_percent) and Cookies format (value)
                     terpene_profile: dict[str, float] = {}
                     terpene_list = bj.get("terpenes", [])
                     if isinstance(terpene_list, list):
                         for t in terpene_list:
                             if isinstance(t, dict):
                                 tname = t.get("name", "")
-                                tpct = _safe_float(t.get("result_percent"))
+                                tpct = _safe_float(t.get("result_percent")) or _safe_float(t.get("value"))
                                 if tname and tpct is not None and tpct > 0:
                                     terpene_profile[tname] = tpct
 
                     # Build a normalized row for _apply_sql_enrichment
+                    # THC/CBD: try Trulieve fields first, then fallback to simpler schemas
+                    thc_pct = _safe_float(bj.get("total_active_thc_percent")) or _safe_float(bj.get("thc_percent")) or _safe_float(bj.get("thc_content"))
+                    cbd_pct = _safe_float(bj.get("total_active_cbd_percent")) or _safe_float(bj.get("cbd_percent")) or _safe_float(bj.get("cbd_content"))
                     enrichment[key] = {
                         "BatchId": row.get("BatchId"),
                         "Strain": strain,
                         "Dispensary": dispensary,
-                        "ThcPercent": _safe_float(bj.get("total_active_thc_percent")),
-                        "CbdPercent": _safe_float(bj.get("total_active_cbd_percent")),
+                        "ThcPercent": thc_pct,
+                        "CbdPercent": cbd_pct,
                         "CbgPercent": _safe_float(bj.get("total_cbg_percent")),
                         "TerpenesTotal": _safe_float(bj.get("total_terpenes_percent") or row.get("totalTerpenes")),
                         "TerpeneProfile": terpene_profile,
@@ -1099,6 +1137,7 @@ class StockIndexerV2:
 
         # Step 3: Merge SQL onto menu items
         enriched_count = 0
+        cross_disp_count = 0
         for item in all_items:
             key = f"{item.dispensary}:{item.strain_slug}"
             sql_row = sql_data.get(key)
@@ -1106,7 +1145,25 @@ class StockIndexerV2:
                 self._apply_sql_enrichment(item, sql_row)
                 enriched_count += 1
 
-        logger.info(f"SQL enrichment applied to {enriched_count}/{len(all_items)} items")
+        # Step 3b: Cross-dispensary strain fallback
+        # Build strain-only lookup (best terpene data wins, prefer rows WITH terpenes)
+        strain_only_data: dict[str, dict] = {}
+        for key, row in sql_data.items():
+            slug = key.split(":", 1)[-1] if ":" in key else key
+            if slug not in strain_only_data:
+                strain_only_data[slug] = row
+            elif row.get("TerpeneProfile") and not strain_only_data[slug].get("TerpeneProfile"):
+                strain_only_data[slug] = row
+
+        for item in all_items:
+            if not item.terpenes.profile:  # Not yet enriched
+                fallback = strain_only_data.get(item.strain_slug)
+                if fallback and fallback.get("TerpeneProfile"):
+                    self._apply_sql_enrichment(item, fallback)
+                    cross_disp_count += 1
+
+        logger.info(f"SQL enrichment applied to {enriched_count}/{len(all_items)} items "
+                    f"(+{cross_disp_count} cross-dispensary matches)")
 
         # Also add SQL-only items not found in menus (recently in stock in DB but not in latest menu)
         menu_keys = {f"{item.dispensary}:{item.strain_slug}" for item in all_items}
