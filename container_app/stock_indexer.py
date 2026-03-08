@@ -434,7 +434,7 @@ class StockIndexerV2:
                     return slug
         return ""
 
-    def _load_sql_enrichment(self, max_age_days: int = 365) -> dict[str, dict]:
+    def _load_sql_enrichment(self, max_age_days: int = 0) -> dict[str, dict]:
         """
         Load enrichment data from SQL Batch table.
 
@@ -444,6 +444,10 @@ class StockIndexerV2:
           - Green Dragon/Curaleaf: strain_name, StoreName, no terpenes
         Top-level columns: BatchId, Name, batchJSON, totalTerpenes, StoreName
 
+        Args:
+            max_age_days: Maximum age of batch records to load.
+                0 = load ALL records (no time limit) for maximum terpene coverage.
+
         Returns dict keyed by "dispensary:strain_slug" → parsed enrichment data.
         """
         enrichment: dict[str, dict] = {}
@@ -451,16 +455,25 @@ class StockIndexerV2:
             conn = self._get_db_connection()
             cursor = conn.cursor(as_dict=True)
 
-            query = """
-            SELECT
-                BatchId, Name, StoreName, totalTerpenes, totalCannabinoids,
-                batchJSON, created
-            FROM Batch
-            WHERE created >= DATEADD(day, %s, GETDATE())
-            ORDER BY created DESC
-            """
-
-            cursor.execute(query, (-max_age_days,))
+            if max_age_days > 0:
+                query = """
+                SELECT
+                    BatchId, Name, StoreName, totalTerpenes, totalCannabinoids,
+                    batchJSON, created
+                FROM Batch
+                WHERE created >= DATEADD(day, %s, GETDATE())
+                ORDER BY created DESC
+                """
+                cursor.execute(query, (-max_age_days,))
+            else:
+                query = """
+                SELECT
+                    BatchId, Name, StoreName, totalTerpenes, totalCannabinoids,
+                    batchJSON, created
+                FROM Batch
+                ORDER BY created DESC
+                """
+                cursor.execute(query)
             rows = cursor.fetchall()
             logger.info(f"SQL enrichment: {len(rows)} rows from Batch table")
 
@@ -561,6 +574,36 @@ class StockIndexerV2:
                 stripped = slug[: -len(suffix)]
                 if stripped:  # Don't return empty string
                     return stripped
+        return slug
+
+    @staticmethod
+    def _normalize_for_matching(slug: str) -> str:
+        """Aggressively normalize a strain slug for cross-dispensary matching.
+
+        Applies all transformations for maximum overlap:
+        - Cookies: strip everything after '---' (product type/size)
+        - Curaleaf/GreenDragon: strip product-type & lineage suffixes
+        - Sanctuary: remove '-and-' connectors ('apples-and-bananas' → 'apples-bananas')
+        - Strip trailing variant numbers ('-2', '-3')
+        """
+        # Cookies uses '---' to separate strain from product form/size
+        if "---" in slug:
+            slug = slug.split("---")[0]
+
+        # Strip product-type and strain-type suffixes
+        for suffix in StockIndexerV2._PRODUCT_SUFFIXES:
+            if slug.endswith(suffix):
+                stripped = slug[: -len(suffix)]
+                if stripped:
+                    slug = stripped
+                    break
+
+        # Remove '-and-' connectors (Sanctuary uses 'apples-and-bananas')
+        slug = slug.replace("-and-", "-")
+
+        # Strip trailing variant numbers like '-2', '-3'
+        slug = re.sub(r"-\d+$", "", slug)
+
         return slug
 
     def _apply_sql_enrichment(self, item: StockItemV2, sql_row: dict) -> None:
@@ -1136,7 +1179,7 @@ class StockIndexerV2:
     # Index Building — Main Entry Point
     # =========================================================================
 
-    def build_index(self, max_age_days: int = 365) -> dict:
+    def build_index(self, max_age_days: int = 0) -> dict:
         """
         Build the full v2 stock index.
 
@@ -1197,15 +1240,15 @@ class StockIndexerV2:
                     self._apply_sql_enrichment(item, fallback)
                     cross_disp_count += 1
 
-        # Step 3c: Fuzzy cross-dispensary matching
-        # Strip common product-type suffixes from strain slugs for broader matching
-        # e.g. "banana-belt-whole-flower" → "banana-belt", "apples-bananas-hybrid" → "apples-bananas"
+        # Step 3c: Fuzzy cross-dispensary matching with aggressive normalization
+        # Handles: Cookies '---' separators, '-and-' connectors, product suffixes,
+        # trailing variant numbers, strain-type suffixes.
         fuzzy_count = 0
 
-        # Build a normalized lookup: strip suffixes from SQL data keys too
+        # Build a normalized lookup: apply full normalization to SQL data keys
         normalized_strain_data: dict[str, dict] = {}
         for slug, row in strain_only_data.items():
-            base = self._strip_product_suffix(slug)
+            base = self._normalize_for_matching(slug)
             if base not in normalized_strain_data:
                 normalized_strain_data[base] = row
             elif row.get("TerpeneProfile") and not normalized_strain_data[base].get("TerpeneProfile"):
@@ -1214,8 +1257,8 @@ class StockIndexerV2:
         for item in all_items:
             if item.terpenes.profile:
                 continue
-            base_slug = self._strip_product_suffix(item.strain_slug)
-            # Try normalized lookup (both sides stripped)
+            base_slug = self._normalize_for_matching(item.strain_slug)
+            # Try normalized lookup (both sides fully normalized)
             fallback = normalized_strain_data.get(base_slug)
             if fallback and fallback.get("TerpeneProfile"):
                 self._apply_sql_enrichment(item, fallback)
