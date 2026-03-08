@@ -500,17 +500,26 @@ class StockIndexerV2:
                     if key in enrichment:
                         continue
 
-                    # Parse terpene array → dict {name: percent}
-                    # Supports Trulieve format (result_percent) and Cookies format (value)
+                    # Parse terpene data → dict {name: percent}
+                    # Handles three formats:
+                    #   Trulieve: terpenes = [{name: x, result_percent: y}, ...]
+                    #   Cookies:  terpenes = [{name: x, value: y}, ...]
+                    #   Green Dragon/Sweed: terpenes = {myrcene: 0.5, limonene: 0.3, ...}
                     terpene_profile: dict[str, float] = {}
-                    terpene_list = bj.get("terpenes", [])
-                    if isinstance(terpene_list, list):
-                        for t in terpene_list:
+                    terpene_data = bj.get("terpenes")
+                    if isinstance(terpene_data, list):
+                        for t in terpene_data:
                             if isinstance(t, dict):
                                 tname = t.get("name", "")
                                 tpct = _safe_float(t.get("result_percent")) or _safe_float(t.get("value"))
                                 if tname and tpct is not None and tpct > 0:
                                     terpene_profile[tname] = tpct
+                    elif isinstance(terpene_data, dict):
+                        # Green Dragon / Sweed POS format: {terpene_name: value}
+                        for tname, tval in terpene_data.items():
+                            tpct = _safe_float(tval)
+                            if tname and tpct is not None and tpct > 0:
+                                terpene_profile[tname] = tpct
 
                     # Build a normalized row for _apply_sql_enrichment
                     # THC/CBD: try Trulieve fields first, then fallback to simpler schemas
