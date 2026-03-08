@@ -381,9 +381,9 @@ class StockIndexerV2:
     _CLIENT_TO_DISPENSARY = {
         "trulieve": "trulieve",
         "sunburn": "trulieve",       # Sunburn is a Trulieve sub-brand
-        "the flowery": "the-flowery",
-        "flowery": "the-flowery",
-        "green dragon": "green-dragon",
+        "the flowery": "flowery",
+        "flowery": "flowery",
+        "green dragon": "green_dragon",
         "cookies": "cookies",
         "sanctuary": "sanctuary",
         "curaleaf": "curaleaf",
@@ -1171,6 +1171,9 @@ class StockIndexerV2:
         for key, row in sql_data.items():
             if key not in menu_keys:
                 dispensary = (row.get("Dispensary") or "").lower()
+                # Skip SQL-only items with no identifiable dispensary
+                if not dispensary:
+                    continue
                 strain = row.get("Strain", "Unknown")
                 strain_slug = self.normalize_strain_name(strain)
                 store_name = row.get("StoreName", "")
