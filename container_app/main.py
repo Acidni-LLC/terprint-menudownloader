@@ -534,17 +534,23 @@ async def lifespan(app: FastAPI):
         scheduler.start()
         logger.info("✅ SCHEDULER MODE: Menu downloads will run every 2 hours from 8am-10pm EST")
         
-        # Rebuild stock index at startup from existing menu files
-        # This ensures the index is fresh even after container restarts
-        try:
-            logger.info("Building stock index from existing menu data at startup...")
-            index_result = build_stock_index_from_menus()
-            if index_result.get("success"):
-                logger.info(f"Startup index build complete: {index_result.get('total_items', 0)} items")
-            else:
-                logger.warning(f"Startup index build issue: {index_result.get('error')}")
-        except Exception as startup_err:
-            logger.error(f"Startup index build failed (non-fatal): {startup_err}")
+        # Rebuild stock index at startup from existing menu files.
+        # Run in a background thread so the health endpoint responds immediately
+        # and the startup probe passes while the index build completes.
+        import asyncio
+
+        async def _startup_index_build():
+            try:
+                logger.info("Building stock index from existing menu data (background)...")
+                index_result = await asyncio.to_thread(build_stock_index_from_menus)
+                if index_result.get("success"):
+                    logger.info(f"Startup index build complete: {index_result.get('total_items', 0)} items")
+                else:
+                    logger.warning(f"Startup index build issue: {index_result.get('error')}")
+            except Exception as startup_err:
+                logger.error(f"Startup index build failed (non-fatal): {startup_err}")
+
+        asyncio.create_task(_startup_index_build())
 
         # Schedule an immediate download 60s after startup so fresh data is
         # available quickly even if the next cron window is hours away.
