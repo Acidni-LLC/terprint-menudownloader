@@ -508,6 +508,7 @@ def browse_stock(
     def to_table_row(item: dict) -> dict:
         pricing = item.get("pricing", {}) or {}
         availability = item.get("availability", {}) or {}
+        cannabinoids = item.get("cannabinoids", {}) or {}
         store_info = item.get("store", {}) or {}
         links = item.get("links", {}) or {}
         terpenes = item.get("terpenes", {}) or {}
@@ -567,6 +568,14 @@ def browse_stock(
                 {"name": t, "percentage": terpene_profile.get(t)}
                 for t in terpene_top3
             ] if terpene_top3 else [],
+            # Cannabinoid data
+            "thc_percent": cannabinoids.get("thc_percent"),
+            "cbd_percent": cannabinoids.get("cbd_percent"),
+            "cbg_percent": cannabinoids.get("cbg_percent"),
+            "total_terpene_percent": terpenes.get("total_percent"),
+            # Enrichment metadata
+            "source": item.get("source", ""),
+            "confidence": availability.get("confidence", ""),
             # Store location for map view
             "store_lat": store_info.get("latitude"),
             "store_lng": store_info.get("longitude"),
