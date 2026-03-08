@@ -495,6 +495,9 @@ def browse_stock(
             return (item.get("store", {}).get("store_name") or "").lower()
         elif sort_by == "strain":
             return (item.get("strain") or "").lower()
+        elif sort_by == "thc_percent":
+            c = item.get("cannabinoids", {}) or {}
+            return c.get("thc_percent") or 0
         else:  # time_in_stock
             return item.get("availability", {}).get("freshness_hours") or float("inf")
     
