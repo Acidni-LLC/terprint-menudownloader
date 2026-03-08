@@ -320,7 +320,7 @@ def build_stock_index_from_menus() -> dict:
         return {"success": False, "error": "Stock indexer not available"}
 
     try:
-        max_age = int(os.environ.get("STOCK_ENRICHMENT_MAX_AGE_DAYS", "90"))
+        max_age = int(os.environ.get("STOCK_ENRICHMENT_MAX_AGE_DAYS", "365"))
         logger.info(f"Building stock index v2 from menu data + SQL ({max_age}d window) + genetics...")
         indexer = StockIndexer()
 

@@ -434,7 +434,7 @@ class StockIndexerV2:
                     return slug
         return ""
 
-    def _load_sql_enrichment(self, max_age_days: int = 90) -> dict[str, dict]:
+    def _load_sql_enrichment(self, max_age_days: int = 365) -> dict[str, dict]:
         """
         Load enrichment data from SQL Batch table.
 
@@ -1136,7 +1136,7 @@ class StockIndexerV2:
     # Index Building — Main Entry Point
     # =========================================================================
 
-    def build_index(self, max_age_days: int = 90) -> dict:
+    def build_index(self, max_age_days: int = 365) -> dict:
         """
         Build the full v2 stock index.
 
@@ -1201,15 +1201,25 @@ class StockIndexerV2:
         # Strip common product-type suffixes from strain slugs for broader matching
         # e.g. "banana-belt-whole-flower" → "banana-belt", "apples-bananas-hybrid" → "apples-bananas"
         fuzzy_count = 0
+
+        # Build a normalized lookup: strip suffixes from SQL data keys too
+        normalized_strain_data: dict[str, dict] = {}
+        for slug, row in strain_only_data.items():
+            base = self._strip_product_suffix(slug)
+            if base not in normalized_strain_data:
+                normalized_strain_data[base] = row
+            elif row.get("TerpeneProfile") and not normalized_strain_data[base].get("TerpeneProfile"):
+                normalized_strain_data[base] = row
+
         for item in all_items:
             if item.terpenes.profile:
                 continue
             base_slug = self._strip_product_suffix(item.strain_slug)
-            if base_slug != item.strain_slug:
-                fallback = strain_only_data.get(base_slug)
-                if fallback and fallback.get("TerpeneProfile"):
-                    self._apply_sql_enrichment(item, fallback)
-                    fuzzy_count += 1
+            # Try normalized lookup (both sides stripped)
+            fallback = normalized_strain_data.get(base_slug)
+            if fallback and fallback.get("TerpeneProfile"):
+                self._apply_sql_enrichment(item, fallback)
+                fuzzy_count += 1
 
         logger.info(f"SQL enrichment applied to {enriched_count}/{len(all_items)} items "
                     f"(+{cross_disp_count} cross-dispensary, +{fuzzy_count} fuzzy matches)")
