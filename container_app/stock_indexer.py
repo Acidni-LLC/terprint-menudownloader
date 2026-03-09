@@ -120,6 +120,7 @@ class StockItemV2:
     links: dict[str, str] = field(default_factory=dict)
     source: str = "menu"
     source_file: str = ""
+    coa_status: str = ""  # "available", "no_coa", "retry", or "" (unknown)
 
 
 # Dispensary display name mapping
@@ -525,6 +526,18 @@ class StockIndexerV2:
                     # THC/CBD: try Trulieve fields first, then fallback to simpler schemas
                     thc_pct = _safe_float(bj.get("total_active_thc_percent")) or _safe_float(bj.get("thc_percent")) or _safe_float(bj.get("thc_content"))
                     cbd_pct = _safe_float(bj.get("total_active_cbd_percent")) or _safe_float(bj.get("cbd_percent")) or _safe_float(bj.get("cbd_content"))
+
+                    # COA status from _data_quality metadata (set by batch processor)
+                    data_quality = bj.get("_data_quality", {})
+                    has_coa = data_quality.get("has_coa")
+                    if has_coa is True:
+                        coa_status = "available" if terpene_profile else "retry"
+                    elif has_coa is False:
+                        coa_status = "no_coa"
+                    else:
+                        # Legacy batches without _data_quality — infer from terpene presence
+                        coa_status = "available" if terpene_profile else ""
+
                     enrichment[key] = {
                         "BatchId": row.get("BatchId"),
                         "Strain": strain,
@@ -534,6 +547,7 @@ class StockIndexerV2:
                         "CbgPercent": _safe_float(bj.get("total_cbg_percent")),
                         "TerpenesTotal": _safe_float(bj.get("total_terpenes_percent") or row.get("totalTerpenes")),
                         "TerpeneProfile": terpene_profile,
+                        "CoaStatus": coa_status,
                         "StoreName": row.get("StoreName") or "",
                         "Created": row.get("created"),
                     }
@@ -669,6 +683,11 @@ class StockIndexerV2:
 
         # Availability confidence boost from COA match
         item.availability.confidence = "high"
+
+        # COA status
+        coa_status = sql_row.get("CoaStatus", "")
+        if coa_status:
+            item.coa_status = coa_status
 
     # =========================================================================
     # Menu File Processing

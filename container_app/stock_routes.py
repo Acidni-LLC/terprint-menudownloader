@@ -579,6 +579,7 @@ def browse_stock(
             # Enrichment metadata
             "source": item.get("source", ""),
             "confidence": availability.get("confidence", ""),
+            "coa_status": item.get("coa_status", ""),
             # Store location for map view
             "store_lat": store_info.get("latitude"),
             "store_lng": store_info.get("longitude"),
