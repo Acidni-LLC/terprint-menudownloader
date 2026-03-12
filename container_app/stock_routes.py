@@ -171,6 +171,49 @@ def _item_lng(item: dict) -> Optional[float]:
 
 
 # ===========================================================================
+# Dispensary matching helpers
+# ===========================================================================
+# Index items store the dispensary SLUG (e.g. "green_dragon") in the
+# "dispensary" field and the display name (e.g. "Green Dragon") in
+# "dispensary_name".  API callers may pass either form.  Single-word
+# slugs (cookies, trulieve) happen to match their lowercased display
+# name, but multi-word names ("Green Dragon" -> "green dragon") do NOT
+# match the underscore-delimited slug ("green_dragon").
+#
+# These helpers normalise the comparison so both forms work.
+# ===========================================================================
+
+def _matches_dispensary(item: dict, dispensary_input: str) -> bool:
+    """Return True if *item* belongs to the dispensary identified by *dispensary_input*.
+
+    Accepts slugs (green_dragon) or display names (Green Dragon).
+    """
+    disp_lower = dispensary_input.lower()
+    slug_normalised = disp_lower.replace(" ", "_")
+    item_slug = item.get("dispensary", "").lower()
+    item_name = (item.get("dispensary_name") or "").lower()
+    return (
+        item_slug == disp_lower
+        or item_slug == slug_normalised
+        or item_name == disp_lower
+    )
+
+
+def _resolve_dispensary_key(by_dispensary: dict, dispensary_input: str) -> str:
+    """Resolve a user-supplied dispensary identifier to the dict key used in *by_dispensary*.
+
+    Falls back to the lowercased input if no match is found.
+    """
+    disp_lower = dispensary_input.lower()
+    if disp_lower in by_dispensary:
+        return disp_lower
+    slug_normalised = disp_lower.replace(" ", "_")
+    if slug_normalised in by_dispensary:
+        return slug_normalised
+    return disp_lower
+
+
+# ===========================================================================
 # Endpoints
 # ===========================================================================
 
@@ -211,7 +254,7 @@ def list_strains(
     results = []
     for slug, items in sorted(by_strain.items()):
         if dispensary:
-            items = [i for i in items if i.get("dispensary", "").lower() == dispensary.lower()]
+            items = [i for i in items if _matches_dispensary(i, dispensary)]
             if not items:
                 continue
 
@@ -315,7 +358,7 @@ def search_stock(
     filtered = list(items)
 
     if dispensary:
-        filtered = [i for i in filtered if i.get("dispensary", "").lower() == dispensary.lower()]
+        filtered = [i for i in filtered if _matches_dispensary(i, dispensary)]
 
     if category:
         filtered = [i for i in filtered if i.get("category", "").lower() == category.lower()]
@@ -413,7 +456,7 @@ def browse_stock(
     filtered = all_items
     
     if dispensary:
-        filtered = [i for i in filtered if i.get("dispensary", "").lower() == dispensary.lower()]
+        filtered = [i for i in filtered if _matches_dispensary(i, dispensary)]
     
     if store:
         store_lower = store.lower()
@@ -810,7 +853,7 @@ def get_hot_products(
         if category:
             filtered = [i for i in filtered if i.get("category", "").lower() == category.lower()]
         if dispensary:
-            filtered = [i for i in filtered if i.get("dispensary", "").lower() == dispensary.lower()]
+            filtered = [i for i in filtered if _matches_dispensary(i, dispensary)]
         return filtered[:limit]
 
     return {
@@ -850,7 +893,7 @@ def get_new_arrivals(
     arrivals = [a for a in arrivals if a.get("hours_ago", 999) <= hours]
 
     if dispensary:
-        arrivals = [a for a in arrivals if a.get("dispensary", "").lower() == dispensary.lower()]
+        arrivals = [a for a in arrivals if _matches_dispensary(a, dispensary)]
     if category:
         arrivals = [a for a in arrivals if a.get("category", "").lower() == category.lower()]
 
@@ -890,7 +933,7 @@ def get_recently_sold_out(
     sold_out = [s for s in sold_out if s.get("hours_since_sold_out", 999) <= hours]
 
     if dispensary:
-        sold_out = [s for s in sold_out if s.get("dispensary", "").lower() == dispensary.lower()]
+        sold_out = [s for s in sold_out if _matches_dispensary(s, dispensary)]
     if category:
         sold_out = [s for s in sold_out if s.get("category", "").lower() == category.lower()]
 
@@ -932,7 +975,7 @@ def get_strain_availability_history(
     for key, entry in items.items():
         entry_slug = entry.get("strain_slug", "")
         if entry_slug == target_slug or target_slug in entry_slug:
-            if dispensary and entry.get("dispensary", "").lower() != dispensary.lower():
+            if dispensary and not _matches_dispensary(entry, dispensary):
                 continue
             matching.append({
                 "key": key,
@@ -1299,8 +1342,8 @@ def get_dispensary_stock(
     """Get all stock for a specific dispensary."""
     index = get_stock_index()
 
-    dispensary_lower = dispensary.lower()
-    dispensary_items = index.get("by_dispensary", {}).get(dispensary_lower, [])
+    dispensary_key = _resolve_dispensary_key(index.get("by_dispensary", {}), dispensary)
+    dispensary_items = index.get("by_dispensary", {}).get(dispensary_key, [])
 
     if not dispensary_items:
         return {
@@ -1329,7 +1372,8 @@ def get_batch_stock(dispensary: str, batch_id: str):
     """Get stock information for a specific batch at a dispensary."""
     index = get_stock_index()
 
-    dispensary_items = index.get("by_dispensary", {}).get(dispensary.lower(), [])
+    dispensary_key = _resolve_dispensary_key(index.get("by_dispensary", {}), dispensary)
+    dispensary_items = index.get("by_dispensary", {}).get(dispensary_key, [])
 
     for item in dispensary_items:
         if item.get("batch_id") == batch_id:
