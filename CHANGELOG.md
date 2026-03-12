@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [2026-03-12]
+
+### Fixed
+- Stock API: Dispensary filter mismatch for multi-word names (Green Dragon, Sanctuary Medicinals)
+  - Index items store slug (`green_dragon`) but API callers pass display name (`Green Dragon`)
+  - `.lower()` comparison failed: `"green dragon" != "green_dragon"` (space vs underscore)
+  - Added `_matches_dispensary()` helper — normalises spaces→underscores and checks both fields
+  - Added `_resolve_dispensary_key()` for `by_dispensary` dict lookups
+  - Updated all 9 filter sites across browse, search, strains, hot-products, new-arrivals,
+    recently-sold-out, availability-history, and catch-all dispensary endpoints
+
 ## [2026-03-08]
 
 ### Added
