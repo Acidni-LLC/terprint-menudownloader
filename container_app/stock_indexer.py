@@ -2227,7 +2227,7 @@ class StockLedgerWriter:
       - Price history over time for a strain
     """
 
-    COSMOS_ACCOUNT = "https://cosmos-terprint-dev.documents.azure.com:443/"
+    COSMOS_ACCOUNT = os.environ.get("COSMOS_ENDPOINT", "https://acidni-cosmos-dev.documents.azure.com:443/")
     DATABASE_NAME = "TerprintAI"
     CONTAINER_NAME = "stock-ledger"
 
